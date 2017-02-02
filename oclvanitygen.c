@@ -158,6 +158,7 @@ main(int argc, char **argv)
 					"AC : Asiacoin : A\n"
 					"AIB : Advanced Internet Block by IOBOND : A\n"
 					"ANC : Anoncoin : A\n"
+					"ARS : Arkstone : A\n"
 					"BLK : Blackcoin : B\n"
 					"BQC : BBQcoin : b\n"
 					"BTC : Bitcoin : 1\n"
@@ -264,6 +265,14 @@ main(int argc, char **argv)
 					"Generating CNC Address\n");
 					addrtype = 28;
 					privtype = 156;
+					break;
+			}
+			else
+			if (strcmp(optarg, "ARS")== 0) {
+				fprintf(stderr,
+					"Generating ARS Address\n");
+					addrtype = 23;
+					privtype = 151;
 					break;
 			}
 			else
