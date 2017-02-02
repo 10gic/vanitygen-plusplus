@@ -7,10 +7,10 @@ then modified by Corey Harding with the following changes:
 +Generate vanity addresses for 50+ coins!
 +I also removed the prefix length limit, now capable of searching for a whole address.
 So technically this is capable of brute forcing a complete address if you have trillions of years to waste.
-+PR From: https://github.com/cryptapus For -Y privkey values
-+PR From: https://github.com/elichai For keyconv decrypt
-+PR From: https://github.com/salfter For compressed key support
-+PR From: https://github.com/WyseNynja For oclvanityminer updates
++Manually merge changes from: https://github.com/cryptapus For -Y privkey values
++Manually merge changes from: https://github.com/elichai For keyconv decrypt
++Manually merge changes from: https://github.com/salfter For compressed key support
++Manually merge changes from: https://github.com/WyseNynja For oclvanityminer updates
 
 WARNING! This program has not been thoroughly tested.  Please attempt importing an address first.
 Send a tiny amount you don't mind losing to the address.  Then perform a test spend.
