@@ -1,0 +1,70 @@
+Chart in part from https://github.com/libbitcoin/libbitcoin/wiki/Altcoin-Version-Mappings
+
+Coin  |            |        -Y        |    -X (PREFIX) 
+
+BTC   |      0     |        128       |   0/('1')   
+TEST  |      1     |        239       | 111/('m' | 'n')
+LTC   |      2     |        176       |  48/('L')       
+DOGE  |      3     |        158       |  30/('D')       
+RDD   |      4     | 189/'V'/c        |  61/('R')       
+DASH  |      5     |        204       |  76/('X')    
+PPC   |      6     |        183       |  55/('P')       
+NMC   |      7     |        180       |  52/('M' | 'N') 
+FTC   |      8     |        142       |  14/('6' | '7') 
+XCP   |      9     |     color_BTC    |   0/('1')       
+BLK   |     10     |        153       |  25/('B')       
+NSR   |     11     |     149/191 c/u  |  63/('S')        
+NBT   |     12     |     150/191 c/u  |  25/('B')       
+MZC   |     13     |        224       |  50/('M')       
+VIA   |     14     |        199       |  71/('V')       
+XCH   |     15     |     color_VIA    |  71/('V')       
+RBY   |     16     |        189       |  61/('R')       
+GRS   |     17     |        128       |  36/('F')       
+DGC   |     18     |        158       |  30/('D')       
+CCN   |     19     |        156       |  28/('C')       
+DGB   |     20     |        128       |  30/('D')         
+???   |     21     |  color_agnostic  |  19/'a'(168bits)   
+MONA  |     22     |        176       |  50/('M')           
+CLAM  |     23     |        133       | 137/('x')         
+XPM   |     24     |        151       |  23/('A')           
+NEOS  |     25     |        239       |  63/('S')             
+JBS   |     26     |        171       |  43/('J')        
+ZRC   |     27     |        208       |  80/('Z')           
+VTC   |     28     |        199       |  71/('V')       
+NXT   |     29     |                  |                            
+MUE   |     31     |        143       |  15/('7')  
+ZOOM  |     32     |        231       | 103/('i')     
+VPN   |     33     |        199       |  71/('V')       
+CDN   |     34     |        156       |  28/('C')     
+SDC   |     35     |        191       |  63/('S')      
+PKB   |     36     |        183       |  55/('P')      
+PND   |     37     |        183       |  55/('P')       
+START |     38     |        253       | 125/('s')          
+GCR   |     39     |        154       |  38/('G')        
+NVC   |     50     |        136       |   8/('4')          
+AC    |     51     |        151       |  23/('A')      
+BTCD  |     52     |        188       |  60/('R')        
+DOPE  |     53     |        136       |   8/('4')         
+TPC   |     54     |        193       |  65/('T')     
+???   |     55     |        151       |  23/('A')       
+ETH   |     60     |                  |                          
+???   |     64     |                  |                          
+OK    |     69     |        183       |  55/('P')       
+DOGED |     77     |        158       |  30/('D')         
+EFL   |     78     |        176       |  48/('L')          
+POT   |     81     |        183       |  55/('P')           
+XRP   |     NR     | 96?/'s'(116 bits)|96?/'r'(136 bits)               
+XMR   |    128     |        N/A       |    /('4')              
+ZEC   |    133     |        128       | (28 & b8)/('t1')
+
+Below add 128 to X value to get Y value.
+
+anc anoncoin 23 A
+CNC 28
+PPCOIN 55 P
+IXC IXCOIN 138 x
+nyancoins 45 K
+Pesetacoin PTC 47 K
+
+YAC 77 Y
+BQC 85 b
