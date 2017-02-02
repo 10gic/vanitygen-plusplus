@@ -1,3 +1,4 @@
+<pre>
 Vanitygen plus!
 
 Forked from samr7/vanitygen ,
@@ -103,3 +104,4 @@ Donate Litecoin: LegacyeBuSwLaZaF5QLMiJL8E4rNCH6tJ7
 Donate Namecoin: N1egacyRAKumMKiFaVrTqwzmdkJVL9mNDs
 Donate Feathercoin: 71egacyuSdmPUMM3EKp4dw8yBgTruKhKZc
 Donate Vertcoin: Vry1337ZVSFftzLWvBkEhf787HAXAqyupJ
+</pre>
