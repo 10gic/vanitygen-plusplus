@@ -24,7 +24,9 @@ The first thing to do is install the required packages then run:
 
 A 64 bit Debian binary is also included.
 
-Now get a list of the alt-coins with: "./oclvanitygen -C List"
+NOTE: All arguments are case sensitive!
+
+Now get a list of the alt-coins with: "./oclvanitygen -C LIST"
 
 Choose your coin.
 
