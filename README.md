@@ -19,6 +19,10 @@ The chances of actually brute forcing an address is nearly impossible anyways.
 
 Be sure to report any issues or bugs and fixes, I am happy to accept pull requests!
 
+------
+Getting Started
+------
+
 Requires libssl1.0-dev
 "apt-get install libssl1.0-dev"
 
@@ -44,6 +48,38 @@ Pattern: bTEST
 Address: bTESTWkCCzPkakWbZTxUWnRSb5VXVyUmU9
 Privkey: 6ErCAAcXhe25jGYm94uamfetTPZxR9MfLG1YNkrNEEfUjTDVMmQ
 
+------
+Encrypting and Decrypting a vanitygen private key for altcoins.
+------
+
+./vanitygen -C AC Aa -E 5
+"-C AC Aa" Choose coin AC and address prefix "Aa"
+"-E 5" Encrypt key with password as "5",
+more secure to use option "-e" with no trailing password,
+then vanitygen prompts for a password so theres no command history.
+
+Generating AC Address
+Difficulty: 23
+Estimated password crack time: >1 seconds
+WARNING: Password contains only numbers
+WARNING: Protecting private keys with weak password
+Pattern: Aa                                                                    
+Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
+Protkey: yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+
+Now refer to the list address-x-y-value-for-keyconv.txt and pick your -X and -Y values.
+Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
+---------------
+AC 	: Asiacoin 		: A			: 23	<---	: 151 <---
+For AC(Asiacoin) these values are 23 and 151.
+
+./keyconv -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+"-X 23 -Y 151" Specifies coin configuration
+"-d" for decrypt and protected key of "yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge"
+Enter import password: 5 <--- Enter "5" or whatever you specified as password and press enter
+Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
+Privkey: 66GRP2W5H4sWbgrBRAuPc3qZxUtP5boubJ9N2M5wZio6fhWjzbr
+
 If you found this repo useful, please consider a donation.  Thank You!
 Donate Bitcoin: 1egacySQXJA8bLHnFhdQQjZBLW1gxSAjc
 Donate Zcash or Zclassic: t1egacynGZDT9mTfmMSCG1yCaedq7bGTs1a
@@ -59,58 +95,59 @@ Current List of Available Alt-Coins for Address Generation
 ---------------------------------------------------
 Argument(UPPERCASE) : Coin : Address Prefix
 ---------------
+AC : Asiacoin : A
+AIB : Advanced Internet Block by IOBOND : A
+ANC : Anoncoin : A
+ARS : Arkstone : A
+BLK : Blackcoin : B
+BQC : BBQcoin : b
 BTC : Bitcoin : 1
 TEST : Bitcoin Testnet : m or n
-LTC : Litecoin : L
-LBRY : LBRY : b
-NMC : Namecoin : M or N
-DOGE : Dogecoin : D
-DASH : Dash Pay : X
-PPC : Peercoin : P
-FTC : Feathercoin : 6 or 7
-BLK : Blackcoin : B
-MZC : Mazacoin : M
-VIA : Viacoin : V
-RBY : Rubycoin : R
-GRS : Groestlcoin : F
-DGC : Digitalcoin : D
+BTCD : Bitcoin Dark : R
 CCN : Canacoin : C
-DGB : Digibyte : D
-MONA : Monacoin : M
-CLAM : Clamcoin : x
-XPM : Primecoin : A
-NEOS : Neoscoin : S
-JBS : Jumbucks : J
-ZRC : Ziftrcoin : Z
-VTC : Vertcoin : V
-MUE : Monetary Unit : 7
-ZOOM : Zoom coin : i
-VPN : Vpncoin : V
 CDN : Canadaecoin : C
-SDC : Shadowcoin : S
+CLAM : Clamcoin : x
+CNC : Chinacoin : C
+DASH : Dash Pay : X
+DGB : Digibyte : D
+DGC : Digitalcoin : D
+DOGED : Doge Dark Coin : D
+DOGE : Dogecoin : D
+DOPE : Dopecoin : 4
+EFL : Electronic-Gulden-Foundation : L
+FTC : Feathercoin : 6 or 7
+GCR : Global Currency Reserve : G
+GRS : Groestlcoin : F
+IXC : Ixcoin : x
+JBS : Jumbucks : J
+LBRY : LBRY : b
+LTC : Litecoin : L
+MONA : Monacoin : M
+MUE : Monetary Unit : 7
+MZC : Mazacoin : M
+NEOS : Neoscoin : S
+NMC : Namecoin : M or N
+NVC : Novacoin : 4
+NYAN : Nyancoin : K
+OK : OK Cash : P
+OMC : Omnicoin : o
 PKB : Parkbyte : P
 PND : Pandacoin : P
-START : Startcoin : s
-GCR : Global Currency Reserve : G
-NVC : Novacoin : 4
-AC : Asiacoin : A
-BTCD : Bitcoin Dark : R
-DOPE : Dopecoin : 4
-TPC : Templecoin : T
-AIB : Advanced Internet Block by IOBOND : A
-OK : OK Cash : P
-DOGED : Doge Dark Coin : D
-EFL : Electronic-Gulden-Foundation : L
 POT : Potcoin : P
-OMC : Omnicoin : o
-ANC : Anoncoin : A
-CNC : Chinacoin : C
-IXC : Ixcoin : x
-NYAN : Nyancoin : K
-RDD : Reddcoin : R
+PPC : Peercoin : P
 PTC : Pesetacoin : K
+RBY : Rubycoin : R
+RDD : Reddcoin : R
+SDC : Shadowcoin : S
+START : Startcoin : s
+TPC : Templecoin : T
+VIA : Viacoin : V
+VPN : Vpncoin : V
+VTC : Vertcoin : V
+XPM : Primecoin : A
 YAC : Yacoin : Y
-BQC : BBQcoin : b
+ZOOM : Zoom coin : i
+ZRC : Ziftrcoin : Z
 
 If you found this repo useful, please consider a donation.  Thank You!
 
