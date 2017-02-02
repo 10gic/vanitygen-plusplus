@@ -8,8 +8,21 @@ then modified by Corey Harding with the following changes:
 +I also removed the prefix length limit, now capable of searching for a whole address.
 So technically this is capable of brute forcing a complete address if you have trillions of years to waste.
 
+WARNING! This program has not been thoroughly tested.  Please attempt importing an address first.
+Send a tiny amount you don't mind losing to the address.  Then perform a test spend.
+I will not be held liable for lost funds as a result of the use of this program.
+Also do not use this program for nefarious purposes!  I do not condone illegal activity.
+The chances of actually brute forcing an address is nearly impossible anyways.
+
+Be sure to report any issues or bugs and fixes, I am happy to accept pull requests!
+
+Requires libssl1.0-dev
+"apt-get install libssl1.0-dev"
+
 The first thing to do is install the required packages then run:
 "make all"
+
+A 64 bit Debian binary is also included.
 
 Now get a list of the alt-coins with: "./oclvanitygen -C List"
 
