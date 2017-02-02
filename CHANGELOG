@@ -118,3 +118,4 @@ Version Plus, released Feb 01, 2017
 	- Add -Y Custom Privkey types
 	- Add Keyconv Decrypt Tool
 	- Remove prefix length limit(Search for whole address)
+	- Update oclvanityminer

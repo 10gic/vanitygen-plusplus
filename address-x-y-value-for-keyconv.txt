@@ -1,3 +1,5 @@
+https://github.com/exploitagency/vanitygen-plus
+
 Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
 ---------------
 AC 	: Asiacoin 		: A			: 23		: 151
