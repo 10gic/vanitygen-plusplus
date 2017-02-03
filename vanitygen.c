@@ -430,6 +430,7 @@ main(int argc, char **argv)
 					"LTC : Litecoin : L\n"
 					"MONA : Monacoin : M\n"
 					"MUE : Monetary Unit : 7\n"
+					"MYRIAD : Myriadcoin : M\n"
 					"MZC : Mazacoin : M\n"
 					"NEOS : Neoscoin : S\n"
 					"NMC : Namecoin : M or N\n"
@@ -444,9 +445,12 @@ main(int argc, char **argv)
 					"PTC : Pesetacoin : K\n"
 					"RBY : Rubycoin : R\n"
 					"RDD : Reddcoin : R\n"
+					"RIC : Riecoin : R\n"
 					"SDC : Shadowcoin : S\n"
 					"START : Startcoin : s\n"
 					"TPC : Templecoin : T\n"
+					"UIS : Unitus : U\n"
+					"UNO : Unobtanium : u\n"
 					"VIA : Viacoin : V\n"
 					"VPN : Vpncoin : V\n"
 					"VTC : Vertcoin : V\n"
@@ -456,6 +460,38 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "RIC")== 0) {
+				fprintf(stderr,
+					"Generating RIC Address\n");
+					addrtype = 60;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "UNO")== 0) {
+				fprintf(stderr,
+					"Generating UNO Address\n");
+					addrtype = 130;
+					privtype = 224;
+					break;
+			}
+			else
+			if (strcmp(optarg, "UIS")== 0) {
+				fprintf(stderr,
+					"Generating UIS Address\n");
+					addrtype = 68;
+					privtype = 132;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MYRIAD")== 0) {
+				fprintf(stderr,
+					"Generating MYRIAD Address\n");
+					addrtype = 50;
+					privtype = 178;
+					break;
 			}
 			else
 			if (strcmp(optarg, "BQC")== 0) {

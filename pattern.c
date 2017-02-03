@@ -1414,7 +1414,7 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 			break;
 		}
 		fprintf(stderr,
-			"Hint: Run vanitygen with \"-C LIST\" for a list of valid prefixes.\n");
+			"Hint: Run vanitygen with \"-C LIST\" for a list of valid prefixes.  Also note that many coins only allow certain characters as the second character in the prefix.\n");
 	}
 
 	if (npfx)

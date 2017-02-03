@@ -31,6 +31,7 @@ LBRY 	: LBRY 			: b			: 85		: 156
 LTC 	: Litecoin 		: L 			: 48 		: 176
 MONA 	: Monacoin 		: M			: 50		: 176
 MUE 	: Monetary Unit 	: 7			: 15		: 143
+MYRIAD	: Myriad Coin		: M			: 50		: 178
 MZC 	: Mazacoin 		: M			: 50		: 224
 NEOS 	: Neoscoin 		: S			: 63		: 239
 NMC 	: Namecoin 		: M or N 		: 52 		: 180
@@ -45,9 +46,12 @@ PPC 	: Peercoin 		: P 			: 55 		: 183
 PTC 	: Pesetacoin 		: K			: 47		: 175
 RBY 	: Rubycoin 		: R			: 61		: 189
 RDD 	: Reddcoin 		: R 			: 61 		: 189
+RIC	: Riecoin		: R			: 60		: 128
 SDC 	: Shadowcoin 		: S			: 63		: 191
 START 	: Startcoin 		: s			: 125		: 253
 TPC 	: Templecoin 		: T			: 65		: 193
+UIS	: Unitus		: U			: 68		: 132
+UNO	: Unobtanium		: u			: 130		: 224
 VIA	: Viacoin 		: V			: 71		: 199
 VPN 	: Vpncoin 		: V			: 71		: 199
 VTC 	: Vertcoin 		: V			: 71		: 199

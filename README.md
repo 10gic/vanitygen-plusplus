@@ -125,6 +125,7 @@ LBRY : LBRY : b
 LTC : Litecoin : L
 MONA : Monacoin : M
 MUE : Monetary Unit : 7
+MYRIAD : Myriadcoin : M
 MZC : Mazacoin : M
 NEOS : Neoscoin : S
 NMC : Namecoin : M or N
@@ -139,9 +140,12 @@ PPC : Peercoin : P
 PTC : Pesetacoin : K
 RBY : Rubycoin : R
 RDD : Reddcoin : R
+RIC : Riecoin : R
 SDC : Shadowcoin : S
 START : Startcoin : s
 TPC : Templecoin : T
+UIS : Unitus : U
+UNO : Unobtanium : u
 VIA : Viacoin : V
 VPN : Vpncoin : V
 VTC : Vertcoin : V
