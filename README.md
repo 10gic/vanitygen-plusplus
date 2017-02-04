@@ -24,8 +24,11 @@ Be sure to report any issues or bugs and fixes, I am happy to accept pull reques
 Getting Started
 ------
 
-Requires libssl1.0-dev
-"apt-get install libssl1.0-dev"
+See this link for more detailed instructions on compiling from source:
+https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
+
+Requires libssl1.0-dev, newer version is not compatible!
+"apt-get install opencl-headers libssl1.0-dev libpcre3-dev ocl-icd-dev ocl-icd-dbg"
 
 The first thing to do is install the required packages then run:
 "make all"
