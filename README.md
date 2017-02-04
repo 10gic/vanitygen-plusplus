@@ -4,7 +4,7 @@ Vanitygen plus!
 Forked from samr7/vanitygen ,
 then modified by Corey Harding with the following changes:
 
-+Generate vanity addresses for 50+ coins!
++Generate vanity addresses for 70+ coins!
 +I also removed the prefix length limit, now capable of searching for a whole address.
 So technically this is capable of brute forcing a complete address if you have trillions of years to waste.
 +Manually merge changes from: https://github.com/cryptapus For -Y privkey values
