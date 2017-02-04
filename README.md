@@ -100,6 +100,7 @@ AC : Asiacoin : A
 AIB : Advanced Internet Block by IOBOND : A
 ANC : Anoncoin : A
 ARS : Arkstone : A
+AUR : Auroracoin : A
 BLK : Blackcoin : B
 BQC : BBQcoin : b
 BTC : Bitcoin : 1
@@ -109,6 +110,7 @@ CCN : Canacoin : C
 CDN : Canadaecoin : C
 CLAM : Clamcoin : x
 CNC : Chinacoin : C
+CON : PayCon : P
 DASH : Dash Pay : X
 DGB : Digibyte : D
 DGC : Digitalcoin : D
@@ -116,18 +118,25 @@ DOGED : Doge Dark Coin : D
 DOGE : Dogecoin : D
 DOPE : Dopecoin : 4
 EFL : Electronic-Gulden-Foundation : L
+FAIR : Faircoin2 : f
+FLOZ : FLOZ : F
 FTC : Feathercoin : 6 or 7
 GCR : Global Currency Reserve : G
+GRC : GridcoinResearch : R or S
 GRS : Groestlcoin : F
+HODL : HOdlcoin : H
 IXC : Ixcoin : x
 JBS : Jumbucks : J
 LBRY : LBRY : b
+LEAF : Leafcoin : f
 LTC : Litecoin : L
+MMC : Memorycoin : M
 MONA : Monacoin : M
 MUE : Monetary Unit : 7
 MYRIAD : Myriadcoin : M
 MZC : Mazacoin : M
 NEOS : Neoscoin : S
+NLG : Gulden : G
 NMC : Namecoin : M or N
 NVC : Novacoin : 4
 NYAN : Nyancoin : K
@@ -138,17 +147,22 @@ PND : Pandacoin : P
 POT : Potcoin : P
 PPC : Peercoin : P
 PTC : Pesetacoin : K
+PTS : Protoshares : P
 RBY : Rubycoin : R
 RDD : Reddcoin : R
 RIC : Riecoin : R
 SDC : Shadowcoin : S
+SKC : Skeincoin : S
 START : Startcoin : s
+SXC : Sexcoin : R or S
 TPC : Templecoin : T
 UIS : Unitus : U
 UNO : Unobtanium : u
 VIA : Viacoin : V
 VPN : Vpncoin : V
 VTC : Vertcoin : V
+WUBS : Dubstepcoin : D
+XC : XCurrency : X
 XPM : Primecoin : A
 YAC : Yacoin : Y
 ZOOM : Zoom coin : i

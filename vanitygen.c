@@ -405,6 +405,7 @@ main(int argc, char **argv)
 					"AIB : Advanced Internet Block by IOBOND : A\n"
 					"ANC : Anoncoin : A\n"
 					"ARS : Arkstone : A\n"
+					"AUR : Auroracoin : A\n"
 					"BLK : Blackcoin : B\n"
 					"BQC : BBQcoin : b\n"
 					"BTC : Bitcoin : 1\n"
@@ -414,6 +415,7 @@ main(int argc, char **argv)
 					"CDN : Canadaecoin : C\n"
 					"CLAM : Clamcoin : x\n"
 					"CNC : Chinacoin : C\n"
+					"CON : PayCon : P\n"
 					"DASH : Dash Pay : X\n"
 					"DGB : Digibyte : D\n"
 					"DGC : Digitalcoin : D\n"
@@ -421,18 +423,25 @@ main(int argc, char **argv)
 					"DOGE : Dogecoin : D\n"
 					"DOPE : Dopecoin : 4\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
+					"FAIR : Faircoin2 : f\n"
+					"FLOZ : FLOZ : F\n"
 					"FTC : Feathercoin : 6 or 7\n"
 					"GCR : Global Currency Reserve : G\n"
+					"GRC : GridcoinResearch : R or S\n"
 					"GRS : Groestlcoin : F\n"
+					"HODL : HOdlcoin : H\n"
 					"IXC : Ixcoin : x\n"
 					"JBS : Jumbucks : J\n"
 					"LBRY : LBRY : b\n"
+					"LEAF : Leafcoin : f\n"
 					"LTC : Litecoin : L\n"
+					"MMC : Memorycoin : M\n"
 					"MONA : Monacoin : M\n"
 					"MUE : Monetary Unit : 7\n"
 					"MYRIAD : Myriadcoin : M\n"
 					"MZC : Mazacoin : M\n"
 					"NEOS : Neoscoin : S\n"
+					"NLG : Gulden : G\n"
 					"NMC : Namecoin : M or N\n"
 					"NVC : Novacoin : 4\n"
 					"NYAN : Nyancoin : K\n"
@@ -443,23 +452,140 @@ main(int argc, char **argv)
 					"POT : Potcoin : P\n"
 					"PPC : Peercoin : P\n"
 					"PTC : Pesetacoin : K\n"
+					"PTS : Protoshares : P\n"
 					"RBY : Rubycoin : R\n"
 					"RDD : Reddcoin : R\n"
 					"RIC : Riecoin : R\n"
 					"SDC : Shadowcoin : S\n"
+					"SKC : Skeincoin : S\n"
 					"START : Startcoin : s\n"
+					"SXC : Sexcoin : R or S\n"
 					"TPC : Templecoin : T\n"
 					"UIS : Unitus : U\n"
 					"UNO : Unobtanium : u\n"
 					"VIA : Viacoin : V\n"
 					"VPN : Vpncoin : V\n"
 					"VTC : Vertcoin : V\n"
+					"WUBS : Dubstepcoin : D\n"
+					"XC : XCurrency : X\n"
 					"XPM : Primecoin : A\n"
 					"YAC : Yacoin : Y\n"
 					"ZOOM : Zoom coin : i\n"
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "XC")== 0) {
+				fprintf(stderr,
+					"Generating XC Address\n");
+					addrtype = 75;
+					privtype = 203;
+					break;
+			}
+			else
+			if (strcmp(optarg, "WUBS")== 0) {
+				fprintf(stderr,
+					"Generating WUBS Address\n");
+					addrtype = 29;
+					privtype = 157;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SXC")== 0) {
+				fprintf(stderr,
+					"Generating SXC Address\n");
+					addrtype = 62;
+					privtype = 190;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SKC")== 0) {
+				fprintf(stderr,
+					"Generating SKC Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PTS")== 0) {
+				fprintf(stderr,
+					"Generating PTS Address\n");
+					addrtype = 56;
+					privtype = 184;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NLG")== 0) {
+				fprintf(stderr,
+					"Generating NLG Address\n");
+					addrtype = 38;
+					privtype = 166;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MMC")== 0) {
+				fprintf(stderr,
+					"Generating MMC Address\n");
+					addrtype = 50;
+					privtype = 178;
+					break;
+			}
+			else
+			if (strcmp(optarg, "LEAF")== 0) {
+				fprintf(stderr,
+					"Generating LEAF Address\n");
+					addrtype = 95;
+					privtype = 223;
+					break;
+			}
+			else
+			if (strcmp(optarg, "HODL")== 0) {
+				fprintf(stderr,
+					"Generating HODL Address\n");
+					addrtype = 40;
+					privtype = 168;
+					break;
+			}
+			else
+			if (strcmp(optarg, "FLOZ")== 0) {
+				fprintf(stderr,
+					"Generating FLOZ Address\n");
+					addrtype = 35;
+					privtype = 163;
+					break;
+			}
+			else
+			if (strcmp(optarg, "FAIR")== 0) {
+				fprintf(stderr,
+					"Generating FAIR Address\n");
+					addrtype = 95;
+					privtype = 223;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CON")== 0) {
+				fprintf(stderr,
+					"Generating CON Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "AUR")== 0) {
+				fprintf(stderr,
+					"Generating AUR Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GRC")== 0) {
+				fprintf(stderr,
+					"Generating GRC Address\n");
+					addrtype = 62;
+					privtype = 188;
+					break;
 			}
 			else
 			if (strcmp(optarg, "RIC")== 0) {
