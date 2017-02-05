@@ -118,17 +118,6 @@ Privkey: 66GRP2W5H4sWbgrBRAuPc3qZxUtP5boubJ9N2M5wZio6fhWjzbr
 END Encrypting and Decrypting a vanitygen private key
 ------
 
-If you found this repo useful, please consider a donation.  Thank You!
-Donate Bitcoin: 1egacySQXJA8bLHnFhdQQjZBLW1gxSAjc
-Donate Zcash or Zclassic: t1egacynGZDT9mTfmMSCG1yCaedq7bGTs1a
-Z-Address: zcashPngjXyQJUjePXH6wvg2vfHHngaZiYLmmDE2bp3PqMAPpErdfpbctug78P6m8xqKXyxX1dmfCYoUeJYfX8hDLSueuKL
-Donate Ethereum or Ethereum Classic: 0x1337aeb726eee1a51fc3b22a7eafa329d950297a
-Donate LBRY: bLEGACYsaVR11r9qp6bXnWeWtpf7Usx9rX
-Donate Litecoin: LegacyeBuSwLaZaF5QLMiJL8E4rNCH6tJ7
-Donate Namecoin: N1egacyRAKumMKiFaVrTqwzmdkJVL9mNDs
-Donate Feathercoin: 71egacyuSdmPUMM3EKp4dw8yBgTruKhKZc
-Donate Vertcoin: Vry1337ZVSFftzLWvBkEhf787HAXAqyupJ
-
 Current List of Available Coins for Address Generation
 ---------------------------------------------------
 Argument(UPPERCASE) : Coin : Address Prefix
@@ -228,4 +217,6 @@ Donate Litecoin: LegacyeBuSwLaZaF5QLMiJL8E4rNCH6tJ7
 Donate Namecoin: N1egacyRAKumMKiFaVrTqwzmdkJVL9mNDs
 Donate Feathercoin: 71egacyuSdmPUMM3EKp4dw8yBgTruKhKZc
 Donate Vertcoin: Vry1337ZVSFftzLWvBkEhf787HAXAqyupJ
+Donate Monacoin: MMMMMM6JDVfedPQw9DGTmDhEmFLrnBzNZs
+Donate Dash: XxXXXxxx4jGY5cjhHH7921c1cv2hfvALRw
 </pre>
