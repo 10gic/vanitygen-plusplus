@@ -63,15 +63,12 @@ Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
 -------
 ./vanitygen: error while loading shared libraries: libcrypto.so.1.0.2: cannot open shared object file: No such file or directory
 
-cd ~
-mkdir deps
-cd deps
 wget http://ftp.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-9_amd64.udeb
 dpkg -i libc6-udeb_2.24-9_amd64.udeb
 wget http://ftp.us.debian.org/debian/pool/main/o/openssl1.0/libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
 dpkg -i libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
-cd ..
-rm deps -R
+rm libc6-udeb_2.24-9_amd64.udeb
+rm libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
 -------
 END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
 -------
