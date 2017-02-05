@@ -40,7 +40,7 @@ HAM 	: HamRadiocoin 		: 1 			: 0	 	: 128
 HODL	: HOdlcoin		: H			: 40		: 168
 IXC 	: Ixcoin 		: x			: 138		: 266
 JBS 	: Jumbucks 		: J			: 43		: 171
-LBRY 	: LBRY 			: b			: 85		: 156
+LBRY 	: LBRY 			: b			: 85		: 28
 LEAF	: Leafcoin		: f			: 95		: 223
 LTC 	: Litecoin 		: L 			: 48 		: 176
 MMC	: Memorycoin		: M			: 50		: 178

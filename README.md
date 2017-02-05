@@ -59,9 +59,11 @@ Choose your coin.
 "bTEST" : the address you are searching for
 
 Example output:
-Pattern: bTEST
-Address: bTESTWkCCzPkakWbZTxUWnRSb5VXVyUmU9
-Privkey: 6ErCAAcXhe25jGYm94uamfetTPZxR9MfLG1YNkrNEEfUjTDVMmQ
+Generating LBRY Address
+Difficulty: 4553521
+Pattern: bTEST                                                                 
+Address: bTEST6jSVcid5MQAJBrGUR6MLDpdyb8oiQ
+Privkey: wrRxctq3f7A1zkpyWoZRifRk5eAC2UM9idh83SPLhz6gAFfqdL
 ------
 END Getting Started
 ------
