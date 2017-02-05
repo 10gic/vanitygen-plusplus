@@ -1133,7 +1133,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Generating LBRY Address\n");
 					addrtype = 85;
-					privtype = 156;
+					privtype = 28;
 					break;
 			}
 			else
