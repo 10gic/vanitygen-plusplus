@@ -36,6 +36,10 @@ A Linux binary is included. (Compiled on 64bit Debian Testing)
 
 NOTE: All arguments are case sensitive!
 Using GPU(oclvanitygen) requires correct drivers be installed openCL and appropriate dependencies.
+See above link for list of said dependencies for oclvanitygen.
+This may take some fiddling depending on your distro.
+Link above works for Kali Rolling and can be adopted for other distros.
+If using CPU only the guide below should suffice.
 
 Downloading:
 apt-get install git
@@ -43,7 +47,8 @@ git clone https://github.com/exploitagency/vanitygen-plus.git
 cd vanitygen-plus
 cd linux-binary
 
-Now get a list of the Coins with: "./vanitygen -C LIST"
+Now get a list of the Coins with:
+./vanitygen -C LIST
 
 Choose your coin.
 
@@ -62,7 +67,7 @@ END Getting Started
 ------
 
 -------
-Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+Fix libcrypto.so.1.0.2 error(Debian, Ubuntu)
 -------
 ./vanitygen: error while loading shared libraries: libcrypto.so.1.0.2: cannot open shared object file: No such file or directory
 
@@ -73,7 +78,7 @@ dpkg -i libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
 rm libc6-udeb_2.24-9_amd64.udeb
 rm libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
 -------
-END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu)
 -------
 
 ------
