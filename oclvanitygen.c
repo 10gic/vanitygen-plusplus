@@ -54,6 +54,8 @@ usage(const char *name)
 "Options:\n"
 "-v            Verbose output\n"
 "-q            Quiet output\n"
+"-r            Use regular expression match instead of prefix\n"
+"              (Feasibility of expression is not checked)\n"
 "-i            Case-insensitive prefix search\n"
 "-k            Keep pattern and continue search after finding a match\n"
 "-1            Stop after first match\n"
@@ -127,8 +129,11 @@ main(int argc, char **argv)
 	int i;
 
 	while ((opt = getopt(argc, argv,
-			     "vqik1C:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:")) != -1) {
+			     "vqrik1C:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:")) != -1) {
 		switch (opt) {
+		case 'r':
+			regex = 1;
+			break;
 		case 'v':
 			verbose = 2;
 			break;
