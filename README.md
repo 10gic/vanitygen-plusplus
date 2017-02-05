@@ -30,13 +30,7 @@ Getting Started
 See this link for more detailed instructions on compiling from source:
 https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
 
-Requires libssl1.0-dev, newer version is not compatible!
-"apt-get install opencl-headers libssl1.0-dev libpcre3-dev ocl-icd-dev ocl-icd-dbg"
-
-The first thing to do is install the required packages then run:
-"make all"
-
-A 64 bit Debian binary is also included.
+A 64 bit Debian binary is included.
 
 NOTE: All arguments are case sensitive!
 
@@ -175,6 +169,24 @@ XPM : Primecoin : A
 YAC : Yacoin : Y
 ZOOM : Zoom coin : i
 ZRC : Ziftrcoin : Z
+
+-------
+Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+-------
+./vanitygen: error while loading shared libraries: libcrypto.so.1.0.2: cannot open shared object file: No such file or directory
+
+cd ~
+mkdir deps
+cd deps
+wget http://ftp.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-9_amd64.udeb
+dpkg -i libc6-udeb_2.24-9_amd64.udeb
+wget http://ftp.us.debian.org/debian/pool/main/o/openssl1.0/libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
+dpkg -i libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
+cd ..
+rm deps -R
+-------
+END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+-------
 
 If you found this repo useful, please consider a donation.  Thank You!
 
