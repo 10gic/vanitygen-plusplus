@@ -401,6 +401,7 @@ main(int argc, char **argv)
 					"---------------------------------------------------\n"
 					"Argument(UPPERCASE) : Coin : Address Prefix\n"
 					"---------------\n"
+					"42 : 42coin : 4\n"
 					"AC : Asiacoin : A\n"
 					"AIB : Advanced Internet Block by IOBOND : A\n"
 					"ANC : Anoncoin : A\n"
@@ -463,6 +464,7 @@ main(int argc, char **argv)
 					"SCA : Scamcoin : S\n"
 					"SDC : Shadowcoin : S\n"
 					"SKC : Skeincoin : S\n"
+					"SPR : Spreadcoin : S\n"
 					"START : Startcoin : s\n"
 					"SXC : Sexcoin : R or S\n"
 					"TPC : Templecoin : T\n"
@@ -472,6 +474,7 @@ main(int argc, char **argv)
 					"VPN : Vpncoin : V\n"
 					"VTC : Vertcoin : V\n"
 					"WDC : Worldcoin Global : W\n"
+					"WKC : Wankcoin : 1\n"
 					"WUBS : Dubstepcoin : D\n"
 					"XC : XCurrency : X\n"
 					"XPM : Primecoin : A\n"
@@ -480,6 +483,30 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "42")== 0) {
+				fprintf(stderr,
+					"Generating 42 Address\n");
+					addrtype = 8;
+					privtype = 136;
+					break;
+			}
+			else
+			if (strcmp(optarg, "WKC")== 0) {
+				fprintf(stderr,
+					"Generating WKC Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SPR")== 0) {
+				fprintf(stderr,
+					"Generating SPR Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
 			}
 			else
 			if (strcmp(optarg, "SCA")== 0) {

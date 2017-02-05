@@ -2,6 +2,7 @@ https://github.com/exploitagency/vanitygen-plus
 
 Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
 ---------------
+42	: 42coin		: 4			: 8		: 136
 AC 	: Asiacoin 		: A			: 23		: 151
 AIB 	: AdvancedInternetBlock	: A			: 23		: 151
 ANC 	: Anoncoin 		: A			: 23		: 151
@@ -64,6 +65,7 @@ RIC	: Riecoin		: R			: 60		: 128
 SCA 	: Scamcoin 		: S			: 63		: 191
 SDC 	: Shadowcoin 		: S			: 63		: 191
 SKC	: Skeincoin		: S			: 63		: 191
+SPR	: Spreadcoin		: S			: 63		: 191
 START 	: Startcoin 		: s			: 125		: 253
 SXC	: Sexcoin		: R or S		: 62		: 190
 TPC 	: Templecoin 		: T			: 65		: 193
@@ -73,6 +75,7 @@ VIA	: Viacoin 		: V			: 71		: 199
 VPN 	: Vpncoin 		: V			: 71		: 199
 VTC 	: Vertcoin 		: V			: 71		: 199
 WDC	: Worldcoin Global	: W			: 73		: 201
+WKC	: Wankcoin		: 1			: 0		: 128
 WUBS	: Dubstepcoin		: D			: 29		: 157
 XC	: XCurrency		: X			: 75		: 203
 XPM 	: Primecoin 		: A			: 23		: 151
