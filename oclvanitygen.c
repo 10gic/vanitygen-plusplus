@@ -184,6 +184,7 @@ main(int argc, char **argv)
 					"DOGED : Doge Dark Coin : D\n"
 					"DOGE : Dogecoin : D\n"
 					"DOPE : Dopecoin : 4\n"
+					"DVC : Devcoin : 1\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
@@ -192,6 +193,7 @@ main(int argc, char **argv)
 					"GCR : Global Currency Reserve : G\n"
 					"GRC : GridcoinResearch : R or S\n"
 					"GRS : Groestlcoin : F\n"
+					"HAM : HamRadiocoin : 1\n"
 					"HODL : HOdlcoin : H\n"
 					"IXC : Ixcoin : x\n"
 					"JBS : Jumbucks : J\n"
@@ -242,6 +244,22 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "HAM")== 0) {
+				fprintf(stderr,
+					"Generating HAM Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DVC")== 0) {
+				fprintf(stderr,
+					"Generating DVC Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
 			}
 			else
 			if (strcmp(optarg, "42")== 0) {

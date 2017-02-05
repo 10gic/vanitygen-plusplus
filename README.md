@@ -154,6 +154,7 @@ DGC : Digitalcoin : D
 DOGED : Doge Dark Coin : D
 DOGE : Dogecoin : D
 DOPE : Dopecoin : 4
+DVC : Devcoin : 1
 EFL : Electronic-Gulden-Foundation : L
 EXCL : Exclusivecoin : E
 FAIR : Faircoin2 : f
@@ -163,6 +164,7 @@ GAP : Gapcoin : G
 GCR : Global Currency Reserve : G
 GRC : GridcoinResearch : R or S
 GRS : Groestlcoin : F
+HAM : HamRadiocoin : 1
 HODL : HOdlcoin : H
 IXC : Ixcoin : x
 JBS : Jumbucks : J
