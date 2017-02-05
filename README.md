@@ -155,6 +155,7 @@ DOGED : Doge Dark Coin : D
 DOGE : Dogecoin : D
 DOPE : Dopecoin : 4
 EFL : Electronic-Gulden-Foundation : L
+EXCL : Exclusivecoin : E
 FAIR : Faircoin2 : f
 FLOZ : FLOZ : F
 FTC : Feathercoin : 6 or 7
