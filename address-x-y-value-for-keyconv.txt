@@ -12,7 +12,7 @@ BQC 	: BBQcoin 		: b			: 85		: 213
 BTC 	: Bitcoin 		: 1 			: 0	 	: 128
 TEST 	: Bitcoin Testnet	: m or n 		: 111 		: 239
 BTCD 	: Bitcoin Dark 		: R			: 60		: 188
-CCN 	: Canacoin 		: C			: 28		: 156
+CCN 	: Cannacoin 		: C			: 28		: 156
 CDN 	: Canadaecoin 		: C			: 28		: 156
 CLAM 	: Clamcoin 		: x			: 137		: 133
 CNC 	: Chinacoin 		: C			: 28		: 156
@@ -24,6 +24,7 @@ DOGED 	: Doge Dark Coin 	: D			: 30		: 158
 DOGE 	: Dogecoin 		: D 			: 30 		: 158
 DOPE 	: Dopecoin 		: 4			: 8		: 136
 EFL 	: Electronic-Gulden-F.	: L			: 48		: 176
+EXCL	: Exclusivecoin		: E			: 33		: 161
 FAIR	: Faircoin2		: f			: 95		: 223
 FLOZ	: FLOZ			: F			: 35		: 163
 FTC 	: Feathercoin 		: 6 or 7 		: 14		: 142 
@@ -67,6 +68,7 @@ UNO	: Unobtanium		: u			: 130		: 224
 VIA	: Viacoin 		: V			: 71		: 199
 VPN 	: Vpncoin 		: V			: 71		: 199
 VTC 	: Vertcoin 		: V			: 71		: 199
+WDC	: Worldcoin Global	: W			: 73		: 201
 WUBS	: Dubstepcoin		: D			: 29		: 157
 XC	: XCurrency		: X			: 75		: 203
 XPM 	: Primecoin 		: A			: 23		: 151

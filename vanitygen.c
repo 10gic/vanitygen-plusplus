@@ -411,7 +411,7 @@ main(int argc, char **argv)
 					"BTC : Bitcoin : 1\n"
 					"TEST : Bitcoin Testnet : m or n\n"
 					"BTCD : Bitcoin Dark : R\n"
-					"CCN : Canacoin : C\n"
+					"CCN : Cannacoin : C\n"
 					"CDN : Canadaecoin : C\n"
 					"CLAM : Clamcoin : x\n"
 					"CNC : Chinacoin : C\n"
@@ -423,6 +423,7 @@ main(int argc, char **argv)
 					"DOGE : Dogecoin : D\n"
 					"DOPE : Dopecoin : 4\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
+					"EXCL : Exclusivecoin : E\n"
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
 					"FTC : Feathercoin : 6 or 7\n"
@@ -466,6 +467,7 @@ main(int argc, char **argv)
 					"VIA : Viacoin : V\n"
 					"VPN : Vpncoin : V\n"
 					"VTC : Vertcoin : V\n"
+					"WDC : Worldcoin Global : W\n"
 					"WUBS : Dubstepcoin : D\n"
 					"XC : XCurrency : X\n"
 					"XPM : Primecoin : A\n"
@@ -474,6 +476,23 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "WDC")== 0) {
+				fprintf(stderr,
+					"Generating WDC Address\n");
+					addrtype = 73;
+					privtype = 201;
+					break;
+			}
+			else
+			if (strcmp(optarg, "EXCL")== 0) {
+				fprintf(stderr,
+					"Generating EXCL Address\n");
+					addrtype = 33;
+					privtype = 161;
+					scriptaddrtype = -1;
+					break;
 			}
 			else
 			if (strcmp(optarg, "XC")== 0) {
