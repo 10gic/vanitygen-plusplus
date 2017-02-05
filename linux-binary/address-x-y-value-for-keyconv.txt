@@ -19,7 +19,7 @@ CDN 	: Canadaecoin 		: C			: 28		: 156
 CLAM 	: Clamcoin 		: x			: 137		: 133
 CNC 	: Chinacoin 		: C			: 28		: 156
 CON	: PayCon		: P			: 55		: 183
-DASH 	: Dash Pay 		: X 			: 76 		: 204
+DASH 	: Dash	 		: X 			: 76 		: 204
 DGB 	: Digibyte 		: D			: 30		: 128
 DGC  	: Digitalcoin 		: D			: 30		: 158
 DOGED 	: Doge Dark Coin 	: D			: 30		: 158

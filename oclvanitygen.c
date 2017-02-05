@@ -178,7 +178,7 @@ main(int argc, char **argv)
 					"CLAM : Clamcoin : x\n"
 					"CNC : Chinacoin : C\n"
 					"CON : PayCon : P\n"
-					"DASH : Dash Pay : X\n"
+					"DASH : Dash : X\n"
 					"DGB : Digibyte : D\n"
 					"DGC : Digitalcoin : D\n"
 					"DOGED : Doge Dark Coin : D\n"
