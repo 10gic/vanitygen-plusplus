@@ -2,7 +2,9 @@
 Vanitygen plus!
 
 Forked from samr7/vanitygen ,
-then modified by Corey Harding with the following changes:
+then modified by Corey Harding
+to support Many Alt-Coins!
+with the following changes:
 
 +Generate vanity addresses for 70+ coins!
 +I also removed the prefix length limit, now capable of searching for a whole address.
@@ -22,6 +24,7 @@ Also do not use this program for nefarious purposes!  I do not condone illegal a
 The chances of actually brute forcing an address is nearly impossible anyways.
 
 Be sure to report any issues or bugs and fixes, I am happy to accept pull requests!
+If you have an altcoin you would like to add please let me know.
 
 ------
 Getting Started
@@ -40,12 +43,12 @@ git clone https://github.com/exploitagency/vanitygen-plus.git
 cd vanitygen-plus
 cd linux-binary
 
-Now get a list of the alt-coins with: "./vanitygen -C LIST"
+Now get a list of the Coins with: "./vanitygen -C LIST"
 
 Choose your coin.
 
 "./vanitygen -C LBRY -o results.txt -k bTEST"
-"-C LBRY" : Chooses the LBRY alt-coin
+"-C LBRY" : Chooses the LBRY coin
 "-o results.txt" : saves the matches to results.txt
 "-k" : keep going even after match is found
 "bTEST" : the address you are searching for
@@ -74,7 +77,7 @@ END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
 -------
 
 ------
-Encrypting and Decrypting a vanitygen private key for altcoins.
+Encrypting and Decrypting a vanitygen private key
 ------
 
 ./vanitygen -C AC Aa -E 5
@@ -105,7 +108,7 @@ Enter import password: 5 <--- Enter "5" or whatever you specified as password an
 Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
 Privkey: 66GRP2W5H4sWbgrBRAuPc3qZxUtP5boubJ9N2M5wZio6fhWjzbr
 ------
-END Encrypting and Decrypting a vanitygen private key for altcoins.
+END Encrypting and Decrypting a vanitygen private key
 ------
 
 If you found this repo useful, please consider a donation.  Thank You!
@@ -119,7 +122,7 @@ Donate Namecoin: N1egacyRAKumMKiFaVrTqwzmdkJVL9mNDs
 Donate Feathercoin: 71egacyuSdmPUMM3EKp4dw8yBgTruKhKZc
 Donate Vertcoin: Vry1337ZVSFftzLWvBkEhf787HAXAqyupJ
 
-Current List of Available Alt-Coins for Address Generation
+Current List of Available Coins for Address Generation
 ---------------------------------------------------
 Argument(UPPERCASE) : Coin : Address Prefix
 ---------------
