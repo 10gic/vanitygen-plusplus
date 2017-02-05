@@ -26,19 +26,25 @@ Be sure to report any issues or bugs and fixes, I am happy to accept pull reques
 ------
 Getting Started
 ------
-
 See this link for more detailed instructions on compiling from source:
 https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
 
-A 64 bit Debian binary is included.
+A Linux binary is included. (Compiled on 64bit Debian Testing)
 
 NOTE: All arguments are case sensitive!
+Using GPU(oclvanitygen) requires correct drivers be installed openCL and appropriate dependencies.
 
-Now get a list of the alt-coins with: "./oclvanitygen -C LIST"
+Downloading:
+apt-get install git
+git clone https://github.com/exploitagency/vanitygen-plus.git
+cd vanitygen-plus
+cd binary-64bit-debian
+
+Now get a list of the alt-coins with: "./vanitygen -C LIST"
 
 Choose your coin.
 
-"./oclvanitygen -C LBRY -o results.txt -k bTEST"
+"./vanitygen -C LBRY -o results.txt -k bTEST"
 "-C LBRY" : Chooses the LBRY alt-coin
 "-o results.txt" : saves the matches to results.txt
 "-k" : keep going even after match is found
@@ -48,6 +54,27 @@ Example output:
 Pattern: bTEST
 Address: bTESTWkCCzPkakWbZTxUWnRSb5VXVyUmU9
 Privkey: 6ErCAAcXhe25jGYm94uamfetTPZxR9MfLG1YNkrNEEfUjTDVMmQ
+------
+END Getting Started
+------
+
+-------
+Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+-------
+./vanitygen: error while loading shared libraries: libcrypto.so.1.0.2: cannot open shared object file: No such file or directory
+
+cd ~
+mkdir deps
+cd deps
+wget http://ftp.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-9_amd64.udeb
+dpkg -i libc6-udeb_2.24-9_amd64.udeb
+wget http://ftp.us.debian.org/debian/pool/main/o/openssl1.0/libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
+dpkg -i libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
+cd ..
+rm deps -R
+-------
+END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
+-------
 
 ------
 Encrypting and Decrypting a vanitygen private key for altcoins.
@@ -80,6 +107,9 @@ For AC(Asiacoin) these values are 23 and 151.
 Enter import password: 5 <--- Enter "5" or whatever you specified as password and press enter
 Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
 Privkey: 66GRP2W5H4sWbgrBRAuPc3qZxUtP5boubJ9N2M5wZio6fhWjzbr
+------
+END Encrypting and Decrypting a vanitygen private key for altcoins.
+------
 
 If you found this repo useful, please consider a donation.  Thank You!
 Donate Bitcoin: 1egacySQXJA8bLHnFhdQQjZBLW1gxSAjc
@@ -169,24 +199,6 @@ XPM : Primecoin : A
 YAC : Yacoin : Y
 ZOOM : Zoom coin : i
 ZRC : Ziftrcoin : Z
-
--------
-Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
--------
-./vanitygen: error while loading shared libraries: libcrypto.so.1.0.2: cannot open shared object file: No such file or directory
-
-cd ~
-mkdir deps
-cd deps
-wget http://ftp.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-9_amd64.udeb
-dpkg -i libc6-udeb_2.24-9_amd64.udeb
-wget http://ftp.us.debian.org/debian/pool/main/o/openssl1.0/libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
-dpkg -i libcrypto1.0.2-udeb_1.0.2k-1_amd64.udeb
-cd ..
-rm deps -R
--------
-END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu, Kali)
--------
 
 If you found this repo useful, please consider a donation.  Thank You!
 
