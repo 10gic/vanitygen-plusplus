@@ -411,6 +411,7 @@ main(int argc, char **argv)
 					"BTC : Bitcoin : 1\n"
 					"TEST : Bitcoin Testnet : m or n\n"
 					"BTCD : Bitcoin Dark : R\n"
+					"CCC : Chococoin : 7\n"
 					"CCN : Cannacoin : C\n"
 					"CDN : Canadaecoin : C\n"
 					"CLAM : Clamcoin : x\n"
@@ -427,6 +428,7 @@ main(int argc, char **argv)
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
 					"FTC : Feathercoin : 6 or 7\n"
+					"GAP : Gapcoin : G\n"
 					"GCR : Global Currency Reserve : G\n"
 					"GRC : GridcoinResearch : R or S\n"
 					"GRS : Groestlcoin : F\n"
@@ -448,6 +450,7 @@ main(int argc, char **argv)
 					"NYAN : Nyancoin : K\n"
 					"OK : OK Cash : P\n"
 					"OMC : Omnicoin : o\n"
+					"PIGGY : Piggycoin : p\n"
 					"PKB : Parkbyte : P\n"
 					"PND : Pandacoin : P\n"
 					"POT : Potcoin : P\n"
@@ -457,6 +460,7 @@ main(int argc, char **argv)
 					"RBY : Rubycoin : R\n"
 					"RDD : Reddcoin : R\n"
 					"RIC : Riecoin : R\n"
+					"SCA : Scamcoin : S\n"
 					"SDC : Shadowcoin : S\n"
 					"SKC : Skeincoin : S\n"
 					"START : Startcoin : s\n"
@@ -476,6 +480,38 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "SCA")== 0) {
+				fprintf(stderr,
+					"Generating SCA Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GAP")== 0) {
+				fprintf(stderr,
+					"Generating GAP Address\n");
+					addrtype = 38;
+					privtype = 166;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CCC")== 0) {
+				fprintf(stderr,
+					"Generating CCC Address\n");
+					addrtype = 15;
+					privtype = 224;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PIGGY")== 0) {
+				fprintf(stderr,
+					"Generating PIGGY Address\n");
+					addrtype = 118;
+					privtype = 246;
+					break;
 			}
 			else
 			if (strcmp(optarg, "WDC")== 0) {
