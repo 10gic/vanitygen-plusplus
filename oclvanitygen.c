@@ -353,7 +353,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Generating GRC Address\n");
 					addrtype = 62;
-					privtype = 188;
+					privtype = 190;
 					break;
 			}
 			else
