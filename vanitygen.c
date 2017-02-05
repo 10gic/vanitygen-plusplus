@@ -434,6 +434,7 @@ main(int argc, char **argv)
 					"GCR : Global Currency Reserve : G\n"
 					"GRC : GridcoinResearch : R or S\n"
 					"GRS : Groestlcoin : F\n"
+					"GUN : Guncoin : G or H\n"
 					"HAM : HamRadiocoin : 1\n"
 					"HODL : HOdlcoin : H\n"
 					"IXC : Ixcoin : x\n"
@@ -485,6 +486,14 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "GUN")== 0) {
+				fprintf(stderr,
+					"Generating GUN Address\n");
+					addrtype = 39;
+					privtype = 167;
+					break;
 			}
 			else
 			if (strcmp(optarg, "HAM")== 0) {

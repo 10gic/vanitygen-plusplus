@@ -164,6 +164,7 @@ GAP : Gapcoin : G
 GCR : Global Currency Reserve : G
 GRC : GridcoinResearch : R or S
 GRS : Groestlcoin : F
+GUN : Guncoin : G or H
 HAM : HamRadiocoin : 1
 HODL : HOdlcoin : H
 IXC : Ixcoin : x
