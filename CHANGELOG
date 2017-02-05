@@ -115,7 +115,14 @@ Version 0.22, released October 11, 2012:
 
 Version Plus, released Feb 01, 2017
 	- Add Massive Altcoin support for 50+ Coins
-	- Add -Y Custom Privkey types
-	- Add Keyconv Decrypt Tool
 	- Remove prefix length limit(Search for whole address)
-	- Update oclvanityminer
+	- Add -Y Custom Privkey types from cryptapus
+	- Add Keyconv Decrypt Tool from elichai
+	- Update oclvanityminer from WyseNynja
+	- Compressed address support from salfter
+
+Version Plus, released Feb 04, 2017
+	- Over 70+ coin support now
+	- Initialize bn_zero to allow Intel CPU OpenCL compilation from Rytiss 
+	- Document -P option from fizzisist
+	- fix hd 68/69xx, 7xxx  from bitkevin 
