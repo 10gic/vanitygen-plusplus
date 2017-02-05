@@ -38,7 +38,7 @@ Downloading:
 apt-get install git
 git clone https://github.com/exploitagency/vanitygen-plus.git
 cd vanitygen-plus
-cd binary-64bit-debian
+cd linux-binary
 
 Now get a list of the alt-coins with: "./vanitygen -C LIST"
 
