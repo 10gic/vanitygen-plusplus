@@ -131,6 +131,7 @@ Current List of Available Coins for Address Generation
 ---------------------------------------------------
 Argument(UPPERCASE) : Coin : Address Prefix
 ---------------
+42 : 42coin : 4
 AC : Asiacoin : A
 AIB : Advanced Internet Block by IOBOND : A
 ANC : Anoncoin : A
@@ -141,6 +142,7 @@ BQC : BBQcoin : b
 BTC : Bitcoin : 1
 TEST : Bitcoin Testnet : m or n
 BTCD : Bitcoin Dark : R
+CCC : Chococoin : 7
 CCN : Cannacoin : C
 CDN : Canadaecoin : C
 CLAM : Clamcoin : x
@@ -153,10 +155,10 @@ DOGED : Doge Dark Coin : D
 DOGE : Dogecoin : D
 DOPE : Dopecoin : 4
 EFL : Electronic-Gulden-Foundation : L
-EXCL : Exclusivecoin : E
 FAIR : Faircoin2 : f
 FLOZ : FLOZ : F
 FTC : Feathercoin : 6 or 7
+GAP : Gapcoin : G
 GCR : Global Currency Reserve : G
 GRC : GridcoinResearch : R or S
 GRS : Groestlcoin : F
@@ -178,6 +180,7 @@ NVC : Novacoin : 4
 NYAN : Nyancoin : K
 OK : OK Cash : P
 OMC : Omnicoin : o
+PIGGY : Piggycoin : p
 PKB : Parkbyte : P
 PND : Pandacoin : P
 POT : Potcoin : P
@@ -187,8 +190,10 @@ PTS : Protoshares : P
 RBY : Rubycoin : R
 RDD : Reddcoin : R
 RIC : Riecoin : R
+SCA : Scamcoin : S
 SDC : Shadowcoin : S
 SKC : Skeincoin : S
+SPR : Spreadcoin : S
 START : Startcoin : s
 SXC : Sexcoin : R or S
 TPC : Templecoin : T
@@ -198,6 +203,7 @@ VIA : Viacoin : V
 VPN : Vpncoin : V
 VTC : Vertcoin : V
 WDC : Worldcoin Global : W
+WKC : Wankcoin : 1
 WUBS : Dubstepcoin : D
 XC : XCurrency : X
 XPM : Primecoin : A
