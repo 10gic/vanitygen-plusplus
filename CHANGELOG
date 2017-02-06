@@ -126,3 +126,6 @@ Version Plus, released Feb 04, 2017
 	- Initialize bn_zero to allow Intel CPU OpenCL compilation from Rytiss 
 	- Document -P option from fizzisist
 	- fix hd 68/69xx, 7xxx  from bitkevin 
+
+Version Plus, released Feb 06, 2017
+	- Groestlcoin address generation from wolf9466
