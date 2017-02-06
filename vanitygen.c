@@ -32,6 +32,8 @@
 #include "pattern.h"
 #include "util.h"
 
+int GRSFlag = 0;
+
 const char *version = VANITYGEN_VERSION;
 
 
@@ -1044,8 +1046,10 @@ main(int argc, char **argv)
 			if (strcmp(optarg, "GRS")== 0) {
 				fprintf(stderr,
 					"Generating GRS Address\n");
-					addrtype = 36;
-					privtype = 128;
+					GRSFlag = 1;
+					addrtype = 0x24;
+					privtype = 0x80;
+					scriptaddrtype = 0x05;
 					break;
 			}
 			else

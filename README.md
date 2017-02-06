@@ -15,6 +15,7 @@ So technically this is capable of brute forcing a complete address if you have t
 +Manually merge changes from: Rytiss For Initialize bn_zero to allow Intel CPU OpenCL compilation
 +Manually merge changes from: fizzisist For Document -P option
 +Manually merge changes from: bitkevin For fix hd 68/69xx, 7xxx 
++Manually merge changes from: wolf9466 For Groestlcoin addresses
 
 WARNING! This program has not been thoroughly tested.  Please attempt importing an address first.
 Send a tiny amount you don't mind losing to the address.  Then perform a test spend.

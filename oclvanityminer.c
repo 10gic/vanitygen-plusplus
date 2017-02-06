@@ -34,6 +34,7 @@
 #include "util.h"
 #include "avl.h"
 
+int GRSFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
 const int debug = 0;
