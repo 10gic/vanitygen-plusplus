@@ -5,9 +5,11 @@ PROGS=vanitygen keyconv oclvanitygen oclvanityminer
 
 PLATFORM=$(shell uname -s)
 ifeq ($(PLATFORM),Darwin)
-OPENCL_LIBS=-framework OpenCL
+	OPENCL_LIBS=-framework OpenCL
+	LIBS+=-L/usr/local/opt/openssl/lib
+	CFLAGS+=-I/usr/local/opt/openssl/include
 else
-OPENCL_LIBS=-lOpenCL
+	OPENCL_LIBS=-lOpenCL
 endif
 
 
