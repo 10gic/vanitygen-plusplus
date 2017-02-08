@@ -1,9 +1,10 @@
 <pre>
-Vanitygen plus!
+Vanitygen PLUS!
 
 Forked from samr7/vanitygen ,
-then modified to support Many Alt-Coins!
-with the following changes:
+then modified by Corey Harding
+to support various Alt-Coins,
+and with the following changes:
 
 +Generate vanity addresses for 80+ coins!
 +I also removed the prefix length limit, now capable of searching for a whole address.
