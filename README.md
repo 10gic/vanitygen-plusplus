@@ -34,6 +34,7 @@ See this link for more detailed instructions on compiling from source:
 https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
 
 A Linux binary is included. (Compiled on 64bit Debian Testing)
+A Windows binary is also included. (Compiled on Win10 64bit)
 
 NOTE: All arguments are case sensitive!
 Using GPU(oclvanitygen) requires correct drivers be installed openCL and appropriate dependencies.
