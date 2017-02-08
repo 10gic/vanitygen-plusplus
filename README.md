@@ -87,7 +87,7 @@ END Fix libcrypto.so.1.0.2 error(Debian, Ubuntu)
 Encrypting and Decrypting a vanitygen private key
 ------
 
-./vanitygen -C AC Aa -E 5
+./vanitygen -E 5 -C AC Aa
 "-C AC Aa" Choose coin AC and address prefix "Aa"
 "-E 5" Encrypt key with password as "5",
 more secure to use option "-e" with no trailing password,

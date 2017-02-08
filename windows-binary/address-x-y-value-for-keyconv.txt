@@ -1,0 +1,87 @@
+https://github.com/exploitagency/vanitygen-plus
+
+Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
+---------------
+42	: 42coin		: 4			: 8		: 136
+AC 	: Asiacoin 		: A			: 23		: 151
+AIB 	: AdvancedInternetBlock	: A			: 23		: 151
+ANC 	: Anoncoin 		: A			: 23		: 151
+ARS	: Arkstone		: A			: 23		: 151
+AUR	: Auroracoin		: A			: 23		: 151
+BLK 	: Blackcoin 		: B			: 25		: 153
+BQC 	: BBQcoin 		: b			: 85		: 213
+BTC 	: Bitcoin 		: 1 			: 0	 	: 128
+TEST 	: Bitcoin Testnet	: m or n 		: 111 		: 239
+BTCD 	: Bitcoin Dark 		: R			: 60		: 188
+CCC 	: Chococoin 		: 7			: 15		: 224
+CCN 	: Cannacoin 		: C			: 28		: 156
+CDN 	: Canadaecoin 		: C			: 28		: 156
+CLAM 	: Clamcoin 		: x			: 137		: 133
+CNC 	: Chinacoin 		: C			: 28		: 156
+CON	: PayCon		: P			: 55		: 183
+DASH 	: Dash	 		: X 			: 76 		: 204
+DGB 	: Digibyte 		: D			: 30		: 128
+DGC  	: Digitalcoin 		: D			: 30		: 158
+DOGED 	: Doge Dark Coin 	: D			: 30		: 158
+DOGE 	: Dogecoin 		: D 			: 30 		: 158
+DOPE 	: Dopecoin 		: 4			: 8		: 136
+DVC 	: Devcoin 		: 1 			: 0	 	: 128
+EFL 	: Electronic-Gulden-F.	: L			: 48		: 176
+EXCL	: Exclusivecoin		: E			: 33		: 161
+FAIR	: Faircoin2		: f			: 95		: 223
+FLOZ	: FLOZ			: F			: 35		: 163
+FTC 	: Feathercoin 		: 6 or 7 		: 14		: 142 
+GAP 	: Gapcoin		: G			: 38		: 166
+GCR 	: GlobalCurrencyReserve	: G			: 38		: 154
+GRC	: GridcoinResearch	: R or S		: 62		: 188
+GRS	: Groestlcoin 		: F			: 36		: 128
+GUN	: Guncoin 		: G or H		: 39		: 167
+HAM 	: HamRadiocoin 		: 1 			: 0	 	: 128
+HODL	: HOdlcoin		: H			: 40		: 168
+IXC 	: Ixcoin 		: x			: 138		: 266
+JBS 	: Jumbucks 		: J			: 43		: 171
+LBRY 	: LBRY 			: b			: 85		: 28
+LEAF	: Leafcoin		: f			: 95		: 223
+LTC 	: Litecoin 		: L 			: 48 		: 176
+MMC	: Memorycoin		: M			: 50		: 178
+MONA 	: Monacoin 		: M			: 50		: 176
+MUE 	: Monetary Unit 	: 7			: 15		: 143
+MYRIAD	: Myriad Coin		: M			: 50		: 178
+MZC 	: Mazacoin 		: M			: 50		: 224
+NEOS 	: Neoscoin 		: S			: 63		: 239
+NLG	: Gulden		: G			: 38		: 166
+NMC 	: Namecoin 		: M or N 		: 52 		: 180
+NVC 	: Novacoin 		: 4			: 8		: 136
+NYAN 	: Nyancoin 		: K			: 45		: 173
+OK 	: OK Cash 		: P			: 55		: 183
+OMC 	: Omnicoin 		: o			: 115		: 243
+PIGGY 	: Piggycoin 		: p			: 118		: 246
+PKB 	: Parkbyte 		: P			: 55		: 183
+PND 	: Pandacoin 		: P			: 55		: 183
+POT 	: Potcoin 		: P			: 55		: 183
+PPC 	: Peercoin 		: P 			: 55 		: 183
+PTC 	: Pesetacoin 		: K			: 47		: 175
+PTS	: Protoshares		: P			: 56		: 184
+RBY 	: Rubycoin 		: R			: 61		: 189
+RDD 	: Reddcoin 		: R 			: 61 		: 189
+RIC	: Riecoin		: R			: 60		: 128
+SCA 	: Scamcoin 		: S			: 63		: 191
+SDC 	: Shadowcoin 		: S			: 63		: 191
+SKC	: Skeincoin		: S			: 63		: 191
+SPR	: Spreadcoin		: S			: 63		: 191
+START 	: Startcoin 		: s			: 125		: 253
+SXC	: Sexcoin		: R or S		: 62		: 190
+TPC 	: Templecoin 		: T			: 65		: 193
+UIS	: Unitus		: U			: 68		: 132
+UNO	: Unobtanium		: u			: 130		: 224
+VIA	: Viacoin 		: V			: 71		: 199
+VPN 	: Vpncoin 		: V			: 71		: 199
+VTC 	: Vertcoin 		: V			: 71		: 199
+WDC	: Worldcoin Global	: W			: 73		: 201
+WKC	: Wankcoin		: 1			: 0		: 128
+WUBS	: Dubstepcoin		: D			: 29		: 157
+XC	: XCurrency		: X			: 75		: 203
+XPM 	: Primecoin 		: A			: 23		: 151
+YAC 	: Yacoin 		: Y			: 77		: 205
+ZOOM 	: Zoom coin 		: i			: 103		: 231
+ZRC 	: Ziftrcoin 		: Z			: 80		: 208
