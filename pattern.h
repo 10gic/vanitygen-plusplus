@@ -36,6 +36,8 @@
 #endif
 
 #define VANITYGEN_VERSION "PLUS"
+char *ticker;
+extern char *ticker;
 
 typedef struct _vg_context_s vg_context_t;
 

@@ -395,6 +395,7 @@ main(int argc, char **argv)
 /*BEGIN ALTCOIN GENERATOR*/
 
 		case 'C':
+			ticker = optarg;
 			/* Start AltCoin Generator */
 			if (strcmp(optarg, "LIST")== 0) {
 				fprintf(stderr,

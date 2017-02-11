@@ -562,7 +562,7 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 	}
 
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
-		printf("\r%79s\rPattern: %s\n", "", pattern);
+		printf("\r%79s\r%s Pattern: %s\n", "", ticker, pattern);
 	}
 
 	if (vcp->vc_verbose > 0) {
@@ -597,8 +597,8 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 				strerror(errno));
 		} else {
 			fprintf(fp,
-				"Pattern: %s\n"
-				, pattern);
+				"%s Pattern: %s\n"
+				, ticker, pattern);
 			if (isscript)
 				fprintf(fp, "P2SHAddress: %s\n", addr2_buf);
 			fprintf(fp,
