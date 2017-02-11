@@ -35,7 +35,7 @@
 #include "avl.h"
 
 #include "ticker.h"
-char *ticker;
+char ticker[10];
 
 int GRSFlag = 0;
 

@@ -563,7 +563,7 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 	}
 
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
-		printf("\r%79s\r%s Pattern: %s\n", "", ticker, pattern);
+		printf("\r%79s\r%sPattern: %s\n", "", ticker, pattern);
 	}
 
 	if (vcp->vc_verbose > 0) {
@@ -584,9 +584,9 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
 		if (isscript)
-			printf("P2SH %s Address: %s\n", ticker, addr2_buf);
-		printf("%s Address: %s\n"
-		       "%s %s: %s\n",
+			printf("P2SH%s Address: %s\n", ticker, addr2_buf);
+		printf("%sAddress: %s\n"
+		       "%s%s: %s\n",
 		       ticker, addr_buf, ticker, keytype, privkey_buf);
 	}
 
@@ -598,13 +598,13 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 				strerror(errno));
 		} else {
 			fprintf(fp,
-				"%s Pattern: %s\n"
+				"%sPattern: %s\n"
 				, ticker, pattern);
 			if (isscript)
-				fprintf(fp, "P2SH %s Address: %s\n", ticker, addr2_buf);
+				fprintf(fp, "P2SH%s Address: %s\n", ticker, addr2_buf);
 			fprintf(fp,
-				"%s Address: %s\n"
-				"%s %s: %s\n",
+				"%sAddress: %s\n"
+				"%s%s: %s\n",
 				ticker, addr_buf, ticker, keytype, privkey_buf);
 			fclose(fp);
 		}

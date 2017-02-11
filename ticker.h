@@ -1,1 +1,1 @@
-extern char *ticker;
+extern char ticker[10];

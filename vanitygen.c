@@ -33,7 +33,7 @@
 #include "util.h"
 
 #include "ticker.h"
-char *ticker;
+char ticker[10];
 
 int GRSFlag = 0;
 
@@ -398,7 +398,8 @@ main(int argc, char **argv)
 /*BEGIN ALTCOIN GENERATOR*/
 
 		case 'C':
-			ticker = optarg;
+			strcpy(ticker, optarg);
+			strcat(ticker, " ");
 			/* Start AltCoin Generator */
 			if (strcmp(optarg, "LIST")== 0) {
 				fprintf(stderr,
