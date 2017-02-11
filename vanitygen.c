@@ -32,6 +32,9 @@
 #include "pattern.h"
 #include "util.h"
 
+#include "ticker.h"
+char *ticker;
+
 int GRSFlag = 0;
 
 const char *version = VANITYGEN_VERSION;

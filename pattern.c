@@ -31,6 +31,7 @@
 
 #include <pcre.h>
 
+#include "ticker.h"
 #include "pattern.h"
 #include "util.h"
 #include "avl.h"
@@ -583,10 +584,10 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
 		if (isscript)
-			printf("P2SHAddress: %s\n", addr2_buf);
-		printf("Address: %s\n"
-		       "%s: %s\n",
-		       addr_buf, keytype, privkey_buf);
+			printf("P2SH %s Address: %s\n", ticker, addr2_buf);
+		printf("%s Address: %s\n"
+		       "%s %s: %s\n",
+		       ticker, addr_buf, ticker, keytype, privkey_buf);
 	}
 
 	if (vcp->vc_result_file) {
@@ -600,11 +601,11 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 				"%s Pattern: %s\n"
 				, ticker, pattern);
 			if (isscript)
-				fprintf(fp, "P2SHAddress: %s\n", addr2_buf);
+				fprintf(fp, "P2SH %s Address: %s\n", ticker, addr2_buf);
 			fprintf(fp,
-				"Address: %s\n"
-				"%s: %s\n",
-				addr_buf, keytype, privkey_buf);
+				"%s Address: %s\n"
+				"%s %s: %s\n",
+				ticker, addr_buf, ticker, keytype, privkey_buf);
 			fclose(fp);
 		}
 	}

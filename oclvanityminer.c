@@ -34,6 +34,9 @@
 #include "util.h"
 #include "avl.h"
 
+#include "ticker.h"
+char *ticker;
+
 int GRSFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
