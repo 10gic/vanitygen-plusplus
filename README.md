@@ -30,42 +30,57 @@ If you have an altcoin you would like to add please let me know.
 ------
 Getting Started
 ------
-See this link for more detailed instructions on compiling from source:
-https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
+Download latest binary from: https://github.com/exploitagency/vanitygen-plus/releases
+Linux Binary (Compiled on 64bit Debian Testing)
+Windows Binary (Compiled on Win10 64bit)
 
-A Linux binary is included. (Compiled on 64bit Debian Testing)
-A Windows binary is also included. (Compiled on Win10 64bit)
+Extract the files,
+open a terminal/command prompt,
+change to directory containing vanitygen-plus binaries.
 
-NOTE: All arguments are case sensitive!
-Using GPU(oclvanitygen) requires correct drivers be installed openCL and appropriate dependencies.
-See above link for list of said dependencies for oclvanitygen.
-This may take some fiddling depending on your distro.
-Link above works for Kali Rolling and can be adopted for other distros.
-If using CPU only the guide below should suffice.
+Running On Linux: ./vanitygen -ARGS, or ./oclvanitygen -ARGS, ./keyconv -ARGS, etc
+Running On Windows: vanitygen.exe -ARGS, oclvanitygen.exe -ARGS, keyconv.exe -ARGS, etc
 
-Downloading:
-apt-get install git
-git clone https://github.com/exploitagency/vanitygen-plus.git
-cd vanitygen-plus
-cd linux-binary
+For generating addresses using the CPU(slower) use: vanitygen
+For generating addresses using the GPU(faster) use: oclvanitygen
+
+NOTES:	All arguments are case sensitive!
+	Address prefix must be at the end of the command.
+	oclvanitygen requires OpenCL and correct drivers.
 
 Now get a list of the Coins with:
-./vanitygen -C LIST
+Linux CPU: ./vanitygen -C LIST
+Linux GPU: ./oclvanitygen -C LIST
+Windows CPU: vanitygen.exe -C LIST
+Windows GPU: oclvanitygen.exe -C LIST
 
-Choose your coin.
+A list of all the supported crypto coins will be output.
 
-"./vanitygen -C LBRY -o results.txt -k bTEST"
+Choose your coin from the list noting the ARGUMENT needed for the coin located in the left hand column.
+For LBRY it is simply LBRY.  For Bitcoin it is BTC.  Etc...
+
+Now lets generate a LBRY address with the prefix "bTEST".
+
+Linux CPU: ./vanitygen -C LBRY -o results.txt -i -k bTEST
+Linux GPU: ./oclvanitygen -C LBRY -o results.txt -i -k bTEST
+Windows CPU: vanitygen.exe -C LBRY -o results.txt -i -k bTEST
+Windows GPU: oclvanitygen.exe -C LBRY -o results.txt -i -k bTEST
+
 "-C LBRY" : Chooses the LBRY coin
 "-o results.txt" : saves the matches to results.txt
-"-k" : keep going even after match is found
-"bTEST" : the address you are searching for
+"-i" : case-Insensitive(do not add this flag to match exact case)
+"-k" : keep going even after match is found(do not add this flag to stop after the first match)
+"bTEST" : the address you are searching for(LBRY addresses start with "b")
 
-Example output:
+Example output of above command:
 Generating LBRY Address
 Difficulty: 4553521
 Pattern: bTEST                                                                 
 Address: bTEST6jSVcid5MQAJBrGUR6MLDpdyb8oiQ
 Privkey: wrRxctq3f7A1zkpyWoZRifRk5eAC2UM9idh83SPLhz6gAFfqdL
+
+For instructions on compiling from source(Kaling Rolling/Linux) see link below:
+https://legacysecuritygroup.com/index.php/projects/recent/12-software/35-oclvanitygen-compiling-and-use
 ------
 END Getting Started
 ------
@@ -110,7 +125,9 @@ Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
 AC 	: Asiacoin 		: A			: 23	<---	: 151 <---
 For AC(Asiacoin) these values are 23 and 151.
 
-./keyconv -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+Linux: ./keyconv -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+Windows: keyconv.exe -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+
 "-X 23 -Y 151" Specifies coin configuration
 "-d" for decrypt and protected key of "yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge"
 Enter import password: 5 <--- Enter "5" or whatever you specified as password and press enter
