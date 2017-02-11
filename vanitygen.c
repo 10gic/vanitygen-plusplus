@@ -1048,9 +1048,9 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Generating GRS Address\n");
 					GRSFlag = 1;
-					addrtype = 0x24;
-					privtype = 0x80;
-					scriptaddrtype = 0x05;
+					addrtype = 36;
+					privtype = 128;
+					scriptaddrtype = 5;
 					break;
 			}
 			else
