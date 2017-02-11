@@ -135,5 +135,5 @@ Version Plus, released Feb 07-08, 2017
 	- More Windows compile fixes by Corey Harding
 
 Version 1.1 Plus, released Feb 10, 2017
-	- Fix oclvanitygen bug on Windows
+	- Fix oclvanitygen bug on Windows from Rytiss
 	- Release Linux and Windows binaries of v1.1 by Corey Harding
