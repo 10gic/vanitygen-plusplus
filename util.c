@@ -101,17 +101,10 @@ dumpbn(const BIGNUM *bn)
 void
 vg_b58_encode_check(void *buf, size_t len, char *result)
 {
-	int hashsize;
-	if(!GRSFlag)
-	{
-		hashsize = 32;
-	}
-	else
-	{
-		hashsize = 64;
-	}
-	unsigned char hash1[hashsize];
-	unsigned char hash2[hashsize];
+	unsigned char hash1[32];
+	unsigned char hash2[32];
+	unsigned char groestlhash1[64];
+	unsigned char groestlhash2[64];
 
 	int d, p;
 
@@ -139,6 +132,7 @@ vg_b58_encode_check(void *buf, size_t len, char *result)
 	{
 		SHA256(binres, len, hash1);
 		SHA256(hash1, sizeof(hash1), hash2);
+		memcpy(&binres[len], hash2, 4);
 	}
 	else
 	{
@@ -146,14 +140,13 @@ vg_b58_encode_check(void *buf, size_t len, char *result)
 		
 		sph_groestl512_init(&ctx);
 		sph_groestl512(&ctx, binres, len);
-		sph_groestl512_close(&ctx, hash1);
+		sph_groestl512_close(&ctx, groestlhash1);
 		
 		sph_groestl512_init(&ctx);
-		sph_groestl512(&ctx, hash1, sizeof(hash1));
-		sph_groestl512_close(&ctx, hash2);
+		sph_groestl512(&ctx, groestlhash1, sizeof(groestlhash1));
+		sph_groestl512_close(&ctx, groestlhash2);
+		memcpy(&binres[len], groestlhash2, 4);
 	}
-	
-	memcpy(&binres[len], hash2, 4);
 
 	BN_bin2bn(binres, len + 4, bn);
 
