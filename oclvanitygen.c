@@ -1158,12 +1158,26 @@ main(int argc, char **argv)
 	}
 
 	if (prompt_password) {
+		if (GRSFlag == 1) {
+			fprintf(stderr,
+				"Sorry, an error occured.\n"
+				"keyconv doesn't support decrypting keys for GRS yet!\n"
+				"Please retry command without issuing the \"-e\" flag...\n");
+			return 1;
+		}
 		if (!vg_read_password(pwbuf, sizeof(pwbuf)))
 			return 1;
 		key_password = pwbuf;
 	}
 	vcp->vc_key_protect_pass = key_password;
 	if (key_password) {
+		if (GRSFlag == 1) {
+			fprintf(stderr,
+				"Sorry, an error occured.\n"
+				"keyconv doesn't support decrypting keys for GRS yet!\n"
+				"Please retry command without issuing the \"-E\" flag...\n");
+			return 1;
+		}
 		if (!vg_check_password_complexity(key_password, verbose))
 			fprintf(stderr,
 				"WARNING: Protecting private keys with "
