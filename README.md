@@ -238,4 +238,6 @@ Donate Feathercoin: 71egacyuSdmPUMM3EKp4dw8yBgTruKhKZc
 Donate Vertcoin: Vry1337ZVSFftzLWvBkEhf787HAXAqyupJ
 Donate Monacoin: MMMMMM6JDVfedPQw9DGTmDhEmFLrnBzNZs
 Donate Dash: XxXXXxxx4jGY5cjhHH7921c1cv2hfvALRw
+Donate Groestlcoin: FgRoEST1y9bLyQWiRQ7ZnhHH9fNne1pCMW
+Donate Monero: 4BCDHackYuKCjofmM34UZn7Wj4mDTLDR5e7xsXNSGqcmTgYEquyvAFdeey2K724ev6CA9dcuuF8p627YXWxu4dULPvLpvbn
 </pre>
