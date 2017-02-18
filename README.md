@@ -105,7 +105,7 @@ Encrypting and Decrypting a vanitygen private key
 ------
 
 ./vanitygen -E 5 -C AC Aa
-"-C AC Aa" Choose coin AC and address prefix "Aa"
+"-C AC Aa" Choose AsiaCoin and address prefix "Aa"
 "-E 5" Encrypt key with password as "5",
 more secure to use option "-e" with no trailing password,
 then vanitygen prompts for a password so theres no command history.
@@ -119,16 +119,10 @@ Pattern: Aa
 Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
 Protkey: yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
 
-Now refer to the list address-x-y-value-for-keyconv.txt and pick your -X and -Y values.
-Ticker 	: Coin 			: Address Prefix 	: -X Value 	: -Y Value
----------------
-AC 	: Asiacoin 		: A			: 23	<---	: 151 <---
-For AC(Asiacoin) these values are 23 and 151.
+Linux: ./keyconv -C AC -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
+Windows: keyconv.exe -C AC -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
 
-Linux: ./keyconv -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
-Windows: keyconv.exe -X 23 -Y 151 -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge
-
-"-X 23 -Y 151" Specifies coin configuration
+"-C AC" Specifies AsiaCoin
 "-d" for decrypt and protected key of "yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge"
 Enter import password: 5 <--- Enter "5" or whatever you specified as password and press enter
 Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd
