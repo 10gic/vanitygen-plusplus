@@ -137,3 +137,15 @@ Version Plus, released Feb 07-08, 2017
 Version 1.1 Plus, released Feb 10, 2017
 	- Fix oclvanitygen bug on Windows from Rytiss
 	- Release Linux and Windows binaries of v1.1 by Corey Harding
+
+Version 1.2 Plus, released Feb 11, 2017
+	- Append ticker symbol to output file
+	- Minor improvements
+
+Version 1.3 Plus, released Feb 12, 2017
+	- Groestlcoin fixes
+	- Minor improvements
+
+Version 1.4 Plus, released Feb 18, 2017
+	- Add -C COIN support to Keyconv for easy decryption of privkeys
+	- Fix Groestlcoin encryption/decryption of privkeys
