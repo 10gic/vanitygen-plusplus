@@ -33,6 +33,8 @@ usage(const char *progname)
 "-e            Encrypt output key, prompt for password\n"
 "-E <password> Encrypt output key with <password> (UNSAFE)\n"
 "-c <key>      Combine private key parts to make complete private key\n"
+"-C <altcoin>  Decrypt an address for specific altcoin, use \"-C LIST\" to view\n" 
+"              a list of all available altcoins, argument is case sensetive!\n" 
 "-d            Decrypt output key, prompt for password\n"
 "-X <version>  Public key version (for altcoins)\n"
 "-Y <version>  Private key version (-X provides public key)\n"
@@ -65,8 +67,773 @@ main(int argc, char **argv)
 	int opt;
 	int res;
 
-	while ((opt = getopt(argc, argv, "8E:ec:vGX:Y:d")) != -1) {
+	while ((opt = getopt(argc, argv, "C:8E:ec:vGX:Y:d")) != -1) {
 		switch (opt) {
+/*BEGIN ALTCOIN GENERATOR*/
+
+		case 'C':
+			/* Start AltCoin Generator */
+			if (strcmp(optarg, "LIST")== 0) {
+				fprintf(stderr,
+					"Usage example \"./oclvanitygen -C LTC Lfoo\"\n"
+					"List of Available Alt-Coins for Address Generation\n"
+					"---------------------------------------------------\n"
+					"Argument(UPPERCASE) : Coin : Address Prefix\n"
+					"---------------\n"
+					"42 : 42coin : 4\n"
+					"AC : Asiacoin : A\n"
+					"AIB : Advanced Internet Block by IOBOND : A\n"
+					"ANC : Anoncoin : A\n"
+					"ARS : Arkstone : A\n"
+					"AUR : Auroracoin : A\n"
+					"BLK : Blackcoin : B\n"
+					"BQC : BBQcoin : b\n"
+					"BTC : Bitcoin : 1\n"
+					"TEST : Bitcoin Testnet : m or n\n"
+					"BTCD : Bitcoin Dark : R\n"
+					"CCC : Chococoin : 7\n"
+					"CCN : Cannacoin : C\n"
+					"CDN : Canadaecoin : C\n"
+					"CLAM : Clamcoin : x\n"
+					"CNC : Chinacoin : C\n"
+					"CON : PayCon : P\n"
+					"DASH : Dash : X\n"
+					"DGB : Digibyte : D\n"
+					"DGC : Digitalcoin : D\n"
+					"DOGED : Doge Dark Coin : D\n"
+					"DOGE : Dogecoin : D\n"
+					"DOPE : Dopecoin : 4\n"
+					"DVC : Devcoin : 1\n"
+					"EFL : Electronic-Gulden-Foundation : L\n"
+					"EXCL : Exclusivecoin : E\n"
+					"FAIR : Faircoin2 : f\n"
+					"FLOZ : FLOZ : F\n"
+					"FTC : Feathercoin : 6 or 7\n"
+					"GAP : Gapcoin : G\n"
+					"GCR : Global Currency Reserve : G\n"
+					"GRC : GridcoinResearch : R or S\n"
+					"GRS : Groestlcoin : F\n"
+					"GUN : Guncoin : G or H\n"
+					"HAM : HamRadiocoin : 1\n"
+					"HODL : HOdlcoin : H\n"
+					"IXC : Ixcoin : x\n"
+					"JBS : Jumbucks : J\n"
+					"LBRY : LBRY : b\n"
+					"LEAF : Leafcoin : f\n"
+					"LTC : Litecoin : L\n"
+					"MMC : Memorycoin : M\n"
+					"MONA : Monacoin : M\n"
+					"MUE : Monetary Unit : 7\n"
+					"MYRIAD : Myriadcoin : M\n"
+					"MZC : Mazacoin : M\n"
+					"NEOS : Neoscoin : S\n"
+					"NLG : Gulden : G\n"
+					"NMC : Namecoin : M or N\n"
+					"NVC : Novacoin : 4\n"
+					"NYAN : Nyancoin : K\n"
+					"OK : OK Cash : P\n"
+					"OMC : Omnicoin : o\n"
+					"PIGGY : Piggycoin : p\n"
+					"PKB : Parkbyte : P\n"
+					"PND : Pandacoin : P\n"
+					"POT : Potcoin : P\n"
+					"PPC : Peercoin : P\n"
+					"PTC : Pesetacoin : K\n"
+					"PTS : Protoshares : P\n"
+					"RBY : Rubycoin : R\n"
+					"RDD : Reddcoin : R\n"
+					"RIC : Riecoin : R\n"
+					"SCA : Scamcoin : S\n"
+					"SDC : Shadowcoin : S\n"
+					"SKC : Skeincoin : S\n"
+					"SPR : Spreadcoin : S\n"
+					"START : Startcoin : s\n"
+					"SXC : Sexcoin : R or S\n"
+					"TPC : Templecoin : T\n"
+					"UIS : Unitus : U\n"
+					"UNO : Unobtanium : u\n"
+					"VIA : Viacoin : V\n"
+					"VPN : Vpncoin : V\n"
+					"VTC : Vertcoin : V\n"
+					"WDC : Worldcoin Global : W\n"
+					"WKC : Wankcoin : 1\n"
+					"WUBS : Dubstepcoin : D\n"
+					"XC : XCurrency : X\n"
+					"XPM : Primecoin : A\n"
+					"YAC : Yacoin : Y\n"
+					"ZOOM : Zoom coin : i\n"
+					"ZRC : Ziftrcoin : Z\n"
+					);
+					return 1;
+			}
+			else
+			if (strcmp(optarg, "GUN")== 0) {
+				fprintf(stderr,
+					"Decrypting GUN Address\n");
+					addrtype = 39;
+					privtype = 167;
+					break;
+			}
+			else
+			if (strcmp(optarg, "HAM")== 0) {
+				fprintf(stderr,
+					"Decrypting HAM Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DVC")== 0) {
+				fprintf(stderr,
+					"Decrypting DVC Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "42")== 0) {
+				fprintf(stderr,
+					"Decrypting 42 Address\n");
+					addrtype = 8;
+					privtype = 136;
+					break;
+			}
+			else
+			if (strcmp(optarg, "WKC")== 0) {
+				fprintf(stderr,
+					"Decrypting WKC Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SPR")== 0) {
+				fprintf(stderr,
+					"Decrypting SPR Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SCA")== 0) {
+				fprintf(stderr,
+					"Decrypting SCA Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GAP")== 0) {
+				fprintf(stderr,
+					"Decrypting GAP Address\n");
+					addrtype = 38;
+					privtype = 166;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CCC")== 0) {
+				fprintf(stderr,
+					"Decrypting CCC Address\n");
+					addrtype = 15;
+					privtype = 224;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PIGGY")== 0) {
+				fprintf(stderr,
+					"Decrypting PIGGY Address\n");
+					addrtype = 118;
+					privtype = 246;
+					break;
+			}
+			else
+			if (strcmp(optarg, "WDC")== 0) {
+				fprintf(stderr,
+					"Decrypting WDC Address\n");
+					addrtype = 73;
+					privtype = 201;
+					break;
+			}
+			else
+			if (strcmp(optarg, "EXCL")== 0) {
+				fprintf(stderr,
+					"Decrypting EXCL Address\n");
+					addrtype = 33;
+					privtype = 161;
+					break;
+			}
+			else
+			if (strcmp(optarg, "XC")== 0) {
+				fprintf(stderr,
+					"Decrypting XC Address\n");
+					addrtype = 75;
+					privtype = 203;
+					break;
+			}
+			else
+			if (strcmp(optarg, "WUBS")== 0) {
+				fprintf(stderr,
+					"Decrypting WUBS Address\n");
+					addrtype = 29;
+					privtype = 157;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SXC")== 0) {
+				fprintf(stderr,
+					"Decrypting SXC Address\n");
+					addrtype = 62;
+					privtype = 190;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SKC")== 0) {
+				fprintf(stderr,
+					"Decrypting SKC Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PTS")== 0) {
+				fprintf(stderr,
+					"Decrypting PTS Address\n");
+					addrtype = 56;
+					privtype = 184;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NLG")== 0) {
+				fprintf(stderr,
+					"Decrypting NLG Address\n");
+					addrtype = 38;
+					privtype = 166;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MMC")== 0) {
+				fprintf(stderr,
+					"Decrypting MMC Address\n");
+					addrtype = 50;
+					privtype = 178;
+					break;
+			}
+			else
+			if (strcmp(optarg, "LEAF")== 0) {
+				fprintf(stderr,
+					"Decrypting LEAF Address\n");
+					addrtype = 95;
+					privtype = 223;
+					break;
+			}
+			else
+			if (strcmp(optarg, "HODL")== 0) {
+				fprintf(stderr,
+					"Decrypting HODL Address\n");
+					addrtype = 40;
+					privtype = 168;
+					break;
+			}
+			else
+			if (strcmp(optarg, "FLOZ")== 0) {
+				fprintf(stderr,
+					"Decrypting FLOZ Address\n");
+					addrtype = 35;
+					privtype = 163;
+					break;
+			}
+			else
+			if (strcmp(optarg, "FAIR")== 0) {
+				fprintf(stderr,
+					"Decrypting FAIR Address\n");
+					addrtype = 95;
+					privtype = 223;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CON")== 0) {
+				fprintf(stderr,
+					"Decrypting CON Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "AUR")== 0) {
+				fprintf(stderr,
+					"Decrypting AUR Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GRC")== 0) {
+				fprintf(stderr,
+					"Decrypting GRC Address\n");
+					addrtype = 62;
+					privtype = 190;
+					break;
+			}
+			else
+			if (strcmp(optarg, "RIC")== 0) {
+				fprintf(stderr,
+					"Decrypting RIC Address\n");
+					addrtype = 60;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "UNO")== 0) {
+				fprintf(stderr,
+					"Decrypting UNO Address\n");
+					addrtype = 130;
+					privtype = 224;
+					break;
+			}
+			else
+			if (strcmp(optarg, "UIS")== 0) {
+				fprintf(stderr,
+					"Decrypting UIS Address\n");
+					addrtype = 68;
+					privtype = 132;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MYRIAD")== 0) {
+				fprintf(stderr,
+					"Decrypting MYRIAD Address\n");
+					addrtype = 50;
+					privtype = 178;
+					break;
+			}
+			else
+			if (strcmp(optarg, "BQC")== 0) {
+				fprintf(stderr,
+					"Decrypting BQC Address\n");
+					addrtype = 85;
+					privtype = 213;
+					break;
+			}
+			else
+			if (strcmp(optarg, "YAC")== 0) {
+				fprintf(stderr,
+					"Decrypting YAC Address\n");
+					addrtype = 77;
+					privtype = 205;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PTC")== 0) {
+				fprintf(stderr,
+					"Decrypting PTC Address\n");
+					addrtype = 47;
+					privtype = 175;
+					break;
+			}
+			else
+			if (strcmp(optarg, "RDD")== 0) {
+				fprintf(stderr,
+					"Decrypting RDD Address\n");
+					addrtype = 61;
+					privtype = 189;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NYAN")== 0) {
+				fprintf(stderr,
+					"Decrypting NYAN Address\n");
+					addrtype = 45;
+					privtype = 173;
+					break;
+			}
+			else
+			if (strcmp(optarg, "IXC")== 0) {
+				fprintf(stderr,
+					"Decrypting IXC Address\n");
+					addrtype = 138;
+					privtype = 266;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CNC")== 0) {
+				fprintf(stderr,
+					"Decrypting CNC Address\n");
+					addrtype = 28;
+					privtype = 156;
+					break;
+			}
+			else
+			if (strcmp(optarg, "ARS")== 0) {
+				fprintf(stderr,
+					"Decrypting ARS Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "ANC")== 0) {
+				fprintf(stderr,
+					"Decrypting ANC Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "OMC")== 0) {
+				fprintf(stderr,
+					"Decrypting OMC Address\n");
+					addrtype = 115;
+					privtype = 243;
+					break;
+			}
+			else
+			if (strcmp(optarg, "POT")== 0) {
+				fprintf(stderr,
+					"Decrypting POT Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "EFL")== 0) {
+				fprintf(stderr,
+					"Decrypting EFL Address\n");
+					addrtype = 48;
+					privtype = 176;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DOGED")== 0) {
+				fprintf(stderr,
+					"Decrypting DOGED Address\n");
+					addrtype = 30;
+					privtype = 158;
+					break;
+			}
+			else
+			if (strcmp(optarg, "OK")== 0) {
+				fprintf(stderr,
+					"Decrypting OK Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "AIB")== 0) {
+				fprintf(stderr,
+					"Decrypting AIB Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "TPC")== 0) {
+				fprintf(stderr,
+					"Decrypting TPC Address\n");
+					addrtype = 65;
+					privtype = 193;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DOPE")== 0) {
+				fprintf(stderr,
+					"Decrypting DOPE Address\n");
+					addrtype = 8;
+					privtype = 136;
+					break;
+			}
+			else
+			if (strcmp(optarg, "BTCD")== 0) {
+				fprintf(stderr,
+					"Decrypting BTCD Address\n");
+					addrtype = 60;
+					privtype = 188;
+					break;
+			}
+			else
+			if (strcmp(optarg, "AC")== 0) {
+				fprintf(stderr,
+					"Decrypting AC Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NVC")== 0) {
+				fprintf(stderr,
+					"Decrypting NVC Address\n");
+					addrtype = 8;
+					privtype = 136;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GCR")== 0) {
+				fprintf(stderr,
+					"Decrypting GCR Address\n");
+					addrtype = 38;
+					privtype = 154;
+					break;
+			}
+			else
+			if (strcmp(optarg, "START")== 0) {
+				fprintf(stderr,
+					"Decrypting START Address\n");
+					addrtype = 125;
+					privtype = 253;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PND")== 0) {
+				fprintf(stderr,
+					"Decrypting PND Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PKB")== 0) {
+				fprintf(stderr,
+					"Decrypting PKB Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "SDC")== 0) {
+				fprintf(stderr,
+					"Decrypting SDC Address\n");
+					addrtype = 63;
+					privtype = 191;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CDN")== 0) {
+				fprintf(stderr,
+					"Decrypting CDN Address\n");
+					addrtype = 28;
+					privtype = 156;
+					break;
+			}
+			else
+			if (strcmp(optarg, "VPN")== 0) {
+				fprintf(stderr,
+					"Decrypting VPN Address\n");
+					addrtype = 71;
+					privtype = 199;
+					break;
+			}
+			else
+			if (strcmp(optarg, "ZOOM")== 0) {
+				fprintf(stderr,
+					"Decrypting ZOOM Address\n");
+					addrtype = 103;
+					privtype = 231;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MUE")== 0) {
+				fprintf(stderr,
+					"Decrypting MUE Address\n");
+					addrtype = 15;
+					privtype = 143;
+					break;
+			}
+			else
+			if (strcmp(optarg, "VTC")== 0) {
+				fprintf(stderr,
+					"Decrypting VTC Address\n");
+					addrtype = 71;
+					privtype = 199;
+					break;
+			}
+			else
+			if (strcmp(optarg, "ZRC")== 0) {
+				fprintf(stderr,
+					"Decrypting ZRC Address\n");
+					addrtype = 80;
+					privtype = 208;
+					break;
+			}
+			else
+			if (strcmp(optarg, "JBS")== 0) {
+				fprintf(stderr,
+					"Decrypting JBS Address\n");
+					addrtype = 43;
+					privtype = 171;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NEOS")== 0) {
+				fprintf(stderr,
+					"Decrypting NEOS Address\n");
+					addrtype = 63;
+					privtype = 239;
+					break;
+			}
+			else
+			if (strcmp(optarg, "XPM")== 0) {
+				fprintf(stderr,
+					"Decrypting XPM Address\n");
+					addrtype = 23;
+					privtype = 151;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CLAM")== 0) {
+				fprintf(stderr,
+					"Decrypting CLAM Address\n");
+					addrtype = 137;
+					privtype = 133;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MONA")== 0) {
+				fprintf(stderr,
+					"Decrypting MONA Address\n");
+					addrtype = 50;
+					privtype = 176;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DGB")== 0) {
+				fprintf(stderr,
+					"Decrypting DGB Address\n");
+					addrtype = 30;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "CCN")== 0) {
+				fprintf(stderr,
+					"Decrypting CCN Address\n");
+					addrtype = 28;
+					privtype = 156;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DGC")== 0) {
+				fprintf(stderr,
+					"Decrypting DGC Address\n");
+					addrtype = 30;
+					privtype = 158;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GRS")== 0) {
+				fprintf(stderr,
+					"Decrypting GRS Address\n");
+					GRSFlag = 1;
+					addrtype = 36;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "RBY")== 0) {
+				fprintf(stderr,
+					"Decrypting RBY Address\n");
+					addrtype = 61;
+					privtype = 189;
+					break;
+			}
+			else
+			if (strcmp(optarg, "VIA")== 0) {
+				fprintf(stderr,
+					"Decrypting VIA Address\n");
+					addrtype = 71;
+					privtype = 199;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MZC")== 0) {
+				fprintf(stderr,
+					"Decrypting MZC Address\n");
+					addrtype = 50;
+					privtype = 224;
+					break;
+			}
+			else
+			if (strcmp(optarg, "BLK")== 0) {
+				fprintf(stderr,
+					"Decrypting BLK Address\n");
+					addrtype = 25;
+					privtype = 153;
+					break;
+			}
+			else
+			if (strcmp(optarg, "FTC")== 0) {
+				fprintf(stderr,
+					"Decrypting FTC Address\n");
+					addrtype = 14;
+					privtype = 142;
+					break;
+			}
+			else
+			if (strcmp(optarg, "PPC")== 0) {
+				fprintf(stderr,
+					"Decrypting PPC Address\n");
+					addrtype = 55;
+					privtype = 183;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DASH")== 0) {
+				fprintf(stderr,
+					"Decrypting DASH Address\n");
+					addrtype = 76;
+					privtype = 204;
+					break;
+			}
+			else
+			if (strcmp(optarg, "BTC")== 0) {
+				fprintf(stderr,
+					"Decrypting BTC Address\n");
+					addrtype = 0;
+					privtype = 128;
+					break;
+			}
+			else
+			if (strcmp(optarg, "TEST")== 0) {
+				fprintf(stderr,
+					"Decrypting BTC Testnet Address\n");
+					addrtype = 111;
+					privtype = 239;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DOGE")== 0) {
+				fprintf(stderr,
+					"Decrypting DOGE Address\n");
+					addrtype = 30;
+					privtype = 158;
+					break;
+			}
+			else
+			if (strcmp(optarg, "LBRY")== 0) {
+				fprintf(stderr,
+					"Decrypting LBRY Address\n");
+					addrtype = 85;
+					privtype = 28;
+					break;
+			}
+			else
+			if (strcmp(optarg, "LTC")== 0) {
+				fprintf(stderr,
+					"Decrypting LTC Address\n");
+					addrtype = 48;
+					privtype = 176;
+					break;
+			}
+			else
+			if (strcmp(optarg, "NMC")== 0) {
+				fprintf(stderr,
+					"Decrypting NMC Address\n");
+					addrtype = 52;
+					privtype = 180;
+					break;
+			}
+			break;
+
+/*END ALTCOIN GENERATOR*/
 		case '8':
 			pkcs8 = 1;
 			break;
