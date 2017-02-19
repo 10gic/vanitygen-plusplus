@@ -74,9 +74,9 @@ Windows GPU: `oclvanitygen.exe -C LBRY -o results.txt -i -k bTEST`
 Example output of above command:  
 >Generating LBRY Address  
 >Difficulty: 4553521  
->Pattern: bTEST                                                                   
->Address: bTEST6jSVcid5MQAJBrGUR6MLDpdyb8oiQ  
->Privkey: wrRxctq3f7A1zkpyWoZRifRk5eAC2UM9idh83SPLhz6gAFfqdL  
+>LBRY Pattern: bTEST                                                                   
+>LBRY Address: bTEST6jSVcid5MQAJBrGUR6MLDpdyb8oiQ  
+>LBRY Privkey: wrRxctq3f7A1zkpyWoZRifRk5eAC2UM9idh83SPLhz6gAFfqdL  
   
 **If you have dependency errors on Linux  
 or need instructions for compiling from source(Kaling Rolling/Linux) see link below:**  
@@ -113,9 +113,9 @@ Also please choose a stronger password than "password".
   
 >Generating AC Address  
 >Difficulty: 23   
->Pattern: Aa                                                                      
->Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd  
->Protkey: yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge  
+>AC Pattern: Aa                                                                      
+>AC Address: Aa853vQs6QGrTuTHb7Q45tbeB8n4EL47vd  
+>AC Protkey: yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge  
   
 **Decrypting generated ProtKey with Keyconv:**  
 Linux: `./keyconv -C AC -d yTYFUWAsgFmMxCbKtu3RdrrJXosZrjxiQFA2o43neB4jPpfLe5owNNrteTs8mpvua8Ge`  
