@@ -155,6 +155,7 @@ CON : PayCon : P
 DASH : Dash : X
 DGB : Digibyte : D
 DGC : Digitalcoin : D
+DMD : Diamond : d
 DOGED : Doge Dark Coin : D
 DOGE : Dogecoin : D
 DOPE : Dopecoin : 4

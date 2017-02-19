@@ -428,6 +428,7 @@ main(int argc, char **argv)
 					"DASH : Dash : X\n"
 					"DGB : Digibyte : D\n"
 					"DGC : Digitalcoin : D\n"
+					"DMD : Diamond : d\n"
 					"DOGED : Doge Dark Coin : D\n"
 					"DOGE : Dogecoin : D\n"
 					"DOPE : Dopecoin : 4\n"
@@ -493,6 +494,14 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "DMD")== 0) {
+				fprintf(stderr,
+					"Generating DMD Address\n");
+					addrtype = 90;
+					privtype = 218;
+					break;
 			}
 			else
 			if (strcmp(optarg, "GUN")== 0) {
