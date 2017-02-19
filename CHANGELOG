@@ -146,6 +146,8 @@ Version 1.3 Plus, released Feb 12, 2017
 	- Groestlcoin fixes
 	- Minor improvements
 
-Version 1.4 Plus, released Feb 18, 2017
+Version 1.41 Plus, released Feb 18, 2017
 	- Add -C COIN support to Keyconv for easy decryption of privkeys
 	- Fix Groestlcoin encryption/decryption of privkeys
+	- Add DMD
+	- Fix Keyconv -C COIN(bug in V1.4)
