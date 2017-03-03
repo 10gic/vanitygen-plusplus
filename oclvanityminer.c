@@ -37,6 +37,9 @@
 #include "ticker.h"
 char ticker[10];
 
+char workurl[2048];
+int workurlFlag = 0;
+
 int GRSFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
@@ -399,12 +402,27 @@ server_context_new(const char *url, const char *credit_addr)
 	ctxp->dummy_key = vg_exec_context_new_key();
 	ctxp->getwork = (char *) malloc(urllen + 9);
 	ctxp->submit = (char *) malloc(urllen + 7);
-	if (url[urllen - 1] == '/') {
-		snprintf(ctxp->getwork, urllen + 9, "%sgetWork", url);
-		snprintf(ctxp->submit, urllen + 7, "%ssolve", url);
-	} else {
-		snprintf(ctxp->getwork, urllen + 9, "%s/getWork", url);
-		snprintf(ctxp->submit, urllen + 7, "%s/solve", url);
+
+	if (workurlFlag == 0)
+	{
+
+		if (url[urllen - 1] == '/') {
+			snprintf(ctxp->getwork, urllen + 9, "%sgetWork", url);
+			snprintf(ctxp->submit, urllen + 7, "%ssolve", url);
+		} else {
+			snprintf(ctxp->getwork, urllen + 9, "%s/getWork", url);
+			snprintf(ctxp->submit, urllen + 7, "%s/solve", url);
+		}
+	}
+	else
+	{
+		int workurllen = strlen(workurl);
+		snprintf(ctxp->getwork, workurllen + 2, "%s", workurl);
+		if (url[urllen - 1] == '/') {
+			snprintf(ctxp->submit, urllen + 7, "%ssolve", url);
+		} else {
+			snprintf(ctxp->submit, urllen + 7, "%s/solve", url);
+		}
 	}
 
 	return ctxp;
@@ -770,6 +788,13 @@ usage(const char *name)
 "-u <URL>      Bounty pool URL\n"
 "-a <address>  Credit address for completed work\n"
 "-i <interval> Set server polling interval in seconds (default 90)\n"
+"              TIP: For pay-per-share vanity pools, set interval\n"
+"                   lower to process the maximum shares possible!\n"
+"-x <altURL>   Specify an alternate url for getWork requests.\n"
+"              Example: \"-x http://127.0.0.1/getWork\"\n"
+"              Useful for manually choosing what prefix to work on.\n"
+"              Copy \"/getWork\" from pool then choose prefixes and self host.\n"
+"              Solved prefixes will still be sent to the url set in \"-u <URL>\".\n"
 "-v            Verbose output\n"
 "-q            Quiet output\n"
 "-p <platform> Select OpenCL platform\n"
@@ -833,8 +858,12 @@ main(int argc, char **argv)
 	}
 
 	while ((opt = getopt(argc, argv,
-			     "u:a:vqp:d:w:t:g:b:VD:Sh?i:m:")) != -1) {
+			     "x:u:a:vqp:d:w:t:g:b:VD:Sh?i:m:")) != -1) {
 		switch (opt) {
+		case 'x':
+			strcpy(workurl, optarg);
+			workurlFlag = 1;
+			break;
 		case 'u':
 			url = optarg;
 			break;
@@ -849,7 +878,7 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			interval = atoi(optarg);
-			if (interval < 10) {
+			if (interval < 1) {
 				fprintf(stderr,
 					"Invalid interval '%s'\n", optarg);
 				return 1;
