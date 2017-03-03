@@ -323,7 +323,7 @@ server_workitem_new(server_request_t *reqp,
 	wip->addrtype = addrtype;
 	wip->difficulty = difficulty;
 	wip->reward = reward;
-	wip->value = (reward * 1000000000.0) / difficulty;
+	wip->value = (reward * 1000000000000.0) / difficulty;
 
 	return wip;
 }
@@ -565,14 +565,14 @@ avl_root_t *work = &scp->items;
                                     NULL);
 
 			printf("PubKey: \"%s\" Pattern: \"%s\" Reward: %f "
-			       "Value: %f BTC/Gkey\n",
+			       "Value: %f BTC/Mkey\n",
 			       pubhex,
 			       wip->pattern,
 			       wip->reward,
 			       wip->value);
 		}
 		if (pbatch->nitems > 1)
-			printf("Batch of %d, total value: %f BTC/Gkey\n",
+			printf("Batch of %d, total value: %f BTC/Mkey\n",
 			       pbatch->nitems, pbatch->total_value);
 	}
 }
@@ -783,7 +783,7 @@ usage(const char *name)
 "-g <x>x<y>    Set grid size\n"
 "-b <invsize>  Set modular inverse ops per thread\n"
 "-V            Enable kernel/OpenCL/hardware verification (SLOW)\n"
-"-m <minvalue> Set minimum value (in BTC/Gkey) for the miner to accept work\n",
+"-m <minvalue> Set minimum value (in BTC/Mkey) for the miner to accept work\n",
 version, name);
 }
 
@@ -1005,7 +1005,7 @@ main(int argc, char **argv)
 		
 		if( pkb && pkb->total_value < min_value ) {
 			fprintf(stderr,
-				"Value of current work (%f BTC/Gkey) does not meet minimum value (%f BTC/Gkey)\n",
+				"Value of current work (%f BTC/Mkey) does not meet minimum value (%f BTC/Mkey)\n",
 				pkb->total_value, min_value);
 			fprintf(stderr, "Sleeping\n");
 			was_sleeping = 1;
@@ -1048,7 +1048,7 @@ main(int argc, char **argv)
 			     wip = workitem_avl_next(wip)) {
 				fprintf(stderr,
 					"Searching for pattern: \"%s\" "
-					"Reward: %f Value: %f BTC/Gkey\n",
+					"Reward: %f Value: %f BTC/Mkey\n",
 					wip->pattern,
 					wip->reward,
 					wip->value);
@@ -1064,7 +1064,7 @@ main(int argc, char **argv)
 			}
 
 			fprintf(stderr, 
-				"\nTotal value for current work: %f BTC/Gkey\n", 
+				"\nTotal value for current work: %f BTC/Mkey\n", 
 				pkb->total_value);
 			
 			res = vg_context_start_threads(vcp);
