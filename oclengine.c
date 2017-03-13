@@ -28,6 +28,8 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #ifndef CL_CALLBACK
@@ -1555,7 +1557,7 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 	vg_test_func_t test_func = vcp->vc_test;
 	uint32_t *ocl_found_out;
 	uint32_t found_delta;
-	int orig_delta, tablesize;
+	int orig_delta;//, tablesize;
 	int res = 0;
 
 	/* Retrieve the found indicator */
@@ -1587,7 +1589,7 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 			 * The match was not found in
 			 * the pattern list.  Hmm.
 			 */
-			tablesize = ocl_found_out[2];
+//			tablesize = ocl_found_out[2];
 			fprintf(stderr, "Match idx: %d\n", ocl_found_out[1]);
 			fprintf(stderr, "CPU hash: ");
 			fdumphex(stderr, vxcp->vxc_binres + 1, 20);
