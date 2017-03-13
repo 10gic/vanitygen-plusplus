@@ -2,6 +2,8 @@
 Vanitygen PLUS!  
 -----
   
+**Download the latest binary from: https://github.com/exploitagency/vanitygen-plus/releases !**  
+  
 Forked from samr7/vanitygen ,  
 then modified by Corey Harding  
 to support various Alt-Coins,  
