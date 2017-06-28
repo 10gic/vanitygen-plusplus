@@ -184,6 +184,7 @@ main(int argc, char **argv)
 					"CLAM : Clamcoin : x\n"
 					"CNC : Chinacoin : C\n"
 					"CON : PayCon : P\n"
+					"CRW : Crown : 1\n"
 					"DASH : Dash : X\n"
 					"DGB : Digibyte : D\n"
 					"DGC : Digitalcoin : D\n"
@@ -196,6 +197,7 @@ main(int argc, char **argv)
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
 					"FTC : Feathercoin : 6 or 7\n"
+					"GAME : GameCredits : G\n"
 					"GAP : Gapcoin : G\n"
 					"GCR : Global Currency Reserve : G\n"
 					"GRC : GridcoinResearch : R or S\n"
@@ -925,6 +927,21 @@ main(int argc, char **argv)
 					"Generating NMC Address\n");
 					addrtype = 52;
 					privtype = 180;
+					break;
+			}
+			else
+			if (strcmp(optarg, "GAME")== 0) {
+				fprintf(stderr,
+					"Generating GAME Address\n");
+					addrtype = 38;
+					privtype = 166;
+					break;
+			}			
+			if (strcmp(optarg, "CRW")== 0) {
+				fprintf(stderr,
+					"Generating CRW Address\n");
+					addrtype = 0;
+					privtype = 128;
 					break;
 			}
 			break;

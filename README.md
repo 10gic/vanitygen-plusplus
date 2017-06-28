@@ -151,6 +151,7 @@ Current List of Available Coins for Address Generation
 |CLAM | Clamcoin | x  |
 |CNC | Chinacoin | C  |
 |CON | PayCon | P  |
+|CRW | Crown | 1  |
 |DASH | Dash | X  |
 |DGB | Digibyte | D  |
 |DGC | Digitalcoin | D  |
@@ -164,6 +165,7 @@ Current List of Available Coins for Address Generation
 |FAIR | Faircoin2 | f  |
 |FLOZ | FLOZ | F  |
 |FTC | Feathercoin | 6 or 7  |
+|GAME | GameCredits | G  |
 |GAP | Gapcoin | G  |
 |GCR | Global Currency Reserve | G  |
 |GRC | GridcoinResearch | R or S  |
