@@ -151,3 +151,6 @@ Version 1.41 Plus, released Feb 18, 2017
 	- Fix Groestlcoin encryption/decryption of privkeys
 	- Add DMD
 	- Fix Keyconv -C COIN(bug in V1.4)
+	
+Version 1.42 Plus, released Feb 18, 2017
+	-Add Pinkcoin, GameCredits, Crown
