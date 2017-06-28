@@ -863,7 +863,8 @@ main(int argc, char **argv)
 					addrtype_opt = 38;
 					privtype_opt = 166;
 					break;
-			}			
+			}
+			else
 			if (strcmp(optarg, "CRW")== 0) {
 				fprintf(stderr,
 					"Decrypting CRW Address\n");
