@@ -936,7 +936,8 @@ main(int argc, char **argv)
 					addrtype = 38;
 					privtype = 166;
 					break;
-			}			
+			}
+			else
 			if (strcmp(optarg, "CRW")== 0) {
 				fprintf(stderr,
 					"Generating CRW Address\n");
