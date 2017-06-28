@@ -238,3 +238,6 @@ Current List of Available Coins for Address Generation
  * Donate Groestlcoin: FgRoEST1y9bLyQWiRQ7ZnhHH9fNne1pCMW  
  * Donate Monero: 4BCDHackYuKCjofmM34UZn7Wj4mDTLDR5e7xsXNSGqcmTgYEquyvAFdeey2K724ev6CA9dcuuF8p627YXWxu4dULPvLpvbn  
  * Donate Diamond: data1osSwhWHh71GUBcH4tD18KEULwdsdt  
+ * Donate PinkCoin: 2Give7s6EDxWCqj8F5fjrDrW8UcqbWboWn  
+ * Donate GameCredits: Game1iVhBWDMvAUvJNHu3FQdEvEKLGKtSe  
+ * Donate Crown: 1CRoWN8eNVfMjzVFuDybBsUaWd3zvBuXD7  
