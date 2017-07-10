@@ -3,7 +3,9 @@ Vanitygen PLUS!
 -----
   
 **Download the latest binary from: https://github.com/exploitagency/vanitygen-plus/releases !**  
-  
+
+Note: For generating a Zcash or Zclassic address please see the Z repo: https://github.com/exploitagency/vanitygen_z
+
 Forked from samr7/vanitygen ,  
 then modified by Corey Harding  
 to support various Alt-Coins,  
