@@ -149,6 +149,7 @@ Current List of Available Coins for Address Generation
 |CDN | Canadaecoin | C  |
 |CLAM | Clamcoin | x  |
 |CNC | Chinacoin | C  |
+|CNOTE | C-Note | C |
 |CON | PayCon | P  |
 |CRW | Crown | 1  |
 |DASH | Dash | X  |
