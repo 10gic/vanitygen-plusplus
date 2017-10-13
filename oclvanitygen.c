@@ -64,7 +64,7 @@ usage(const char *name)
 "-k            Keep pattern and continue search after finding a match\n"
 "-1            Stop after first match\n"
 "-C <altcoin>  Generate an address for specific altcoin, use \"-C LIST\" to view\n" 
-"              a list of all available altcoins, argument is case sensetive!\n" 
+"              a list of all available altcoins, argument is case sensitive!\n" 
 "-X <version>  Generate address with the given version\n"
 "-Y <version>  Specify private key version (-X provides public key)\n"
 "-F <format>   Generate address with the given format (pubkey, compressed)\n"

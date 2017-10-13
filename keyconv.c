@@ -36,7 +36,7 @@ usage(const char *progname)
 "-E <password> Encrypt output key with <password> (UNSAFE)\n"
 "-c <key>      Combine private key parts to make complete private key\n"
 "-C <altcoin>  Decrypt an address for specific altcoin, use \"-C LIST\" to view\n" 
-"              a list of all available altcoins, argument is case sensetive!\n" 
+"              a list of all available altcoins, argument is case sensitive!\n" 
 "-d            Decrypt output key, prompt for password\n"
 "-X <version>  Public key version (for altcoins)\n"
 "-Y <version>  Private key version (-X provides public key)\n"
