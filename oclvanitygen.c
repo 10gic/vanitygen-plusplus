@@ -5,7 +5,7 @@
  * Vanitygen is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Vanitygen is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -63,8 +63,8 @@ usage(const char *name)
 "-i            Case-insensitive prefix search\n"
 "-k            Keep pattern and continue search after finding a match\n"
 "-1            Stop after first match\n"
-"-C <altcoin>  Generate an address for specific altcoin, use \"-C LIST\" to view\n" 
-"              a list of all available altcoins, argument is case sensitive!\n" 
+"-C <altcoin>  Generate an address for specific altcoin, use \"-C LIST\" to view\n"
+"              a list of all available altcoins, argument is case sensitive!\n"
 "-X <version>  Generate address with the given version\n"
 "-Y <version>  Specify private key version (-X provides public key)\n"
 "-F <format>   Generate address with the given format (pubkey, compressed)\n"
@@ -227,6 +227,7 @@ main(int argc, char **argv)
 					"OMC : Omnicoin : o\n"
 					"PIGGY : Piggycoin : p\n"
 					"PINK : Pinkcoin : 2\n"
+					"PIVX : PIVX : D\n"
 					"PKB : Parkbyte : P\n"
 					"PND : Pandacoin : P\n"
 					"POT : Potcoin : P\n"
@@ -258,6 +259,14 @@ main(int argc, char **argv)
 					"ZRC : Ziftrcoin : Z\n"
 					);
 					return 1;
+			}
+			else
+			if (strcmp(optarg, "PIVX")== 0) {
+				fprintf(stderr,
+					"Generating PIVX Address\n");
+					addrtype = 30;
+					privtype = 212;
+					break;
 			}
 			else
 			if (strcmp(optarg, "PINK")== 0) {
@@ -980,9 +989,9 @@ main(int argc, char **argv)
 			addrtype = atoi(optarg);
 			privtype = 128 + addrtype;
 			break;
-		case 'Y': 
-			/* Overrides privtype of 'X' but leaves all else intact */ 
-			privtype = atoi(optarg); 
+		case 'Y':
+			/* Overrides privtype of 'X' but leaves all else intact */
+			privtype = atoi(optarg);
 			break;
 		case 'F':
 			if (!strcmp(optarg, "compressed"))
