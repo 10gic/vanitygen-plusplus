@@ -90,6 +90,7 @@ main(int argc, char **argv)
 					"AIB : Advanced Internet Block by IOBOND : A\n"
 					"ANC : Anoncoin : A\n"
 					"ARS : Arkstone : A\n"
+					"ATMOS : Atmos : N\n"
 					"AUR : Auroracoin : A\n"
 					"BLK : Blackcoin : B\n"
 					"BQC : BBQcoin : b\n"
@@ -917,6 +918,14 @@ main(int argc, char **argv)
 					privtype_opt = 128;
 					break;
 			}
+			else
+			if (strcmp(optarg, "ATMOS")== 0) {
+				fprintf(stderr,
+					"Decrypting ATMOS Address\n");
+					addrtype_opt = 53;
+					privtype_opt = 153;
+					break;
+			}	
 			break;
 
 /*END ALTCOIN GENERATOR*/
