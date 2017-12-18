@@ -762,7 +762,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Decrypting DGB Address\n");
 					addrtype_opt = 30;
-					privtype_opt = 128;
+					privtype_opt = 158;
 					break;
 			}
 			else
