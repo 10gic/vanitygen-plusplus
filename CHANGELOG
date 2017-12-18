@@ -154,3 +154,13 @@ Version 1.41 Plus, released Feb 18, 2017
 	
 Version 1.42 Plus, released Feb 18, 2017
 	-Add Pinkcoin, GameCredits, Crown
+
+Version 1.50 Plus, released Dec 18, 2017
+	-Add C-Note by jcaferjr
+	-Add Emercoin by easmith
+	-Add DeepOnion by chillerfx
+	-Add PIVX by guggero
+	-Add QTUM by xuanyan0x7c7
+	-Add ATMOS by Dabs64
+	-Fix typo caught by ofek
+	-Show loading status from pattern file(evolution of example by mike-stuffel)
