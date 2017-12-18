@@ -844,7 +844,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Generating DGB Address\n");
 					addrtype = 30;
-					privtype = 158;
+					privtype = 128;
 					break;
 			}
 			else
