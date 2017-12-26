@@ -32,6 +32,7 @@ usage(const char *progname)
 "Usage: %s [-8] [-e|-E <password>] [-c <key>] [<key>]\n"
 "-G            Generate a key pair and output the full public key\n"
 "-8            Output key in PKCS#8 form\n"
+"-F <format>   Output address in the given format (compressed)\n"
 "-e            Encrypt output key, prompt for password\n"
 "-E <password> Encrypt output key with <password> (UNSAFE)\n"
 "-c <key>      Combine private key parts to make complete private key\n"
@@ -63,14 +64,14 @@ main(int argc, char **argv)
 	int addrtype_override = 0;
 	int pkcs8 = 0;
 	int pass_prompt = 0;
-	int compress = 0;
+	int compressed = 0;
 	int verbose = 0;
 	int generate = 0;
 	int decrypt = 0;
 	int opt;
 	int res;
 
-	while ((opt = getopt(argc, argv, "C:8E:ec:vGX:Y:d")) != -1) {
+	while ((opt = getopt(argc, argv, "C:8E:ec:vGX:Y:dF:")) != -1) {
 		switch (opt) {
 /*BEGIN ALTCOIN GENERATOR*/
 
@@ -980,6 +981,16 @@ main(int argc, char **argv)
 			privtype_opt = atoi(optarg);
 			addrtype_override = 1;
 			break;
+		case 'F':
+                        if (!strcmp(optarg, "compressed")) {
+                                compressed = 1;
+			}
+                        else {
+				fprintf(stderr,
+					"Invalid choice '%s'\n", optarg);
+				return 1;
+			}
+			break;
 		default:
 			usage(argv[0]);
 			return 1;
@@ -1036,7 +1047,7 @@ main(int argc, char **argv)
 	}
 
 	if (res == 2) {
-		compress = 1;
+		compressed = 1;
 	}
 
 	if (key2_in) {
@@ -1060,7 +1071,7 @@ main(int argc, char **argv)
 		}
 
 		if (res == 2) {
-			compress = 1;
+			compressed = 1;
 		}
 
 		BN_init(&bntmp);
@@ -1133,7 +1144,7 @@ main(int argc, char **argv)
 	}
 
 	else {
-		if (compress) {
+		if (compressed) {
 			vg_encode_address_compressed(EC_KEY_get0_public_key(pkey),
 						     EC_KEY_get0_group(pkey),
 						     addrtype, ecprot);
