@@ -94,6 +94,7 @@ main(int argc, char **argv)
 					"ARS : Arkstone : A\n"
 					"ATMOS : Atmos : N\n"
 					"AUR : Auroracoin : A\n"
+					"AXE : Axe : X\n"
 					"BLK : Blackcoin : B\n"
 					"BQC : BBQcoin : b\n"
 					"BTC : Bitcoin : 1\n"
@@ -936,6 +937,14 @@ main(int argc, char **argv)
 					"Decrypting ATMOS Address\n");
 					addrtype_opt = 53;
 					privtype_opt = 153;
+					break;
+			}	
+			else
+			if (strcmp(optarg, "AXE")== 0) {
+				fprintf(stderr,
+					"Decrypting Axe Address\n");
+					addrtype_opt = 75;
+					privtype_opt = 203;
 					break;
 			}	
 			else
