@@ -251,3 +251,4 @@ Current List of Available Coins for Address Generation
  * Donate PinkCoin: 2Give7s6EDxWCqj8F5fjrDrW8UcqbWboWn  
  * Donate GameCredits: Game1iVhBWDMvAUvJNHu3FQdEvEKLGKtSe  
  * Donate Crown: 1CRoWN8eNVfMjzVFuDybBsUaWd3zvBuXD7  
+ * Donate Skeincoin: SUPerRFr4ZLW5D8ScbjjPW4aAq5cacwvY9  
