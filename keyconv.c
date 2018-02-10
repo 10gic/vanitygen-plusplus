@@ -353,7 +353,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Decrypting SKC Address\n");
 					addrtype_opt = 63;
-					privtype_opt = 191;
+					privtype_opt = 226;
 					break;
 			}
 			else

@@ -425,7 +425,7 @@ main(int argc, char **argv)
 				fprintf(stderr,
 					"Generating SKC Address\n");
 					addrtype = 63;
-					privtype = 191;
+					privtype = 226;
 					break;
 			}
 			else
