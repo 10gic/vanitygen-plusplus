@@ -1289,10 +1289,10 @@ main(int argc, char **argv)
 			if (strcmp(optarg, "AXE")== 0) {
 				fprintf(stderr,
 					"Decrypting AXE Address\n");
-					addrtype = 75;
-					privtype = 203;
+					addrtype = 55;
+					privtype = 204;
 					break;
-			}	
+			}
 			else
 			if (strcmp(optarg, "ZNY")== 0) {
 				fprintf(stderr,

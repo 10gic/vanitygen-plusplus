@@ -957,15 +957,15 @@ main(int argc, char **argv)
 					addrtype_opt = 53;
 					privtype_opt = 153;
 					break;
-			}	
+			}
 			else
 			if (strcmp(optarg, "AXE")== 0) {
 				fprintf(stderr,
 					"Decrypting Axe Address\n");
-					addrtype_opt = 75;
-					privtype_opt = 203;
+					addrtype_opt = 55;
+					privtype_opt = 204;
 					break;
-			}	
+			}
 			else
 			if (strcmp(optarg, "ZNY")== 0) {
 				fprintf(stderr,
