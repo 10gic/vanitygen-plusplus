@@ -164,3 +164,18 @@ Version 1.50 Plus, released Dec 18, 2017
 	-Add ATMOS by Dabs64
 	-Fix typo caught by ofek
 	-Show loading status from pattern file(evolution of example by mike-stuffel)
+
+Version 1.52 Plus, released Feb 19, 2018
+	-Added HBN (#52) by Tranz5
+	-Add support for combining compressed private keys (#50) by ryancdotorg
+	-Add compressed flag to keyconv #53 by me
+	-Add BitZeny (#54) by shirako-jp
+	-Add AXE (#57) update AXE (#76) by charlesrocket
+	-Fixing the FTP links. (#61) by flewkey
+	-Add NEETCOIN (#63) shirako-jp
+	-Bug Fix + Mac Fix (#68) by DesWurstes
+	- Add Garlicoin (GRLC) (#69) by sampi
+	-Fix SKC by me
+	-Support for ROIcoin (#72) by TheTDD
+	-Add Jincoin (JIN) (#77) by JinCoin
+	-Add Denarius (DNR) Support (#59)  by jwrb
