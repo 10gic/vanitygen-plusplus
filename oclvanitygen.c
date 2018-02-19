@@ -190,6 +190,7 @@ main(int argc, char **argv)
 					"CRW : Crown : 1\n"
 					"DASH : Dash : X\n"
 					"DEEPONION : DeepOnion : D\n"
+					"DNR: Denarius: D\n"
 					"DGB : Digibyte : D\n"
 					"DGC : Digitalcoin : D\n"
 					"DMD : Diamond : d\n"
@@ -291,6 +292,14 @@ main(int argc, char **argv)
 					"Generating DEEPONION Address\n");
 					addrtype = 31;
 					privtype = 159;
+					break;
+			}
+			else
+			if (strcmp(optarg, "DNR")== 0) {
+				fprintf(stderr,
+					"Generating DNR Address\n");
+					addrtype = 30;
+					privtype = 158;
 					break;
 			}
 			else
