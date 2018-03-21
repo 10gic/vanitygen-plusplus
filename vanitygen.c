@@ -329,6 +329,7 @@ usage(const char *name)
 "-i            Case-insensitive prefix search\n"
 "-k            Keep pattern and continue search after finding a match\n"
 "-1            Stop after first match\n"
+"-a <amount>   Stop after generating <amount> addresses/keys\n"
 "-C <altcoin>  Generate an address for specific altcoin, use \"-C LIST\" to view\n"
 "              a list of all available altcoins, argument is case sensitive!\n"
 "-X <version>  Generate address with the given version\n"
@@ -362,6 +363,7 @@ main(int argc, char **argv)
 	int simulate = 0;
 	int remove_on_match = 1;
 	int only_one = 0;
+	int numpairs = 0;
 	int prompt_password = 0;
 	int opt;
 	char *seedfile = NULL;
@@ -384,7 +386,7 @@ main(int argc, char **argv)
 
 	int i;
 
-	while ((opt = getopt(argc, argv, "vqnrik1eE:P:C:X:Y:F:t:h?f:o:s:Z:")) != -1) {
+	while ((opt = getopt(argc, argv, "vqnrik1eE:P:C:X:Y:F:t:h?f:o:s:Z:a:")) != -1) {
 		switch (opt) {
 		case 'c':
 		        compressed = 1;
@@ -406,6 +408,10 @@ main(int argc, char **argv)
 			break;
 		case 'k':
 			remove_on_match = 0;
+			break;
+		case 'a':
+			remove_on_match = 0;
+			numpairs = atoi(optarg);
 			break;
 		case '1':
 			only_one = 1;
@@ -1538,6 +1544,7 @@ main(int argc, char **argv)
 	vcp->vc_verbose = verbose;
 	vcp->vc_result_file = result_file;
 	vcp->vc_remove_on_match = remove_on_match;
+	vcp->vc_numpairs = numpairs;
 	vcp->vc_only_one = only_one;
 	vcp->vc_format = format;
 	vcp->vc_pubkeytype = pubkeytype;

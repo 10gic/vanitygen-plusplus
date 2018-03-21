@@ -1498,7 +1498,9 @@ research:
 					   vp->vp_pattern);
 
 		vcpp->base.vc_found++;
-
+		if (vcpp->base.vc_numpairs >= 1 && vcpp->base.vc_found >= vcpp->base.vc_numpairs) {
+			exit(1);
+		}
 		if (vcpp->base.vc_only_one) {
 			return 2;
 		}
@@ -1798,6 +1800,9 @@ restart_loop:
 					   vcrp->vcr_regex_pat[i]);
 		vcrp->base.vc_found++;
 
+		if (vcrp->base.vc_numpairs >= 1 && vcrp->base.vc_found >= vcrp->base.vc_numpairs) {
+			exit(1);
+		}
 		if (vcrp->base.vc_only_one) {
 			res = 2;
 			goto out;
