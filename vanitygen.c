@@ -343,7 +343,9 @@ usage(const char *name)
 "              (Use \"-\" as the file name for stdin)\n"
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
-"-Z <prefix>   Private key prefix in hex (vipco.in)\n",
+"-Z <prefix>   Private key prefix in hex (vipco.in)\n"
+"-z            Format output of matches in CSV(disables verbose mode)\n"
+"              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
 }
 
@@ -364,6 +366,7 @@ main(int argc, char **argv)
 	int remove_on_match = 1;
 	int only_one = 0;
 	int numpairs = 0;
+	int csv = 0;
 	int prompt_password = 0;
 	int opt;
 	char *seedfile = NULL;
@@ -386,7 +389,7 @@ main(int argc, char **argv)
 
 	int i;
 
-	while ((opt = getopt(argc, argv, "vqnrik1eE:P:C:X:Y:F:t:h?f:o:s:Z:a:")) != -1) {
+	while ((opt = getopt(argc, argv, "vqnrik1ezE:P:C:X:Y:F:t:h?f:o:s:Z:a:")) != -1) {
 		switch (opt) {
 		case 'c':
 		        compressed = 1;
@@ -415,6 +418,9 @@ main(int argc, char **argv)
 			break;
 		case '1':
 			only_one = 1;
+			break;
+		case 'z':
+			csv = 1;
 			break;
 
 /*BEGIN ALTCOIN GENERATOR*/
@@ -1545,6 +1551,7 @@ main(int argc, char **argv)
 	vcp->vc_result_file = result_file;
 	vcp->vc_remove_on_match = remove_on_match;
 	vcp->vc_numpairs = numpairs;
+	vcp->vc_csv = csv;
 	vcp->vc_only_one = only_one;
 	vcp->vc_format = format;
 	vcp->vc_pubkeytype = pubkeytype;

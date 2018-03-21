@@ -36,7 +36,6 @@
 #include "util.h"
 #include "avl.h"
 
-
 /*
  * Common code for execution helper
  */
@@ -562,12 +561,25 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 			vg_encode_privkey(pkey, vcp->vc_privtype, privkey_buf);
 	}
 
+	int tickerlength=0;
+	if (vcp->vc_csv) {
+			if (strcmp(ticker, "")==0) {
+				strcpy(ticker, "BTC ");
+			}
+			tickerlength=(strlen(ticker)-1);
+	}
+
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
-		printf("\r%79s\r%sPattern: %s\n", "", ticker, pattern);
+		if (vcp->vc_csv) {
+			printf("\r%79s\r%.*s,%s,", "", tickerlength, ticker, pattern);
+		}
+		else {
+			printf("\r%79s\r%sPattern: %s\n", "", ticker, pattern);
+		}
 	}
 
 	if (vcp->vc_verbose > 0) {
-		if (vcp->vc_verbose > 1) {
+		if (vcp->vc_verbose > 1&&!(vcp->vc_csv)) {
 			pend = key_buf;
 			len = i2o_ECPublicKey(pkey, &pend);
 			printf("Pubkey (hex): ");
@@ -583,11 +595,28 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 	}
 
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
-		if (isscript)
-			printf("P2SH%s Address: %s\n", ticker, addr2_buf);
-		printf("%sAddress: %s\n"
-		       "%s%s: %s\n",
-		       ticker, addr_buf, ticker, keytype, privkey_buf);
+		if (vcp->vc_csv) {
+			if (isscript) {
+				printf(
+				"%s,",
+				addr2_buf);
+			}
+			else {
+				printf(
+				"%s,",
+				addr_buf);
+			}
+			printf(
+				"%s\n",
+				privkey_buf);
+		}
+		else {
+			if (isscript)
+				printf("P2SH%s Address: %s\n", ticker, addr2_buf);
+			printf("%sAddress: %s\n"
+			       "%s%s: %s\n",
+			       ticker, addr_buf, ticker, keytype, privkey_buf);
+		}
 	}
 
 	if (vcp->vc_result_file) {
@@ -597,16 +626,37 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 				"ERROR: could not open result file: %s\n",
 				strerror(errno));
 		} else {
-			fprintf(fp,
-				"%sPattern: %s\n"
-				, ticker, pattern);
-			if (isscript)
-				fprintf(fp, "P2SH%s Address: %s\n", ticker, addr2_buf);
-			fprintf(fp,
-				"%sAddress: %s\n"
-				"%s%s: %s\n",
-				ticker, addr_buf, ticker, keytype, privkey_buf);
-			fclose(fp);
+			if (vcp->vc_csv) {
+				fprintf(fp,
+					"%.*s,%s,",
+					tickerlength,ticker, pattern);
+				if (isscript) {
+					fprintf(fp,
+					"%s,",
+					addr2_buf);
+				}
+				else {
+					fprintf(fp,
+					"%s,",
+					addr_buf);
+				}
+				fprintf(fp,
+					"%s\n",
+					privkey_buf);
+				fclose(fp);
+			}
+			else {
+				fprintf(fp,
+					"%sPattern: %s\n"
+					, ticker, pattern);
+				if (isscript)
+					fprintf(fp, "P2SH%s Address: %s\n", ticker, addr2_buf);
+				fprintf(fp,
+					"%sAddress: %s\n"
+					"%s%s: %s\n",
+					ticker, addr_buf, ticker, keytype, privkey_buf);
+				fclose(fp);
+			}
 		}
 	}
 	if (free_ppnt)

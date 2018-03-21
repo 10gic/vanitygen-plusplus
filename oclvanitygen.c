@@ -87,7 +87,9 @@ usage(const char *name)
 "              (Use \"-\" as the file name for stdin)\n"
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
-"-Z <prefix>   Private key prefix in hex (vipco.in)\n",
+"-Z <prefix>   Private key prefix in hex (vipco.in)\n"
+"-z            Format output of matches in CSV(disables verbose mode)\n"
+"              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
 }
 
@@ -116,6 +118,7 @@ main(int argc, char **argv)
 	int remove_on_match = 1;
 	int only_one = 0;
 	int numpairs = 0;
+	int csv = 0;
 	int verify_mode = 0;
 	int safe_mode = 0;
 	vg_context_t *vcp = NULL;
@@ -138,7 +141,7 @@ main(int argc, char **argv)
 	int i;
 
 	while ((opt = getopt(argc, argv,
-			     "vqrik1C:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:")) != -1) {
+			     "vqrik1zC:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:")) != -1) {
 		switch (opt) {
 		case 'r':
 			regex = 1;
@@ -161,7 +164,10 @@ main(int argc, char **argv)
 		case 'a': 
 			remove_on_match = 0; 
 			numpairs = atoi(optarg); 
-			break; 
+			break;
+		case 'z':
+		      csv = 1;
+		      break;
 
 /*BEGIN ALTCOIN GENERATOR*/
 
@@ -1320,6 +1326,7 @@ main(int argc, char **argv)
 	vcp->vc_remove_on_match = remove_on_match;
 	vcp->vc_only_one = only_one;
 	vcp->vc_numpairs = numpairs;
+	vcp->vc_csv = csv;
 	vcp->vc_pubkeytype = addrtype;
 	vcp->vc_pubkey_base = pubkey_base;
 	memcpy(vcp->vc_privkey_prefix, privkey_prefix, privkey_prefix_length);

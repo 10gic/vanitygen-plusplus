@@ -101,6 +101,7 @@ struct _vg_context_s {
 	int			vc_remove_on_match;
 	int        		vc_numpairs;
 	int			vc_only_one;
+	int        		vc_csv;
 	int			vc_verbose;
 	enum vg_format		vc_format;
 	int			vc_pubkeytype;
