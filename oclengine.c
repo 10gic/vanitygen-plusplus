@@ -43,6 +43,34 @@
 #include "pattern.h"
 #include "util.h"
 
+// Unfortunately we need this!
+#if OPENSSL_VERSION_NUMBER >= 0x0010100000
+#define PPNT_ARROW_X ppnt->X
+#define PPNT_ARROW_Y ppnt->Y
+#define PPNT_ARROW_Z ppnt->Z
+#define PPS_ARROW_X pps->X
+#define PPS_ARROW_Y pps->Y
+#define PPS_ARROW_Z pps->Z
+#define PPT_ARROW_X ppt->X
+#define PPT_ARROW_Y ppt->Y
+#define PPR_ARROW_X ppr->X
+#define PPR_ARROW_Y ppr->Y
+#define PPC_ARROW_X ppc->X
+#define PPC_ARROW_Y ppc->Y
+#else
+#define PPNT_ARROW_X &ppnt->X
+#define PPNT_ARROW_Y &ppnt->Y
+#define PPNT_ARROW_Z &ppnt->Z
+#define PPS_ARROW_X &pps->X
+#define PPS_ARROW_Y &pps->Y
+#define PPS_ARROW_Z &pps->Z
+#define PPT_ARROW_X &ppt->X
+#define PPT_ARROW_Y &ppt->Y
+#define PPR_ARROW_X &ppr->X
+#define PPR_ARROW_Y &ppr->Y
+#define PPC_ARROW_X &ppc->X
+#define PPC_ARROW_Y &ppc->Y
+#endif
 
 #define MAX_SLOT 2
 #define MAX_ARG 6
@@ -1307,14 +1335,21 @@ vg_ocl_kernel_wait(vg_ocl_context_t *vocp, int slot)
 static INLINE void
 vg_ocl_get_bignum_raw(BIGNUM *bn, const unsigned char *buf)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x0010100000
+	BN_lebin2bn(buf, 32, bn);
+#else
 	bn_expand(bn, 256);
 	memcpy(bn->d, buf, 32);
 	bn->top = (32 / sizeof(BN_ULONG));
+#endif
 }
 
 static INLINE void
 vg_ocl_put_bignum_raw(unsigned char *buf, const BIGNUM *bn)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x0010100000
+	BN_bn2lebinpad(bn, buf, 32);
+#else
 	int bnlen = (bn->top * sizeof(BN_ULONG));
 	if (bnlen >= 32) {
 		memcpy(buf, bn->d, 32);
@@ -1322,6 +1357,7 @@ vg_ocl_put_bignum_raw(unsigned char *buf, const BIGNUM *bn)
 		memcpy(buf, bn->d, bnlen);
 		memset(buf + bnlen, 0, 32 - bnlen);
 	}
+#endif
 }
 
 #define ACCESS_BUNDLE 1024
@@ -1351,9 +1387,15 @@ vg_ocl_get_bignum_tpa(BIGNUM *bn, const unsigned char *buf, int cell)
 
 struct ec_point_st {
 	const EC_METHOD *meth;
+#if OPENSSL_VERSION_NUMBER >= 0x0010100000
+	BIGNUM *X;
+	BIGNUM *Y;
+	BIGNUM *Z;
+#else
 	BIGNUM X;
 	BIGNUM Y;
 	BIGNUM Z;
+#endif
 	int Z_is_one;
 };
 
@@ -1361,11 +1403,11 @@ static INLINE void
 vg_ocl_get_point(EC_POINT *ppnt, const unsigned char *buf)
 {
 	static const unsigned char mont_one[] = { 0x01,0x00,0x00,0x03,0xd1 };
-	vg_ocl_get_bignum_raw(&ppnt->X, buf);
-	vg_ocl_get_bignum_raw(&ppnt->Y, buf + 32);
+	vg_ocl_get_bignum_raw(PPNT_ARROW_X, buf);
+	vg_ocl_get_bignum_raw(PPNT_ARROW_Y, buf + 32);
 	if (!ppnt->Z_is_one) {
 		ppnt->Z_is_one = 1;
-		BN_bin2bn(mont_one, sizeof(mont_one), &ppnt->Z);
+		BN_bin2bn(mont_one, sizeof(mont_one), PPNT_ARROW_Z);
 	}
 }
 
@@ -1373,8 +1415,8 @@ static INLINE void
 vg_ocl_put_point(unsigned char *buf, const EC_POINT *ppnt)
 {
 	assert(ppnt->Z_is_one);
-	vg_ocl_put_bignum_raw(buf, &ppnt->X);
-	vg_ocl_put_bignum_raw(buf + 32, &ppnt->Y);
+	vg_ocl_put_bignum_raw(buf, PPNT_ARROW_X);
+	vg_ocl_put_bignum_raw(buf + 32, PPNT_ARROW_Y);
 }
 
 static void
@@ -1662,7 +1704,7 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 	unsigned char *ocl_points_in = NULL, *ocl_strides_in = NULL;
 	const EC_GROUP *pgroup;
 	EC_POINT *ppr = NULL, *ppc = NULL, *pps = NULL, *ppt = NULL;
-	BIGNUM bnz, bnez, bnm, *bnzc;
+	BIGNUM *bnz, *bnez, *bnm, *bnzc;
 	BN_CTX *bnctx = NULL;
 	BN_MONT_CTX *bnmont;
 	int ret = 0;
@@ -1675,9 +1717,9 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 		0xFF,0xFF,0xFF,0xFE,0xFF,0xFF,0xFC,0x2F
 	};
 
-	BN_init(&bnz);
-	BN_init(&bnez);
-	BN_init(&bnm);
+	bnz = BN_new();
+	bnez = BN_new();
+	bnm = BN_new();
 
 	bnctx = BN_CTX_new();
 	bnmont = BN_MONT_CTX_new();
@@ -1692,13 +1734,13 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 		goto out;
 	}
 
-	BN_bin2bn(raw_modulus, sizeof(raw_modulus), &bnm);
-	BN_MONT_CTX_set(bnmont, &bnm, bnctx);
+	BN_bin2bn(raw_modulus, sizeof(raw_modulus), bnm);
+	BN_MONT_CTX_set(bnmont, bnm, bnctx);
 
 	if (z_inverted) {
-		bnzc = &bnez;
+		bnzc = bnez;
 	} else {
-		bnzc = &pps->Z;
+		bnzc = PPS_ARROW_Z;
 	}
 
 	z_heap = (unsigned char *)
@@ -1726,15 +1768,15 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 			EC_POINT_add(pgroup, pps, ppc, ppr, bnctx);
 			assert(!pps->Z_is_one);
 			vg_ocl_get_point_tpa(ppt, point_tmp, bx + x);
-			vg_ocl_get_bignum_tpa(&bnz, z_heap, bx + x);
+			vg_ocl_get_bignum_tpa(bnz, z_heap, bx + x);
 			if (z_inverted) {
-				BN_mod_inverse(&bnez, &pps->Z, &bnm, bnctx);
-				BN_to_montgomery(&bnez, &bnez, bnmont, bnctx);
-				BN_to_montgomery(&bnez, &bnez, bnmont, bnctx);
+				BN_mod_inverse(bnez, PPS_ARROW_Z, bnm, bnctx);
+				BN_to_montgomery(bnez, bnez, bnmont, bnctx);
+				BN_to_montgomery(bnez, bnez, bnmont, bnctx);
 			}
-			if (BN_cmp(&ppt->X, &pps->X) ||
-			    BN_cmp(&ppt->Y, &pps->Y) ||
-			    BN_cmp(&bnz, bnzc)) {
+			if (BN_cmp(PPT_ARROW_X, PPS_ARROW_X) ||
+			    BN_cmp(PPT_ARROW_Y, PPS_ARROW_Y) ||
+			    BN_cmp(bnz, bnzc)) {
 				if (!mismatches) {
 					fprintf(stderr, "Base privkey: ");
 					fdumpbn(stderr, EC_KEY_get0_private_key(
@@ -1747,33 +1789,33 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 				if (!mm_r) {
 					mm_r = 1;
 					fprintf(stderr, "Row X   : ");
-					fdumpbn(stderr, &ppr->X);
+					fdumpbn(stderr, PPR_ARROW_X);
 					fprintf(stderr, "Row Y   : ");
-					fdumpbn(stderr, &ppr->Y);
+					fdumpbn(stderr, PPS_ARROW_Y);
 				}
 
 				fprintf(stderr, "Column X: ");
-				fdumpbn(stderr, &ppc->X);
+				fdumpbn(stderr, PPC_ARROW_X);
 				fprintf(stderr, "Column Y: ");
-				fdumpbn(stderr, &ppc->Y);
+				fdumpbn(stderr, PPC_ARROW_Y);
 
-				if (BN_cmp(&ppt->X, &pps->X)) {
+				if (BN_cmp(PPT_ARROW_X, PPS_ARROW_X)) {
 					fprintf(stderr, "Expect X: ");
-					fdumpbn(stderr, &pps->X);
+					fdumpbn(stderr, PPS_ARROW_X);
 					fprintf(stderr, "Device X: ");
-					fdumpbn(stderr, &ppt->X);
+					fdumpbn(stderr, PPT_ARROW_X);
 				}
-				if (BN_cmp(&ppt->Y, &pps->Y)) {
+				if (BN_cmp(PPT_ARROW_Y, PPS_ARROW_Y)) {
 					fprintf(stderr, "Expect Y: ");
-					fdumpbn(stderr, &pps->Y);
+					fdumpbn(stderr, PPS_ARROW_Y);
 					fprintf(stderr, "Device Y: ");
-					fdumpbn(stderr, &ppt->Y);
+					fdumpbn(stderr, PPT_ARROW_Y);
 				}
-				if (BN_cmp(&bnz, bnzc)) {
+				if (BN_cmp(bnz, bnzc)) {
 					fprintf(stderr, "Expect Z: ");
 					fdumpbn(stderr, bnzc);
 					fprintf(stderr, "Device Z: ");
-					fdumpbn(stderr, &bnz);
+					fdumpbn(stderr, bnz);
 				}
 			}
 		}
@@ -1798,9 +1840,9 @@ out:
 		EC_POINT_free(pps);
 	if (ppt)
 		EC_POINT_free(ppt);
-	BN_clear_free(&bnz);
-	BN_clear_free(&bnez);
-	BN_clear_free(&bnm);
+	BN_clear_free(bnz);
+	BN_clear_free(bnez);
+	BN_clear_free(bnm);
 	if (bnmont)
 		BN_MONT_CTX_free(bnmont);
 	if (bnctx)
@@ -1971,13 +2013,13 @@ vg_opencl_loop(vg_exec_context_t *arg)
 	if (!pbatchinc || !poffset || !pseek)
 		goto enomem;
 
-	BN_set_word(&vxcp->vxc_bntmp, ncols);
-	EC_POINT_mul(pgroup, pbatchinc, &vxcp->vxc_bntmp, NULL, NULL,
+	BN_set_word(vxcp->vxc_bntmp, ncols);
+	EC_POINT_mul(pgroup, pbatchinc, vxcp->vxc_bntmp, NULL, NULL,
 		     vxcp->vxc_bnctx);
 	EC_POINT_make_affine(pgroup, pbatchinc, vxcp->vxc_bnctx);
 
-	BN_set_word(&vxcp->vxc_bntmp, round);
-	EC_POINT_mul(pgroup, poffset, &vxcp->vxc_bntmp, NULL, NULL,
+	BN_set_word(vxcp->vxc_bntmp, round);
+	EC_POINT_mul(pgroup, poffset, vxcp->vxc_bntmp, NULL, NULL,
 		     vxcp->vxc_bnctx);
 	EC_POINT_make_affine(pgroup, poffset, vxcp->vxc_bnctx);
 
@@ -2046,12 +2088,12 @@ l_rekey:
 	}
 
 	/* Determine rekey interval */
-	EC_GROUP_get_order(pgroup, &vxcp->vxc_bntmp, vxcp->vxc_bnctx);
-	BN_sub(&vxcp->vxc_bntmp2,
-	       &vxcp->vxc_bntmp,
+	EC_GROUP_get_order(pgroup, vxcp->vxc_bntmp, vxcp->vxc_bnctx);
+	BN_sub(vxcp->vxc_bntmp2,
+	       vxcp->vxc_bntmp,
 	       EC_KEY_get0_private_key(pkey));
-	rekey_at = BN_get_word(&vxcp->vxc_bntmp2);
-	if ((rekey_at == BN_MASK2) || (rekey_at > rekey_max))
+	rekey_at = BN_get_word(vxcp->vxc_bntmp2);
+	if ((rekey_at == 0xffffffffL) || (rekey_at > rekey_max))
 		rekey_at = rekey_max;
 	assert(rekey_at > 0);
 
