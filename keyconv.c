@@ -142,6 +142,7 @@ main(int argc, char **argv)
 					"IXC : Ixcoin : x\n"
 					"JBS : Jumbucks : J\n"
 					"JIN : Jincoin : J\n"
+					"KORE : Kore : K\n"
 					"LBRY : LBRY : b\n"
 					"LEAF : Leafcoin : f\n"
 					"LTC : Litecoin : L\n"
@@ -1080,7 +1081,15 @@ main(int argc, char **argv)
 					addrtype_opt = 65;
 					privtype_opt = 193;
 					break;
-            }
+      }
+      else
+			if (strcmp(optarg, "KORE")== 0) {
+				fprintf(stderr,
+					"Decrypting Kore Address\n");
+					addrtype_opt = 45;
+					privtype_opt = 128;
+					break;		
+			}
 			break;
 
 /*END ALTCOIN GENERATOR*/
