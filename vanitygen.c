@@ -499,6 +499,7 @@ main(int argc, char **argv)
 					"IXC : Ixcoin : x\n"
 					"JBS : Jumbucks : J\n"
 					"JIN : Jincoin : J\n"
+					"KMD : Komodo (and assetchains) : R\n"
 					"KORE : Kore : K\n"
 					"LBRY : LBRY : b\n"
 					"LEAF : Leafcoin : f\n"
@@ -572,6 +573,14 @@ main(int argc, char **argv)
 					"Generating PIVX Address\n");
 					addrtype = 30;
 					privtype = 212;
+					break;
+			}
+			else
+			if (strcmp(optarg, "KMD")== 0) {
+				fprintf(stderr,
+					"Generating KMD Address\n");
+					addrtype = 60;
+					privtype = 188;
 					break;
 			}
 			else
