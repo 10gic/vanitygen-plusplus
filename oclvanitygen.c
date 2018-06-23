@@ -1167,8 +1167,8 @@ main(int argc, char **argv)
 					addrtype = 65;
 					privtype = 193;
 					break;
-      }
-      else
+                        }
+                        else
 			if (strcmp(optarg, "KORE")== 0) {
 				fprintf(stderr,
 					"Generating Kore Address\n");

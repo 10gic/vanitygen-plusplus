@@ -1081,8 +1081,8 @@ main(int argc, char **argv)
 					addrtype_opt = 65;
 					privtype_opt = 193;
 					break;
-      }
-      else
+                        }
+                        else
 			if (strcmp(optarg, "KORE")== 0) {
 				fprintf(stderr,
 					"Decrypting Kore Address\n");
