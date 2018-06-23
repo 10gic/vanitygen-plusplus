@@ -274,6 +274,7 @@ main(int argc, char **argv)
 					"START : Startcoin : s\n"
 					"SXC : Sexcoin : R or S\n"
 					"TPC : Templecoin : T\n"
+					"TUX : Tuxcoin : T\n"
 					"UIS : Unitus : U\n"
 					"UNO : Unobtanium : u\n"
 					"VIA : Viacoin : V\n"
@@ -1158,6 +1159,14 @@ main(int argc, char **argv)
 					privtype = 239;
 					break;
 			}
+			else
+			if (strcmp(optarg, "TUX")== 0) {
+				fprintf(stderr,
+					"Generating TUX Address\n");
+					addrtype = 65;
+					privtype = 193;
+					break;
+            }
 			break;
 
 /*END ALTCOIN GENERATOR*/
