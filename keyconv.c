@@ -150,6 +150,7 @@ main(int argc, char **argv)
 					"LEAF : Leafcoin : f\n"
 					"LTC : Litecoin : L\n"
 					"MMC : Memorycoin : M\n"
+					"MNP : MNPCoin : M\n"
 					"MOG : Mogwai : M\n"
 					"MONA : Monacoin : M\n"
 					"MUE : Monetary Unit : 7\n"
@@ -1108,6 +1109,14 @@ main(int argc, char **argv)
 					"Decrypting Gravium Address\n");
 					addrtype_opt = 38;
 					privtype_opt = 166;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MNP")== 0) {
+				fprintf(stderr,
+					"Decrypting MNPCoin Address\n");
+					addrtype_opt = 50;
+					privtype_opt = 55;
 					break;
 			}
 			else
