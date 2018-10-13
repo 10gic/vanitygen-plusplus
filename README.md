@@ -198,6 +198,7 @@ Current List of Available Coins for Address Generation
 |LEAF | Leafcoin | f  |
 |LMC | LomoCoin | L  |
 |LTC | Litecoin | L  |
+|MGD | MassGrid | M  |
 |MMC | Memorycoin | M  |
 |MNP | MNPCoin | M  |
 |MOG | Mogwai | M  |

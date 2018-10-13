@@ -509,6 +509,7 @@ main(int argc, char **argv)
 					"LEAF : Leafcoin : f\n"
 					"LMC : LomoCoin : L\n"
 					"LTC : Litecoin : L\n"
+					"MGD : MassGrid : M\n"
 					"MMC : Memorycoin : M\n"
 					"MNP : MNPCoin : M\n"
 					"MOG : Mogwai : M\n"
@@ -1287,6 +1288,14 @@ main(int argc, char **argv)
 					"Generating DASH Address\n");
 					addrtype = 76;
 					privtype = 204;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MGD")== 0) {
+				fprintf(stderr,
+					"Generating MassGrid Address\n");
+					addrtype = 50;
+					privtype = 25;
 					break;
 			}
 			else

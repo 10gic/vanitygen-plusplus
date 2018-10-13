@@ -152,6 +152,7 @@ main(int argc, char **argv)
 					"LEAF : Leafcoin : f\n"
 					"LMC : LomoCoin : L\n"
 					"LTC : Litecoin : L\n"
+					"MGD : MassGrid : M\n"
 					"MMC : Memorycoin : M\n"
 					"MNP : MNPCoin : M\n"
 					"MOG : Mogwai : M\n"
@@ -928,6 +929,14 @@ main(int argc, char **argv)
 					"Decrypting DASH Address\n");
 					addrtype_opt = 76;
 					privtype_opt = 204;
+					break;
+			}
+			else
+			if (strcmp(optarg, "MGD")== 0) {
+				fprintf(stderr,
+					"Decrypting MassGrid Address\n");
+					addrtype_opt = 50;
+					privtype_opt = 25;
 					break;
 			}
 			else
