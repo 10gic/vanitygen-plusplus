@@ -128,6 +128,7 @@ main(int argc, char **argv)
 					"DVC : Devcoin : 1\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
 					"EMC : Emercoin : E\n"
+					"ETH : Ethereum : 0x\n"
 					"EXCL : Exclusivecoin : E\n"
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
@@ -389,6 +390,14 @@ main(int argc, char **argv)
 						"Decrypting Emercoin Address\n");
 				addrtype_opt = 33;
 				privtype_opt = 128;
+				break;
+			}
+			else
+			if (strcmp(optarg, "ETH")== 0) {
+				fprintf(stderr,
+						"Generating/Decrypting ETH Address\n");
+				addrtype_opt = ADDR_TYPE_ETH;
+				privtype_opt = PRIV_TYPE_ETH;
 				break;
 			}
 			else
@@ -1296,7 +1305,7 @@ main(int argc, char **argv)
 		dumpbn(EC_KEY_get0_private_key(pkey));
 		vg_encode_address(EC_KEY_get0_public_key(pkey),
 				  EC_KEY_get0_group(pkey),
-				  addrtype, ecprot);
+				  addrtype, 0, ecprot);
 		printf("Address: %s\n", ecprot);
 		vg_encode_privkey(pkey, privtype, ecprot);
 		printf("Privkey: %s\n", ecprot);
@@ -1417,7 +1426,7 @@ main(int argc, char **argv)
 
 		vg_encode_address(EC_KEY_get0_public_key(pkey),
 				  EC_KEY_get0_group(pkey),
-				  addrtype, pwbuf);
+				  addrtype, 0, pwbuf);
 		printf("Address: %s\n", pwbuf);
 		printf("Protkey: %s\n", ecprot);
 	}
@@ -1433,7 +1442,7 @@ main(int argc, char **argv)
 		} else {
 			vg_encode_address(EC_KEY_get0_public_key(pkey),
 					  EC_KEY_get0_group(pkey),
-					  addrtype, ecprot);
+					  addrtype, 0, ecprot);
 			printf("Address: %s\n", ecprot);
 			vg_encode_privkey(pkey, privtype, ecprot);
 			printf("Privkey: %s\n", ecprot);

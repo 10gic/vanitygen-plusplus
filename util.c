@@ -25,6 +25,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <ctype.h>
 
 #include <openssl/bn.h>
 #include <openssl/sha.h>
@@ -39,6 +40,7 @@
 #include "pattern.h"
 #include "util.h"
 #include "sph_groestl.h"
+#include "sha3.h"
 
 const char *vg_b58_alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -279,8 +281,22 @@ out:
 
 void
 vg_encode_address(const EC_POINT *ppoint, const EC_GROUP *pgroup,
-		  int addrtype, char *result)
+		  int addrtype, int addrformat, char *result)
 {
+	// For ETH
+	if (addrtype == ADDR_TYPE_ETH) {
+		unsigned char eckey_buf[128];
+		unsigned char addr_buf[20];
+		size_t len=64;
+		EC_POINT_point2oct(pgroup, ppoint,
+						   POINT_CONVERSION_UNCOMPRESSED, eckey_buf,
+						   sizeof(eckey_buf), NULL);
+		// Save ETH address into addr_buf
+		eth_pubkey2addr(eckey_buf, addrformat, addr_buf);
+		memcpy(result, "0x", 2);
+		hexenc(result+2, &len, addr_buf, 20);
+		return;
+	}
 	unsigned char eckey_buf[128], *pend;
 	unsigned char binres[21] = {0,};
 	unsigned char hash1[32];
@@ -354,7 +370,7 @@ vg_encode_script_address(const EC_POINT *ppoint, const EC_GROUP *pgroup,
 }
 
 void
-vg_encode_privkey(const EC_KEY *pkey, int addrtype, char *result)
+vg_encode_privkey(const EC_KEY *pkey, int privtype, char *result)
 {
 	unsigned char eckey_buf[128];
 	const BIGNUM *bn;
@@ -362,18 +378,26 @@ vg_encode_privkey(const EC_KEY *pkey, int addrtype, char *result)
 
 	bn = EC_KEY_get0_private_key(pkey);
 
-	eckey_buf[0] = addrtype;
+	eckey_buf[0] = privtype;
 	nbytes = BN_num_bytes(bn);
 	assert(nbytes <= 32);
 	if (nbytes < 32)
 		memset(eckey_buf + 1, 0, 32 - nbytes);
 	BN_bn2bin(bn, &eckey_buf[33 - nbytes]);
 
+	// For ETH
+	if (privtype == PRIV_TYPE_ETH) {
+		size_t len=80;
+		memcpy(result, "0x", 2);
+		hexenc(result + 2, &len, eckey_buf + 1, 32);
+		return;
+	}
+
 	vg_b58_encode_check(eckey_buf, 33, result);
 }
 
 void
-vg_encode_privkey_compressed(const EC_KEY *pkey, int addrtype, char *result)
+vg_encode_privkey_compressed(const EC_KEY *pkey, int privtype, char *result)
 {
 	unsigned char eckey_buf[128];
 	const BIGNUM *bn;
@@ -381,7 +405,7 @@ vg_encode_privkey_compressed(const EC_KEY *pkey, int addrtype, char *result)
 
 	bn = EC_KEY_get0_private_key(pkey);
 
-	eckey_buf[0] = addrtype;
+	eckey_buf[0] = privtype;
 	nbytes = BN_num_bytes(bn);
 	assert(nbytes <= 32);
 	if (nbytes < 32)
@@ -1174,4 +1198,81 @@ vg_read_file(FILE *fp, char ***result, int *rescount)
 	*rescount = npatterns;
 	fprintf(stderr,	"\n");
 	return ret;
+}
+
+static const char hexdig[] = "0123456789abcdef";
+
+int hexdec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
+{
+	size_t binsz = *binszp;
+	const unsigned char *hexu = (void*)hex;
+	uint8_t *binu = bin;
+	size_t i;
+
+	if (!hexsz) hexsz = strlen((const char *)hex);
+	if (hexsz & 1) return -1;
+	if (*hexu == '0' && (hexu[1] | 0x20) == 'x') {
+		hexu += 2;
+		hexsz -= 2;
+	}
+	if (hexsz == 0 || binsz < hexsz/2) return -1;
+	binsz = hexsz/2;
+	for(i=0;i<binsz;i++,binu++) {
+		if (!isxdigit(*hexu)) return -1;
+		if (isdigit(*hexu)) *binu = (*hexu - '0') << 4; else {
+			*binu = ((*hexu | 0x20) - 'a' + 10) << 4;
+		}
+		hexu++;
+		if (!isxdigit(*hexu)) return -1;
+		if (isdigit(*hexu)) *binu |= (*hexu - '0'); else {
+			*binu |= ((*hexu | 0x20) - 'a' + 10);
+		}
+		hexu++;
+	}
+
+	*binszp = binsz;
+
+	return 0;
+}
+
+int hexenc(char *hex, size_t *hexsz, const void *data, size_t binsz)
+{
+	const uint8_t *bin = data;
+	size_t i, len;
+	if (*hexsz < binsz*2 +1) return -1;
+	len = 0;
+	for(i=0;i<binsz;i++,bin++) {
+		*hex++ = hexdig[*bin >> 4];
+		len++;
+		*hex++ = hexdig[*bin & 0xf];
+		len++;
+	}
+	*hex = '\0';
+	*hexsz = ++len;
+
+	return 0;
+}
+
+// pubkey_buf must be equal or greater than 65 bytes
+// out_buf must be equal or greater than 20 bytes
+void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned char *out_buf) {
+	unsigned char hash1[32], ethrlp_buf[23];
+
+	SHA3_256(hash1, pubkey_buf + 1, 64); // skip 1 byte (the leading 0x04) in uncompressed public key
+	memcpy(out_buf, hash1 + 12, 20); // skip first 12 bytes in public key hash, out_buf store eth address
+	if (addrformat == VCF_CONTRACT) {
+		// Compute eth contract address with nonce 0, see:
+		// https://ethereum.stackexchange.com/questions/760/how-is-the-address-of-an-ethereum-contract-computed
+		ethrlp_buf[0] = 0xd6;
+		ethrlp_buf[1] = 0x94;
+		memcpy(ethrlp_buf + 2, out_buf, 20);
+		ethrlp_buf[22] = 0x80;
+
+		SHA3_256(hash1, ethrlp_buf, 23);
+		memcpy(out_buf, hash1 + 12, 20); // out_buf store eth contract address
+	}
+	// printf("public key: ");
+	// dumphex(pubkey_buf, 65);
+	// printf("address: ");
+	// dumphex(out_buf, 20);
 }

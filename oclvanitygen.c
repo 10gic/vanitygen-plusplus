@@ -137,6 +137,7 @@ main(int argc, char **argv)
 	int npattfp = 0;
 	int pattstdin = 0;
 	int compressed = 0;
+	enum vg_format format = VCF_PUBKEY;
 
 	int i;
 
@@ -223,6 +224,7 @@ main(int argc, char **argv)
 					"DVC : Devcoin : 1\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
 					"EMC : Emercoin : E\n"
+					"ETH : Ethereum : 0x\n"
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
 					"FTC : Feathercoin : 6 or 7\n"
@@ -1302,6 +1304,14 @@ main(int argc, char **argv)
 					privtype = 239;
 					break;
 			}
+			else
+			if (strcmp(optarg, "ETH")== 0) {
+				fprintf(stderr,
+						"Generating ETH Address\n");
+				addrtype = ADDR_TYPE_ETH;
+				privtype = PRIV_TYPE_ETH;
+				break;
+			}
 			break;
 
 /*END ALTCOIN GENERATOR*/
@@ -1315,6 +1325,9 @@ main(int argc, char **argv)
 			privtype = atoi(optarg);
 			break;
 		case 'F':
+			if (!strcmp(optarg, "contract"))
+				format = VCF_CONTRACT;
+			else
 			if (!strcmp(optarg, "compressed"))
 				compressed = 1;
 			else
@@ -1457,7 +1470,8 @@ main(int argc, char **argv)
 		case 'Z':
 			assert(strlen(optarg) % 2 == 0);
 			privkey_prefix_length = strlen(optarg)/2;
-			for (size_t i = 0; i < privkey_prefix_length; i++) {
+			size_t i;
+			for (i = 0; i < privkey_prefix_length; i++) {
 				int value; // Can't sscanf directly to char array because of overlapping on Win32
 				sscanf(&optarg[i*2], "%2x", &value);
 				privkey_prefix[privkey_prefix_length - 1 - i] = value;
@@ -1516,6 +1530,7 @@ main(int argc, char **argv)
 	vcp->vc_result_file = result_file;
 	vcp->vc_remove_on_match = remove_on_match;
 	vcp->vc_only_one = only_one;
+	vcp->vc_format = format;
 	vcp->vc_numpairs = numpairs;
 	vcp->vc_csv = csv;
 	vcp->vc_pubkeytype = addrtype;
@@ -1605,6 +1620,10 @@ main(int argc, char **argv)
 	if (!opened) {
 		vg_ocl_enumerate_devices();
 		return 1;
+	}
+
+	if (verbose > 1) {
+		vg_ocl_enumerate_devices();
 	}
 
 	opt = vg_context_start_threads(vcp);

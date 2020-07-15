@@ -31,6 +31,7 @@
 
 #include "pattern.h"
 #include "util.h"
+#include "sha3.h"
 
 #include "ticker.h"
 char ticker[10];
@@ -132,7 +133,7 @@ vg_thread_loop(void *arg)
         unsigned char pkey_arr[32];
         assert(BN_bn2bin(pkbn, pkey_arr) < 33);
         memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
-				for (int i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
+				for (i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
 					int k = pkey_arr[i];
 					pkey_arr[i] = pkey_arr[vcp->vc_privkey_prefix_length - 1 - i];
 					pkey_arr[vcp->vc_privkey_prefix_length - 1 - i] = k;
@@ -221,9 +222,13 @@ vg_thread_loop(void *arg)
 						 (vcp->vc_compressed)?33:65,
 						 vxcp->vxc_bnctx);
 			assert(len == 65 || len == 33);
-
-			SHA256(hash_buf, hash_len, hash1);
-			RIPEMD160(hash1, sizeof(hash1), &vxcp->vxc_binres[1]);
+			if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
+				// Save ETH address into vxcp->vxc_binres
+				eth_pubkey2addr(eckey_buf, vxcp->vxc_vc->vc_format, vxcp->vxc_binres);
+			} else {
+				SHA256(hash_buf, hash_len, hash1);
+				RIPEMD160(hash1, sizeof(hash1), &vxcp->vxc_binres[1]);
+			}
 
 			switch (test_func(vxcp)) {
 			case 1:
@@ -485,6 +490,7 @@ main(int argc, char **argv)
 					"DVC : Devcoin : 1\n"
 					"EFL : Electronic-Gulden-Foundation : L\n"
 					"EMC : Emercoin : E\n"
+					"ETH : Ethereum : 0x\n"
 					"EXCL : Exclusivecoin : E\n"
 					"FAIR : Faircoin2 : f\n"
 					"FLOZ : FLOZ : F\n"
@@ -1575,6 +1581,14 @@ main(int argc, char **argv)
 					privtype = 239;
 					break;
 			}
+			else
+			if (strcmp(optarg, "ETH")== 0) {
+				fprintf(stderr,
+						"Generating ETH Address\n");
+				addrtype = ADDR_TYPE_ETH;
+				privtype = PRIV_TYPE_ETH;
+				break;
+			}
 			break;
 
 /*END ALTCOIN GENERATOR*/
@@ -1589,12 +1603,15 @@ main(int argc, char **argv)
 			privtype = atoi(optarg);
  			break;
 		case 'F':
+			if (!strcmp(optarg, "contract"))
+				format = VCF_CONTRACT;
+			else
 			if (!strcmp(optarg, "script"))
 				format = VCF_SCRIPT;
-                        else
-                        if (!strcmp(optarg, "compressed"))
-                                compressed = 1;
-                        else
+			else
+			if (!strcmp(optarg, "compressed"))
+				compressed = 1;
+			else
 			if (strcmp(optarg, "pubkey")) {
 				fprintf(stderr,
 					"Invalid format '%s'\n", optarg);
@@ -1679,7 +1696,7 @@ main(int argc, char **argv)
 		case 'Z':
 			assert(strlen(optarg) % 2 == 0);
 			privkey_prefix_length = strlen(optarg)/2;
-			for (size_t i = 0; i < privkey_prefix_length; i++) {
+			for (i = 0; i < privkey_prefix_length; i++) {
 				int value; // Can't sscanf directly to char array because of overlapping on Win32
 				sscanf(&optarg[i*2], "%2x", &value);
 				privkey_prefix[privkey_prefix_length - 1 - i] = value;

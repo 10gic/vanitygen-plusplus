@@ -39,14 +39,14 @@ extern void vg_b58_encode_check(void *buf, size_t len, char *result);
 extern int vg_b58_decode_check(const char *input, void *buf, size_t len);
 
 extern void vg_encode_address(const EC_POINT *ppoint, const EC_GROUP *pgroup,
-			      int addrtype, char *result);
+			      int addrtype, int addrformat, char *result);
 extern void vg_encode_address_compressed(const EC_POINT *ppoint, const EC_GROUP *pgroup,
 			      int addrtype, char *result);
 extern void vg_encode_script_address(const EC_POINT *ppoint,
 				     const EC_GROUP *pgroup,
 				     int addrtype, char *result);
-extern void vg_encode_privkey(const EC_KEY *pkey, int addrtype, char *result);
-extern void vg_encode_privkey_compressed(const EC_KEY *pkey, int addrtype, char *result);
+extern void vg_encode_privkey(const EC_KEY *pkey, int privtype, char *result);
+extern void vg_encode_privkey_compressed(const EC_KEY *pkey, int privtype, char *result);
 extern int vg_set_privkey(const BIGNUM *bnpriv, EC_KEY *pkey);
 extern int vg_decode_privkey(const char *b58encoded,
 			     EC_KEY *pkey, int *addrtype);
@@ -79,5 +79,10 @@ extern int vg_read_password(char *buf, size_t size);
 extern int vg_check_password_complexity(const char *pass, int verbose);
 
 extern int vg_read_file(FILE *fp, char ***result, int *rescount);
+
+extern int hexdec(void *bin, size_t *binsz, const char *hex, size_t hexsz);
+extern int hexenc(char *hex, size_t *hexsz, const void *bin, size_t binsz);
+
+extern void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned char *out_buf);
 
 #endif /* !defined (__VG_UTIL_H__) */

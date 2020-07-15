@@ -67,7 +67,8 @@
  * Steps:
  * - Compute Px = Pxj * (1/Pz)^2
  * - Compute Py = Pyj * (1/Pz)^3
- * - Compute H = RIPEMD160(SHA256({0x02|0x03|0x04} | Px | Py?))
+ * - Compute H = RIPEMD160(SHA256({0x02|0x03|0x04} | Px | Py?)) or
+ *   Compute H = SHA3 (Px, Py) when ETH
  *
  * Output:
  * - Array of 20-byte address hash values
@@ -99,6 +100,18 @@
 	__constant bool compressed_address = 1;
 #else
 	__constant bool compressed_address = 0;
+#endif
+
+#ifdef ADDR_TYPE_ETH
+	__constant bool addr_type_eth = 1;
+#else
+	__constant bool addr_type_eth = 0;
+#endif
+
+#ifdef VCF_CONTRACT
+	__constant bool vcf_contract = 1;
+#else
+	__constant bool vcf_contract = 0;
 #endif
 
 /*
@@ -983,6 +996,135 @@ ripemd160_block(uint *out, uint *in)
 }
 
 
+/******** The Keccak-f[1600] permutation ********/
+
+/*** Constants. ***/
+static const __constant uchar rho[24] = \
+	{ 1,  3,   6, 10, 15, 21,
+	  28, 36, 45, 55,  2, 14,
+	  27, 41, 56,  8, 25, 43,
+	  62, 18, 39, 61, 20, 44};
+static const __constant uchar pi[24] = \
+	{10,  7, 11, 17, 18, 3,
+	 5, 16,  8, 21, 24, 4,
+	 15, 23, 19, 13, 12, 2,
+	 20, 14, 22,  9, 6,  1};
+static const __constant ulong RC[24] = \
+	{1UL, 0x8082UL, 0x800000000000808aUL, 0x8000000080008000UL,
+	 0x808bUL, 0x80000001UL, 0x8000000080008081UL, 0x8000000000008009UL,
+	 0x8aUL, 0x88UL, 0x80008009UL, 0x8000000aUL,
+	 0x8000808bUL, 0x800000000000008bUL, 0x8000000000008089UL, 0x8000000000008003UL,
+	 0x8000000000008002UL, 0x8000000000000080UL, 0x800aUL, 0x800000008000000aUL,
+	 0x8000000080008081UL, 0x8000000000008080UL, 0x80000001UL, 0x8000000080008008UL};
+
+/*** Helper macros to unroll the permutation. ***/
+#define rol(x, s) (((x) << s) | ((x) >> (64 - s)))
+#define REPEAT6(e) e e e e e e
+#define REPEAT24(e) REPEAT6(e e e e)
+#define REPEAT5(e) e e e e e
+#define FOR5(v, s, e)							\
+	v = 0;										\
+	REPEAT5(e; v += s;)
+
+/*** Keccak-f[1600] ***/
+static inline void keccakf(void* state) {
+	ulong* a = (ulong*)state;
+	ulong b[5] = {0UL,0UL,0UL,0UL,0UL};
+	ulong t = 0UL;
+	uchar x, y;
+
+	for (int i = 0; i < 24; i++) {
+		// Theta
+		FOR5(x, 1,
+			 b[x] = 0;
+					 FOR5(y, 5,
+						  b[x] ^= a[x + y]; ))
+		FOR5(x, 1,
+			 FOR5(y, 5,
+				  a[y + x] ^= b[(x + 4) % 5] ^ rol(b[(x + 1) % 5], 1); ))
+		// Rho and pi
+		t = a[1];
+		x = 0;
+		REPEAT24(b[0] = a[pi[x]];
+						 a[pi[x]] = rol(t, rho[x]);
+						 t = b[0];
+						 x++; )
+		// Chi
+		FOR5(y,
+			 5,
+			 FOR5(x, 1,
+				  b[x] = a[y + x];)
+					 FOR5(x, 1,
+					 a[y + x] = b[x] ^ ((~b[(x + 1) % 5]) & b[(x + 2) % 5]); ))
+		// Iota
+		a[0] ^= RC[i];
+	}
+}
+
+/******** The FIPS202-defined functions. ********/
+
+/*** Some helper macros. ***/
+
+#define _(S) do { S } while (0)
+#define FOR(i, ST, L, S)							\
+	_(for (size_t i = 0; i < L; i += ST) { S; })
+#define mkapply_ds(NAME, S)						\
+	static inline void NAME(uchar* dst,			\
+		const uchar* src,						\
+		size_t len) {								\
+		FOR(i, 1, len, S);							\
+	}
+#define mkapply_sd(NAME, S)						\
+	static inline void NAME(const uchar* src,	\
+		uchar* dst,								\
+		size_t len) {								\
+		FOR(i, 1, len, S);							\
+	}
+
+mkapply_ds(xorin, dst[i] ^= src[i])  // xorin
+mkapply_sd(setout, dst[i] = src[i])  // setout
+
+#define P keccakf
+#define Plen 200
+
+// Fold P*F over the fUL blocks of an input.
+#define foldP(I, L, F)								\
+	while (L >= rate) {								\
+		F(a, I, rate);								\
+		P(a);										\
+		I += rate;									\
+		L -= rate;									\
+	}
+
+/** The sponge-based hash construction. **/
+static inline void hash(uchar* out, size_t outlen,
+						const uchar* in, size_t inlen,
+						size_t rate, uchar delim) {
+	uchar a[Plen] = {0};
+	ulong *st = (ulong *)a;
+	for(size_t i = 0; i<25; i++) *st++ = 0UL;
+	// Absorb input.
+	foldP(in, inlen, xorin);
+	// Xor in the DS and pad frame.
+	a[inlen] ^= delim;
+	a[rate - 1] ^= 0x80;
+	// Xor in the last block.
+	xorin(a, in, inlen);
+	// Apply P
+	P(a);
+	// Squeeze output.
+	foldP(out, outlen, setout);
+	setout(a, out, outlen);
+}
+
+void sha3_256(uchar * out, const uchar * in, size_t inlen)
+{
+	hash(out, 32, in, inlen, 200 - (256 / 4), 0x01);
+}
+
+/*** FIPS202 SHA3 FOFs ***/
+
+
 #ifdef TEST_KERNELS
 /*
  * Test kernels
@@ -1337,6 +1479,97 @@ hash_ec_point(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
 	ripemd160_block(hash_out, hash2);
 }
 
+void
+hash_ec_point_eth(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
+{
+	uint hash1[16], hash2[16];
+	bignum c, zi, zzi;
+
+	/*
+	 * Multiply the coordinates by the inverted Z values.
+	 * Stash the coordinates in the hash buffer.
+	 */
+#define hash_ec_point_inner_1(i)		\
+	zi.d[i] = zip[i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_1);
+
+	bn_mul_mont(&zzi, &zi, &zi);  /* 1 / Z^2 */
+
+#define hash_ec_point_inner_2(i)		\
+	c.d[i] = xy[i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_2);
+
+	bn_mul_mont(&c, &c, &zzi);  /* X / Z^2 */
+	bn_from_mont(&c, &c);
+
+#define hash_ec_point_inner_3(i)		\
+	hash1[i] = bswap32(c.d[(BN_NWORDS - 1) - i]);
+
+	bn_unroll(hash_ec_point_inner_3);
+
+	bn_mul_mont(&zzi, &zzi, &zi);  /* 1 / Z^3 */
+
+#define hash_ec_point_inner_4(i)				\
+	c.d[i] = xy[(ACCESS_STRIDE/2) + i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_4);
+
+	bn_mul_mont(&c, &c, &zzi);  /* Y / Z^3 */
+	bn_from_mont(&c, &c);
+
+#define hash_ec_point_inner_5(i)			\
+    hash1[BN_NWORDS + i] = bswap32(c.d[(BN_NWORDS - 1) - i]);
+
+    bn_unroll(hash_ec_point_inner_5);
+    sha3_256(hash2, hash1, 64);
+    // the length of uncompressed public key (hash1) are 64 bytes (exclude the leading 0x04)
+	// the length of sha3_256 result (hash2) are 32 bytes
+	// the length of eth address (hash_out) are 20 bytes (skip first 12 bytes in previous hash)
+    hash_out[0] = hash2[3];
+    hash_out[1] = hash2[4];
+    hash_out[2] = hash2[5];
+    hash_out[3] = hash2[6];
+    hash_out[4] = hash2[7];
+
+    if (vcf_contract) {
+		// Compute eth contract address with nonce 0, see:
+		// https://ethereum.stackexchange.com/questions/760/how-is-the-address-of-an-ethereum-contract-computed
+		unsigned char ethrlp_buf[23];
+		ethrlp_buf[0] = 0xd6;
+		ethrlp_buf[1] = 0x94;
+		ethrlp_buf[2] = hash_out[0]; // assume little-endian
+		ethrlp_buf[3] = hash_out[0] >> 8;
+		ethrlp_buf[4] = hash_out[0] >> 16;
+		ethrlp_buf[5] = hash_out[0] >> 24;
+		ethrlp_buf[6] = hash_out[1];
+		ethrlp_buf[7] = hash_out[1] >> 8;
+		ethrlp_buf[8] = hash_out[1] >> 16;
+		ethrlp_buf[9] = hash_out[1] >> 24;
+		ethrlp_buf[10] = hash_out[2];
+		ethrlp_buf[11] = hash_out[2] >> 8;
+		ethrlp_buf[12] = hash_out[2] >> 16;
+		ethrlp_buf[13] = hash_out[2] >> 24;
+		ethrlp_buf[14] = hash_out[3];
+		ethrlp_buf[15] = hash_out[3] >> 8;
+		ethrlp_buf[16] = hash_out[3] >> 16;
+		ethrlp_buf[17] = hash_out[3] >> 24;
+		ethrlp_buf[18] = hash_out[4];
+		ethrlp_buf[19] = hash_out[4] >> 8;
+		ethrlp_buf[20] = hash_out[4] >> 16;
+		ethrlp_buf[21] = hash_out[4] >> 24;
+		ethrlp_buf[22] = 0x80;
+
+		sha3_256(hash2, ethrlp_buf, 23);
+		hash_out[0] = hash2[3]; // skip first 12 bytes
+		hash_out[1] = hash2[4];
+		hash_out[2] = hash2[5];
+		hash_out[3] = hash2[6];
+		hash_out[4] = hash2[7];
+    }
+}
+
 
 __kernel void
 hash_ec_point_get(__global uint *hashes_out,
@@ -1355,7 +1588,11 @@ hash_ec_point_get(__global uint *hashes_out,
 	points_in += start;
 
 	/* Complete the coordinates and hash */
-	hash_ec_point(hash, points_in, z_heap);
+	if (addr_type_eth) {
+		hash_ec_point_eth(hash, points_in, z_heap);
+	} else {
+		hash_ec_point(hash, points_in, z_heap);
+	}
 
 	p = get_global_size(0);
 	i = p * get_global_id(1);
@@ -1413,7 +1650,11 @@ hash_ec_point_search_prefix(__global uint *found,
 	points_in += start;
 
 	/* Complete the coordinates and hash */
-	hash_ec_point(hash, points_in, z_heap);
+	if (addr_type_eth) {
+		hash_ec_point_eth(hash, points_in, z_heap);
+	} else {
+		hash_ec_point(hash, points_in, z_heap);
+	}
 
 	/*
 	 * Unconditionally byteswap the hash result, because:

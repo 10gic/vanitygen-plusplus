@@ -37,6 +37,9 @@
 
 #define VANITYGEN_VERSION "PLUS v1.53"
 
+#define ADDR_TYPE_ETH -1
+#define PRIV_TYPE_ETH -1
+
 typedef struct _vg_context_s vg_context_t;
 
 struct _vg_exec_context_s;
@@ -73,7 +76,7 @@ typedef int (*vg_add_pattern_func_t)(vg_context_t *,
 				     int npatterns);
 typedef void (*vg_clear_all_patterns_func_t)(vg_context_t *);
 typedef int (*vg_test_func_t)(vg_exec_context_t *);
-typedef int (*vg_hash160_sort_func_t)(vg_context_t *vcp, void *buf);
+typedef int (*vg_addr_sort_func_t)(vg_context_t *vcp, void *buf);
 typedef void (*vg_output_error_func_t)(vg_context_t *vcp, const char *info);
 typedef void (*vg_output_match_func_t)(vg_context_t *vcp, EC_KEY *pkey,
 				       const char *pattern);
@@ -84,6 +87,7 @@ typedef void (*vg_output_timing_func_t)(vg_context_t *vcp, double count,
 enum vg_format {
 	VCF_PUBKEY,
 	VCF_SCRIPT,
+	VCF_CONTRACT, // VCF_CONTRACT only valid for ETH
 };
 
 /* Application-level context, incl. parameters and global pattern store */
@@ -118,7 +122,7 @@ struct _vg_context_s {
 	vg_add_pattern_func_t		vc_add_patterns;
 	vg_clear_all_patterns_func_t	vc_clear_all_patterns;
 	vg_test_func_t			vc_test;
-	vg_hash160_sort_func_t		vc_hash160_sort;
+	vg_addr_sort_func_t		vc_addr_sort;
 
 	/* Performance related members */
 	unsigned long long		vc_timing_total;
@@ -163,7 +167,7 @@ extern void vg_output_timing_console(vg_context_t *vcp, double count,
 
 
 /* Internal vg_context methods */
-extern int vg_context_hash160_sort(vg_context_t *vcp, void *buf);
+extern int vg_context_addr_sort(vg_context_t *vcp, void *buf);
 extern void vg_context_thread_exit(vg_context_t *vcp);
 
 /* Internal Init/cleanup for common execution context */

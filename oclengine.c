@@ -967,7 +967,13 @@ vg_ocl_init(vg_context_t *vcp, vg_ocl_context_t *vocp, cl_device_id did,
 				"-DAMD_BFI_INT ");
 	if (vcp->vc_compressed)
 		end += snprintf(optbuf + end, sizeof(optbuf) - end,
-				"-DCOMPRESSED_ADDRESS");
+				"-DCOMPRESSED_ADDRESS ");
+	if (vcp->vc_addrtype == ADDR_TYPE_ETH)
+		end += snprintf(optbuf + end, sizeof(optbuf) - end,
+				"-DADDR_TYPE_ETH ");
+	if (vcp->vc_format == VCF_CONTRACT)
+		end += snprintf(optbuf + end, sizeof(optbuf) - end,
+						"-DVCF_CONTRACT ");
 	if (vocp->voc_quirks & VG_OCL_NV_VERBOSE)
 		end += snprintf(optbuf + end, sizeof(optbuf) - end,
 				"-cl-nv-verbose ");
@@ -1503,9 +1509,12 @@ vg_ocl_gethash_check(vg_ocl_context_t *vocp, int slot)
 	round = vocp->voc_ocl_cols * vocp->voc_ocl_rows;
 
 	for (i = 0; i < round; i++, vxcp->vxc_delta++) {
-		memcpy(&vxcp->vxc_binres[1],
-		       ocl_hashes_out + (20*i),
-		       20);
+		if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
+			memcpy(&vxcp->vxc_binres[0], ocl_hashes_out + (20 * i), 20);
+		} else {
+			// First byte is addrtype, skip it when memcpy
+			memcpy(&vxcp->vxc_binres[1], ocl_hashes_out + (20 * i), 20);
+		}
 
 		res = test_func(vxcp);
 		if (res)
@@ -1563,7 +1572,7 @@ vg_ocl_prefix_rekey(vg_ocl_context_t *vocp)
 
 	if (vocp->voc_pattern_rewrite) {
 		/* Count number of range records */
-		i = vg_context_hash160_sort(vcp, NULL);
+		i = vg_context_addr_sort(vcp, NULL);
 		if (!i)
 			return 0;
 
@@ -1582,7 +1591,7 @@ vg_ocl_prefix_rekey(vg_ocl_context_t *vocp)
 				"ERROR: Could not map hash target buffer\n");
 			return -1;
 		}
-		vg_context_hash160_sort(vcp, ocl_targets_in);
+		vg_context_addr_sort(vcp, ocl_targets_in);
 		vg_ocl_unmap_arg_buffer(vocp, 0, 5, ocl_targets_in);
 		vg_ocl_kernel_int_arg(vocp, -1, 4, i);
 
@@ -1617,16 +1626,21 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 		/* GPU code claims match, verify with CPU version */
 		orig_delta = vxcp->vxc_delta;
 		vxcp->vxc_delta += found_delta;
-		vg_exec_context_calc_address(vxcp);
+		vg_exec_context_calc_address(vxcp); // compute hash using cpu, save result into vxcp->vxc_binres
 
 		/* Make sure the GPU produced the expected hash */
 		res = 0;
-		if (!memcmp(vxcp->vxc_binres + 1,
-			    ocl_found_out + 2,
-			    20)) {
-			res = test_func(vxcp);
+		if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
+			if (!memcmp(vxcp->vxc_binres, ocl_found_out + 2, 20)) {
+				res = test_func(vxcp);
+			}
+		} else {
+			if (!memcmp(vxcp->vxc_binres + 1, ocl_found_out + 2, 20)) {
+				res = test_func(vxcp);
+			}
 		}
 		if (res == 0) {
+			vcp->vc_output_match(vcp, vxcp->vxc_key, "N/A");  // just show private key for debugging.
 			/*
 			 * The match was not found in
 			 * the pattern list.  Hmm.
@@ -1634,7 +1648,11 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 //			tablesize = ocl_found_out[2];
 			fprintf(stderr, "Match idx: %d\n", ocl_found_out[1]);
 			fprintf(stderr, "CPU hash: ");
-			fdumphex(stderr, vxcp->vxc_binres + 1, 20);
+			if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
+				fdumphex(stderr, vxcp->vxc_binres, 20);
+			} else {
+				fdumphex(stderr, vxcp->vxc_binres + 1, 20);
+			}
 			fprintf(stderr, "GPU hash: ");
 			fdumphex(stderr,
 				 (unsigned char *) (ocl_found_out + 2), 20);
@@ -1677,7 +1695,7 @@ vg_ocl_config_pattern(vg_ocl_context_t *vocp)
 	vg_context_t *vcp = vocp->base.vxc_vc;
 	int i;
 
-	i = vg_context_hash160_sort(vcp, NULL);
+	i = vg_context_addr_sort(vcp, NULL);
 	if (i > 0) {
 		if (vcp->vc_verbose > 1)
 			fprintf(stderr, "Using OpenCL prefix matcher\n");
@@ -1791,7 +1809,7 @@ vg_ocl_verify_temporary(vg_ocl_context_t *vocp, int slot, int z_inverted)
 					fprintf(stderr, "Row X   : ");
 					fdumpbn(stderr, PPR_ARROW_X);
 					fprintf(stderr, "Row Y   : ");
-					fdumpbn(stderr, PPS_ARROW_Y);
+					fdumpbn(stderr, PPR_ARROW_Y);
 				}
 
 				fprintf(stderr, "Column X: ");
@@ -2082,7 +2100,7 @@ l_rekey:
 		unsigned char pkey_arr[32];
 		assert(BN_bn2bin(pkbn, pkey_arr) < 33);
 		memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
-		for (int i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
+		for (i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
 			int k = pkey_arr[i];
 			pkey_arr[i] = pkey_arr[vcp->vc_privkey_prefix_length - 1 - i];
 			pkey_arr[vcp->vc_privkey_prefix_length - 1 - i] = k;
@@ -2360,6 +2378,7 @@ show_devices(cl_platform_id pid, cl_device_id *ids, int nd, int base)
 	char vbuf[128];
 	size_t len;
 	cl_int res;
+	cl_bool endian_little;
 
 	for (i = 0; i < nd; i++) {
 		res = clGetDeviceInfo(ids[i], CL_DEVICE_NAME,
@@ -2376,7 +2395,10 @@ show_devices(cl_platform_id pid, cl_device_id *ids, int nd, int base)
 		if (len >= sizeof(vbuf))
 			len = sizeof(vbuf) - 1;
 		vbuf[len] = '\0';
-		fprintf(stderr, "  %d: [%s] %s\n", i + base, vbuf, nbuf);
+		res = clGetDeviceInfo(ids[i], CL_DEVICE_ENDIAN_LITTLE, sizeof(endian_little), &endian_little, &len);
+		if (res != CL_SUCCESS) continue;
+		fprintf(stderr, "  %d: [%s] %s, endian little: %s\n", i + base, vbuf, nbuf,
+				(endian_little==CL_TRUE)?"true":"false");
 	}
 }
 

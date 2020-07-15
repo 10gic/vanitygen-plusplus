@@ -35,6 +35,7 @@
 #include "pattern.h"
 #include "util.h"
 #include "avl.h"
+#include "sha3.h"
 
 /*
  * Common code for execution helper
@@ -260,10 +261,14 @@ vg_exec_context_calc_address(vg_exec_context_t *vxcp)
 				 eckey_buf,
 				 sizeof(eckey_buf),
 				 vxcp->vxc_bnctx);
-	SHA256(eckey_buf, len, hash1);
-	RIPEMD160(hash1, sizeof(hash1), hash2);
-	memcpy(&vxcp->vxc_binres[1],
-	       hash2, 20);
+	if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
+		// Save ETH address into vxcp->vxc_binres
+		eth_pubkey2addr(eckey_buf, vxcp->vxc_vc->vc_format, vxcp->vxc_binres);
+	} else {
+		SHA256(eckey_buf, len, hash1);
+		RIPEMD160(hash1, sizeof(hash1), hash2);
+		memcpy(&vxcp->vxc_binres[1], hash2, 20);
+	}
 	EC_POINT_free(pubkey);
 }
 
@@ -535,7 +540,7 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 	else
 		vg_encode_address(ppnt,
 				  EC_KEY_get0_group(pkey),
-				  vcp->vc_pubkeytype, addr_buf);
+				  vcp->vc_pubkeytype, vcp->vc_format, addr_buf);
 	if (isscript)
 		vg_encode_script_address(ppnt,
 					 EC_KEY_get0_group(pkey),
@@ -687,11 +692,11 @@ vg_context_clear_all_patterns(vg_context_t *vcp)
 }
 
 int
-vg_context_hash160_sort(vg_context_t *vcp, void *buf)
+vg_context_addr_sort(vg_context_t *vcp, void *buf)
 {
-	if (!vcp->vc_hash160_sort)
+	if (!vcp->vc_addr_sort)
 		return 0;
-	return vcp->vc_hash160_sort(vcp, buf);
+	return vcp->vc_addr_sort(vcp, buf);
 }
 
 int
@@ -764,9 +769,46 @@ get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
 	bntmp = BN_new();
 	bntmp2 = BN_new();
 
-	BN_set_word(bnbase, 58);
-
 	p = strlen(pfx);
+
+	// For ETH
+	if (addrtype == ADDR_TYPE_ETH) {
+		size_t ethkeylen = 20;
+
+		uint8_t upbin[64], lowbin[64], binres[64];
+		memset(lowbin, 0, sizeof(lowbin));
+		memset(upbin, 0xff, sizeof(upbin));
+
+		size_t bLen = ethkeylen;
+		if (hexdec(binres, &bLen, pfx, p) < 0) {
+			fprintf(stderr, "Invalid eth address prefix (%s) keylen: %d\n", pfx, (int)ethkeylen);
+			goto out;
+		}
+
+		memcpy(upbin, binres, bLen);
+		memcpy(lowbin, binres, bLen);
+
+		bnlow = BN_new();
+		bnhigh = BN_new();
+		BN_bin2bn(lowbin, ethkeylen, bnlow);
+		BN_bin2bn(upbin, ethkeylen, bnhigh);
+
+		// printf("bnlow=");
+		// dumpbn(bnlow);
+		// printf("bnhigh=");
+		// dumpbn(bnhigh);
+
+		result[0] = bnlow;   // bnlow=1200000000000000000000000000000000000000 if pfx=0x12
+		result[1] = bnhigh; // bnhigh=12FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF if pfx=0x12
+		result[2] = NULL;
+		result[3] = NULL;
+		bnlow = NULL;
+		bnhigh = NULL;
+		ret = 0;
+		return ret;
+	}
+
+	BN_set_word(bnbase, 58);
 
 	for (i = 0; i < p; i++) {
 		c = vg_b58_reverse_map[(int)pfx[i]];
@@ -1311,9 +1353,13 @@ vg_prefix_context_next_difficulty(vg_prefix_context_t *vcpp,
 				  BIGNUM *bntmp, BIGNUM *bntmp2, BN_CTX *bnctx)
 {
 	char *dbuf;
+	size_t address_bit_len = 192;
+	if (vcpp->base.vc_addrtype == ADDR_TYPE_ETH) {
+		address_bit_len = 160; // ETH address 160 bit (20 bytes)
+	}
 
 	BN_clear(bntmp);
-	BN_set_bit(bntmp, 192);
+	BN_set_bit(bntmp, address_bit_len);
 	BN_div(bntmp2, NULL, bntmp, vcpp->vcp_difficulty, bnctx);
 
 	dbuf = BN_bn2dec(bntmp2);
@@ -1344,6 +1390,10 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 	int case_impossible;
 	unsigned long npfx;
 	char *dbuf;
+	size_t address_bit_len = 192;
+	if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
+		address_bit_len = 160; // ETH address 160 bit (20 bytes)
+	}
 
 	bnctx = BN_CTX_new();
 	bntmp = BN_new();
@@ -1432,7 +1482,7 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 
 		if (vcp->vc_verbose > 1) {
 			BN_clear(bntmp2);
-			BN_set_bit(bntmp2, 192);
+			BN_set_bit(bntmp2, address_bit_len);
 			BN_div(bntmp3, NULL, bntmp2, bntmp, bnctx);
 
 			dbuf = BN_bn2dec(bntmp3);
@@ -1489,6 +1539,10 @@ vg_prefix_get_difficulty(int addrtype, const char *pattern)
 	char *dbuf;
 	int ret;
 	double diffret = 0.0;
+	size_t address_bit_len = 192;
+	if (addrtype == ADDR_TYPE_ETH) {
+		address_bit_len = 160; // ETH address 160 bit (20 bytes)
+	}
 
 	bnctx = BN_CTX_new();
 	result = BN_new();
@@ -1507,7 +1561,7 @@ vg_prefix_get_difficulty(int addrtype, const char *pattern)
 		free_ranges(ranges);
 
 		BN_clear(bntmp);
-		BN_set_bit(bntmp, 192);
+		BN_set_bit(bntmp, address_bit_len);
 		BN_div(result, NULL, bntmp, result, bnctx);
 
 		dbuf = BN_bn2dec(result);
@@ -1529,13 +1583,17 @@ vg_prefix_test(vg_exec_context_t *vxcp)
 	vg_prefix_t *vp;
 	int res = 0;
 
-	/*
-	 * We constrain the prefix so that we can check for
-	 * a match without generating the lower four byte
-	 * check code.
-	 */
-
-	BN_bin2bn(vxcp->vxc_binres, 25, vxcp->vxc_bntarg);
+	// Convert address from binary format (vxcp->vxc_binres) into BIGNUM (vxcp->vxc_bntarg)
+	if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
+		BN_bin2bn(vxcp->vxc_binres, 20, vxcp->vxc_bntarg); // ETH address only take 20 bytes
+	} else {
+		/*
+		 * We constrain the prefix so that we can check for
+		 * a match without generating the lower four byte
+		 * check code.
+		 */
+		BN_bin2bn(vxcp->vxc_binres, 25, vxcp->vxc_bntarg);
+	}
 
 research:
 	vp = vg_prefix_avl_search(&vcpp->vcp_avlroot, vxcp->vxc_bntarg);
@@ -1597,35 +1655,62 @@ vg_prefix_hash160_sort(vg_context_t *vcp, void *buf)
 	 * values into the hash160 buffer.  Skip the lower four bytes
 	 * and anything above the 24th byte.
 	 */
-	for (vp = vg_prefix_first(&vcpp->vcp_avlroot);
-	     vp != NULL;
-	     vp = vg_prefix_next(vp)) {
+	for (vp = vg_prefix_first(&vcpp->vcp_avlroot); vp != NULL; vp = vg_prefix_next(vp)) {
 		npfx++;
 		if (!buf)
 			continue;
 
 		/* Low */
 		nbytes = BN_bn2bin(vp->vp_low, bnbuf);
-		ncopy = ((nbytes >= 24) ? 20 :
-			 ((nbytes > 4) ? (nbytes - 4) : 0));
+		ncopy = ((nbytes >= 24) ? 20 : ((nbytes > 4) ? (nbytes - 4) : 0));
 		nskip = (nbytes >= 24) ? (nbytes - 24) : 0;
 		if (ncopy < 20)
 			memset(cbuf, 0, 20 - ncopy);
-		memcpy(cbuf + (20 - ncopy),
-		       bnbuf + nskip,
-		       ncopy);
+		memcpy(cbuf + (20 - ncopy), bnbuf + nskip, ncopy);
 		cbuf += 20;
 
 		/* High */
 		nbytes = BN_bn2bin(vp->vp_high, bnbuf);
-		ncopy = ((nbytes >= 24) ? 20 :
-			 ((nbytes > 4) ? (nbytes - 4) : 0));
+		ncopy = ((nbytes >= 24) ? 20 : ((nbytes > 4) ? (nbytes - 4) : 0));
 		nskip = (nbytes >= 24) ? (nbytes - 24) : 0;
 		if (ncopy < 20)
 			memset(cbuf, 0, 20 - ncopy);
-		memcpy(cbuf + (20 - ncopy),
-		       bnbuf + nskip,
-		       ncopy);
+		memcpy(cbuf + (20 - ncopy), bnbuf + nskip, ncopy);
+		cbuf += 20;
+	}
+	return npfx;
+}
+
+static int
+vg_prefix_ethaddr_sort(vg_context_t *vcp, void *buf)
+{
+	vg_prefix_context_t *vcpp = (vg_prefix_context_t *) vcp;
+	vg_prefix_t *vp;
+	unsigned char *cbuf = (unsigned char *) buf;
+	unsigned char bnbuf[40];
+	int nbytes, ncopy, npfx = 0;
+
+	/*
+	 * Walk the prefix tree in order, copy the upper and lower bound
+	 * values into buf.
+	 */
+	for (vp = vg_prefix_first(&vcpp->vcp_avlroot); vp != NULL; vp = vg_prefix_next(vp)) {
+		npfx++;
+		if (!buf)
+			continue;
+
+		/* Low */
+		nbytes = BN_bn2bin(vp->vp_low, bnbuf);
+		ncopy = ((nbytes >= 20) ? 20 : ((nbytes > 4) ? (nbytes - 4) : 0));
+		memset(cbuf, 0, 20);
+		memcpy(cbuf + (20 - ncopy), bnbuf, ncopy);
+		cbuf += 20;
+
+		/* High */
+		nbytes = BN_bn2bin(vp->vp_high, bnbuf);
+		ncopy = ((nbytes >= 20) ? 20 : ((nbytes > 4) ? (nbytes - 4) : 0));
+		memset(cbuf, 0, 20);
+		memcpy(cbuf + (20 - ncopy), bnbuf, ncopy);
 		cbuf += 20;
 	}
 	return npfx;
@@ -1650,7 +1735,11 @@ vg_prefix_context_new(int addrtype, int privtype, int caseinsensitive)
 		vcpp->base.vc_clear_all_patterns =
 			vg_prefix_context_clear_all_patterns;
 		vcpp->base.vc_test = vg_prefix_test;
-		vcpp->base.vc_hash160_sort = vg_prefix_hash160_sort;
+		if (addrtype == ADDR_TYPE_ETH) {
+			vcpp->base.vc_addr_sort = vg_prefix_ethaddr_sort;
+		} else {
+			vcpp->base.vc_addr_sort = vg_prefix_hash160_sort;
+		}
 		avl_root_init(&vcpp->vcp_avlroot);
 		vcpp->vcp_difficulty = BN_new();
 		vcpp->vcp_caseinsensitive = caseinsensitive;
@@ -1781,35 +1870,54 @@ vg_regex_test(vg_exec_context_t *vxcp)
 	BIGNUM *bnrem;
 	BIGNUM *bn, *bndiv, *bnptmp;
 	int res = 0;
+	char *addr;
+	int addr_len = 0;
 
 	pcre *re;
 
 	bnrem = BN_new();
 
-	/* Hash the hash and write the four byte check code */
-	SHA256(vxcp->vxc_binres, 21, hash1);
-	SHA256(hash1, sizeof(hash1), hash2);
-	memcpy(&vxcp->vxc_binres[21], hash2, 4);
+	// Convert address from binary format (vxcp->vxc_binres) into BIGNUM (bn)
+	if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
+		bn = vxcp->vxc_bntmp;
+		BN_bin2bn(vxcp->vxc_binres, 20, bn); // ETH address only take 20 bytes
 
-	bn = vxcp->vxc_bntmp;
-	bndiv = vxcp->vxc_bntmp2;
+		char addr_buf[64];
+		size_t len = sizeof(addr_buf);
+		memcpy(addr_buf, "0x", 2);
+		hexenc(addr_buf+2, &len, vxcp->vxc_binres, 20);
 
-	BN_bin2bn(vxcp->vxc_binres, 25, bn);
+		addr = addr_buf;
+		addr_len = 21;
+	} else {
+		/* Hash the hash and write the four byte check code */
+		SHA256(vxcp->vxc_binres, 21, hash1);
+		SHA256(hash1, sizeof(hash1), hash2);
+		memcpy(&vxcp->vxc_binres[21], hash2, 4);
 
-	/* Compute the complete encoded address */
-	for (zpfx = 0; zpfx < 25 && vxcp->vxc_binres[zpfx] == 0; zpfx++);
-	p = sizeof(b58) - 1;
-	b58[p] = '\0';
-	while (!BN_is_zero(bn)) {
-		BN_div(bndiv, bnrem, bn, vxcp->vxc_bnbase, vxcp->vxc_bnctx);
-		bnptmp = bn;
-		bn = bndiv;
-		bndiv = bnptmp;
-		d = BN_get_word(bnrem);
-		b58[--p] = vg_b58_alphabet[d];
-	}
-	while (zpfx--) {
-		b58[--p] = vg_b58_alphabet[0];
+		bn = vxcp->vxc_bntmp;
+		bndiv = vxcp->vxc_bntmp2;
+
+		BN_bin2bn(vxcp->vxc_binres, 25, bn);
+
+		/* Compute the complete encoded address */
+		for (zpfx = 0; zpfx < 25 && vxcp->vxc_binres[zpfx] == 0; zpfx++);
+		p = sizeof(b58) - 1;
+		b58[p] = '\0';
+		while (!BN_is_zero(bn)) {
+			BN_div(bndiv, bnrem, bn, vxcp->vxc_bnbase, vxcp->vxc_bnctx);
+			bnptmp = bn;
+			bn = bndiv;
+			bndiv = bnptmp;
+			d = BN_get_word(bnrem);
+			b58[--p] = vg_b58_alphabet[d];
+		}
+		while (zpfx--) {
+			b58[--p] = vg_b58_alphabet[0];
+		}
+
+		addr = &b58[p];
+		addr_len = (sizeof(b58) - 1) - p;
 	}
 
 	/*
@@ -1825,7 +1933,7 @@ restart_loop:
 	for (i = 0; i < nres; i++) {
 		d = pcre_exec(vcrp->vcr_regex[i],
 			      vcrp->vcr_regex_extra[i],
-			      &b58[p], (sizeof(b58) - 1) - p, 0,
+			      addr, addr_len, 0,
 			      0,
 			      re_vec, sizeof(re_vec)/sizeof(re_vec[0]));
 
@@ -1901,7 +2009,7 @@ vg_regex_context_new(int addrtype, int privtype)
 		vcrp->base.vc_clear_all_patterns =
 			vg_regex_context_clear_all_patterns;
 		vcrp->base.vc_test = vg_regex_test;
-		vcrp->base.vc_hash160_sort = NULL;
+		vcrp->base.vc_addr_sort = NULL;
 		vcrp->vcr_regex = NULL;
 		vcrp->vcr_nalloc = 0;
 	}
