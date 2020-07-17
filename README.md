@@ -50,7 +50,8 @@ Many thanks to following projects:
 3. https://github.com/kjx98/vanitygen-eth
 
 # Known Issue
-1. ETH vanity address difficulty estimation is **always** for case-insensative searching.
+1. oclvanitygen++ (GPU version) can't find vanity ETH address start with 0x00.
+2. ETH vanity address difficulty estimation is **always** for case-insensative searching.
 
 # Next Work
 1. Support split-key vanity address.
