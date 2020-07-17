@@ -35,7 +35,7 @@
 #include <unistd.h>
 #endif
 
-#define VANITYGEN_VERSION "PLUS v1.53"
+#define VANITYGEN_VERSION "PLUS PLUS v2.01"
 
 #define ADDR_TYPE_ETH -1
 #define PRIV_TYPE_ETH -1
