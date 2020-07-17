@@ -780,7 +780,7 @@ get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
 		memset(upbin, 0xff, sizeof(upbin));
 
 		size_t bLen = ethkeylen;
-		if (hexdec(binres, &bLen, pfx, p) < 0) {
+		if (hex_dec(binres, &bLen, pfx, p) < 0) {
 			fprintf(stderr, "Invalid eth address prefix (%s) keylen: %d\n", pfx, (int)ethkeylen);
 			goto out;
 		}
@@ -1318,6 +1318,12 @@ vg_prefix_context_set_case_insensitive(vg_context_t *vcp, int caseinsensitive)
 	((vg_prefix_context_t *) vcp)->vcp_caseinsensitive = caseinsensitive;
 }
 
+int
+vg_prefix_context_get_case_insensitive(vg_context_t *vcp)
+{
+	return ((vg_prefix_context_t *) vcp)->vcp_caseinsensitive;
+}
+
 static void
 vg_prefix_context_clear_all_patterns(vg_context_t *vcp)
 {
@@ -1402,7 +1408,14 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 
 	npfx = 0;
 	for (i = 0; i < npatterns; i++) {
-		if (!vcpp->vcp_caseinsensitive) {
+		if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
+			vp = NULL;
+			ret = get_prefix_ranges(vcpp->base.vc_addrtype, patterns[i], ranges, bnctx);
+			if (!ret) {
+				vp = vg_prefix_add_ranges(&vcpp->vcp_avlroot, patterns[i], ranges, NULL);
+			}
+
+		} else if (!vcpp->vcp_caseinsensitive) {
 			vp = NULL;
 			ret = get_prefix_ranges(vcpp->base.vc_addrtype,
 						patterns[i],
@@ -1576,6 +1589,7 @@ vg_prefix_get_difficulty(int addrtype, const char *pattern)
 }
 
 
+// return 0 (not found), 1 (found), 2 (not continue)
 static int
 vg_prefix_test(vg_exec_context_t *vxcp)
 {
@@ -1597,6 +1611,25 @@ vg_prefix_test(vg_exec_context_t *vxcp)
 
 research:
 	vp = vg_prefix_avl_search(&vcpp->vcp_avlroot, vxcp->vxc_bntarg);
+	if (vp && vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH && (!vcpp->vcp_caseinsensitive)) { // case-sensitive for ETH
+		char checksum_addr[40];
+		const char *pattern = vp->vp_pattern;
+		size_t plen = strlen(vp->vp_pattern);
+		// construct checksum addr (without leading '0x') into checksum_addr
+		eth_encode_checksum_addr(vxcp->vxc_binres, 20, checksum_addr, 40);
+		// skip '0x' in pattern
+		if (pattern[0] == '0' && pattern[1] == 'x') {
+			pattern = vp->vp_pattern + 2;
+			plen -= 2;
+		}
+		// perform case-sensitive comparing
+		if (memcmp(checksum_addr, pattern, plen)) {
+			if (vxcp->vxc_vc->vc_verbose > 1) {
+				fprintf(stderr, "case-sensitive comparing fail, pattern %s\n", vp->vp_pattern);
+			}
+			vp = NULL;
+		}
+	}
 	if (vp) {
 		if (vg_exec_context_upgrade_lock(vxcp))
 			goto research;
@@ -1882,13 +1915,12 @@ vg_regex_test(vg_exec_context_t *vxcp)
 		bn = vxcp->vxc_bntmp;
 		BN_bin2bn(vxcp->vxc_binres, 20, bn); // ETH address only take 20 bytes
 
-		char addr_buf[64];
-		size_t len = sizeof(addr_buf);
+		char addr_buf[42];
 		memcpy(addr_buf, "0x", 2);
-		hexenc(addr_buf+2, &len, vxcp->vxc_binres, 20);
+		eth_encode_checksum_addr(vxcp->vxc_binres, 20, addr_buf + 2, 40);
 
 		addr = addr_buf;
-		addr_len = 21;
+		addr_len = 42;
 	} else {
 		/* Hash the hash and write the four byte check code */
 		SHA256(vxcp->vxc_binres, 21, hash1);

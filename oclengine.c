@@ -1626,20 +1626,28 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 		/* GPU code claims match, verify with CPU version */
 		orig_delta = vxcp->vxc_delta;
 		vxcp->vxc_delta += found_delta;
-		vg_exec_context_calc_address(vxcp); // compute hash using cpu, save result into vxcp->vxc_binres
+		vg_exec_context_calc_address(vxcp); // compute hash using CPU, save result into vxcp->vxc_binres
 
 		/* Make sure the GPU produced the expected hash */
 		res = 0;
 		if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
-			if (!memcmp(vxcp->vxc_binres, ocl_found_out + 2, 20)) {
-				res = test_func(vxcp);
+			if (!memcmp(vxcp->vxc_binres, ocl_found_out + 2, 20)) { // CPU hash is same as GPU hash
+				res = test_func(vxcp); // test the address derived from hash if match pattern
 			}
 		} else {
 			if (!memcmp(vxcp->vxc_binres + 1, ocl_found_out + 2, 20)) {
 				res = test_func(vxcp);
 			}
 		}
-		if (res == 0) {
+		if (res == 0) { // not match using test_func
+			if (vcp->vc_addrtype == ADDR_TYPE_ETH && (!vg_prefix_context_get_case_insensitive(vcp))) {
+				// eth address match fail possibility caused by case mismatched in case sensitive searching
+				if (vcp->vc_verbose > 1) {
+					fprintf(stderr, "may be fail by case sensitive searching\n");
+				} else {
+					goto out;  // do not print following detail message for this mismatch
+				}
+			}
 			vcp->vc_output_match(vcp, vxcp->vxc_key, "N/A");  // just show private key for debugging.
 			/*
 			 * The match was not found in
@@ -1665,6 +1673,7 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 		vxcp->vxc_delta += (vocp->voc_ocl_cols * vocp->voc_ocl_rows);
 	}
 
+	out:
 	vg_ocl_unmap_arg_buffer(vocp, slot, 0, ocl_found_out);
 	return res;
 }

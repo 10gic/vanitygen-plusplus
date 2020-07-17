@@ -80,9 +80,11 @@ extern int vg_check_password_complexity(const char *pass, int verbose);
 
 extern int vg_read_file(FILE *fp, char ***result, int *rescount);
 
-extern int hexdec(void *bin, size_t *binsz, const char *hex, size_t hexsz);
-extern int hexenc(char *hex, size_t *hexsz, const void *bin, size_t binsz);
+extern int hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz);
+extern int hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz);
 
 extern void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned char *out_buf);
+
+extern void eth_encode_checksum_addr(void *input, int inlen, char *output, int outlen);
 
 #endif /* !defined (__VG_UTIL_H__) */

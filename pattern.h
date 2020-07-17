@@ -151,6 +151,7 @@ extern vg_context_t *vg_prefix_context_new(int addrtype, int privtype,
 					   int caseinsensitive);
 extern void vg_prefix_context_set_case_insensitive(vg_context_t *vcp,
 						   int caseinsensitive);
+extern int vg_prefix_context_get_case_insensitive(vg_context_t *vcp);
 extern double vg_prefix_get_difficulty(int addrtype, const char *pattern);
 
 /* Regex context methods */

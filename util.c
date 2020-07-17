@@ -287,14 +287,14 @@ vg_encode_address(const EC_POINT *ppoint, const EC_GROUP *pgroup,
 	if (addrtype == ADDR_TYPE_ETH) {
 		unsigned char eckey_buf[128];
 		unsigned char addr_buf[20];
-		size_t len=64;
 		EC_POINT_point2oct(pgroup, ppoint,
 						   POINT_CONVERSION_UNCOMPRESSED, eckey_buf,
 						   sizeof(eckey_buf), NULL);
 		// Save ETH address into addr_buf
 		eth_pubkey2addr(eckey_buf, addrformat, addr_buf);
 		memcpy(result, "0x", 2);
-		hexenc(result+2, &len, addr_buf, 20);
+		eth_encode_checksum_addr(addr_buf, 20, result+2, 40); // mixed-case checksum address
+		result[42] = '\0';
 		return;
 	}
 	unsigned char eckey_buf[128], *pend;
@@ -387,9 +387,10 @@ vg_encode_privkey(const EC_KEY *pkey, int privtype, char *result)
 
 	// For ETH
 	if (privtype == PRIV_TYPE_ETH) {
-		size_t len=80;
+		size_t len=64;
 		memcpy(result, "0x", 2);
-		hexenc(result + 2, &len, eckey_buf + 1, 32);
+		hex_enc(result + 2, &len, eckey_buf + 1, 32);
+		result[len+2] = '\0';
 		return;
 	}
 
@@ -1202,7 +1203,7 @@ vg_read_file(FILE *fp, char ***result, int *rescount)
 
 static const char hexdig[] = "0123456789abcdef";
 
-int hexdec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
+int hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 {
 	size_t binsz = *binszp;
 	const unsigned char *hexu = (void*)hex;
@@ -1235,11 +1236,14 @@ int hexdec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 	return 0;
 }
 
-int hexenc(char *hex, size_t *hexsz, const void *data, size_t binsz)
+// An example:
+// input: data[2] = {0x12, 0xab}
+// output: hex[4] = {0x31, 0x32, 0x61, 0x62}
+int hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz)
 {
 	const uint8_t *bin = data;
 	size_t i, len;
-	if (*hexsz < binsz*2 +1) return -1;
+	if (*hexszp < binsz*2) { return -1; }
 	len = 0;
 	for(i=0;i<binsz;i++,bin++) {
 		*hex++ = hexdig[*bin >> 4];
@@ -1247,8 +1251,7 @@ int hexenc(char *hex, size_t *hexsz, const void *data, size_t binsz)
 		*hex++ = hexdig[*bin & 0xf];
 		len++;
 	}
-	*hex = '\0';
-	*hexsz = ++len;
+	*hexszp = len;
 
 	return 0;
 }
@@ -1275,4 +1278,51 @@ void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned c
 	// dumphex(pubkey_buf, 65);
 	// printf("address: ");
 	// dumphex(out_buf, 20);
+}
+
+static char upper[128] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0, 0, 0, 0, 0, 0,
+	0, 'A', 'B', 'C', 'D', 'E', 'F', 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 'A', 'B', 'C', 'D', 'E', 'F', 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+static char lower[128] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0, 0, 0, 0, 0, 0,
+    0, 'a', 'b', 'c', 'd', 'e', 'f', 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 'a', 'b', 'c', 'd', 'e', 'f', 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+// input is 20-byte binary address
+// output is 40-byte hex string address
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md
+void eth_encode_checksum_addr(void * input, int inlen, char *output, int outlen) {
+	assert(inlen >= 20);
+	assert(outlen >= 40);
+	int i;
+	unsigned char input_hex[40];
+	unsigned char hash1[32];
+	char hash1_hex[64];
+	size_t len = 40;
+	hex_enc((char *)input_hex, &len, input, 20);
+	SHA3_256(hash1, input_hex, 40);
+	len = 64;
+	hex_enc(hash1_hex, &len, hash1, 32);
+	for (i=0; i<40; i++) {
+		if (hash1_hex[i] >= '8' + 0) {
+			// Convert 'a'-'f' to uppercase 'A'-'F'; keep '0'-'9' untouched.
+			output[i] = upper[input_hex[i] + 0]; // `+ 0` for avoid compiler warning
+		} else {
+			output[i] = lower[input_hex[i] + 0];
+		}
+	}
 }
