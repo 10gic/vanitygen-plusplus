@@ -9,6 +9,15 @@ $ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
 ```
 
 # Usage
+List all supported crypto currencies:
+```
+$ ./vanitygen++ -C LIST
+ETH : Ethereum : 0x
+BTC : Bitcoin : 1
+LTC : Litecoin : L
+...... (skip many output)
+```
+
 Generate BTC vanity address:
 ```
 $ ./vanitygen++ 1Love
