@@ -1201,9 +1201,108 @@ vg_read_file(FILE *fp, char ***result, int *rescount)
 	return ret;
 }
 
+char
+*strtok_r_keep_empty_fields(char *str, const char *delims, char **store) {
+	char *ret;
+
+	if (str == NULL) str = *store;
+
+	if (*str == '\0') return NULL;
+
+	ret = str;
+	str += strcspn(str, delims);
+
+	if (*str != '\0') {
+		*str++ = '\0';
+	}
+
+	*store = str;
+	return ret;
+}
+
+void
+vg_print_alicoin_help_msg() {
+	char line[1024];
+	char *coinsymbol, *coinname, *prefix;
+	char *save;
+	char *part;
+	int partindex;
+	FILE *fp = fopen("base58prefix.txt","r");
+	if( fp == NULL ) {
+		fprintf(stderr,	"Read base58prefix.txt fail: %s\n", strerror(errno));
+		return;
+	}
+	// read file line by line
+	while (fgets(line, 1024, fp)) {
+		if (!strcmp(line,"\n")) continue; // skip empty line
+		if (!strcmp(line,"\r\n")) continue; // skip empty line in MS system
+		if (!strncmp(line,"#", 1)) continue; // skip line start with #
+		partindex = 0;
+		part = strtok_r_keep_empty_fields(line, ",", &save);
+		while (part != NULL) {
+			partindex++;
+			if (partindex == 1) {
+				coinsymbol = part;
+			} else if (partindex == 2) {
+				coinname = part;
+			} else if (partindex == 3) {
+				prefix = part;
+			}
+			part = strtok_r_keep_empty_fields(NULL, ",", &save);
+		}
+		if (partindex < 5) {
+			fprintf(stderr,	"Invalid line found in base58prefix.txt\n");
+			continue;
+		}
+		fprintf(stderr,	"%s : %s : %s\n", coinsymbol, coinname, prefix);
+	}
+}
+
+int
+vg_get_altcoin(char *altcoin, int *addrtype, int *privtype)
+{
+	char line[1024];
+	char *save;
+	char *part;
+	int partindex;
+	FILE *fp = fopen("base58prefix.txt","r");
+	if( fp == NULL ) {
+		fprintf(stderr,	"Read base58prefix.txt fail: %s\n", strerror(errno));
+		return 1;
+	}
+	// read file line by line
+	while (fgets(line, 1024, fp)) {
+		//printf("%s",line);
+		if (!strncmp(altcoin, line, strlen(altcoin)) && line[strlen(altcoin)] == ',') {
+			// find coin at line beginning
+			partindex = 0;
+			part = strtok_r_keep_empty_fields(line, ",", &save);
+			while (part != NULL) {
+				partindex++;
+				if (partindex == 4) {
+					// parse addrtype
+					*addrtype = (int)strtol(part, NULL, 0);
+				} else if (partindex == 5) {
+					// parse privtype
+					*privtype = (int)strtol(part, NULL, 0);
+				}
+				part = strtok_r_keep_empty_fields(NULL, ",", &save);
+			}
+            if (partindex < 5) {
+                fprintf(stderr,	"Cannot find coin %s: invalid line found in base58prefix.txt\n", altcoin);
+                return 1;
+            }
+			return 0;
+		}
+	}
+	fprintf(stderr,	"Cannot find coin %s in base58prefix.txt\n", altcoin);
+	return 1;
+}
+
 static const char hexdig[] = "0123456789abcdef";
 
-int hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
+int
+hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 {
 	size_t binsz = *binszp;
 	const unsigned char *hexu = (void*)hex;
@@ -1239,7 +1338,8 @@ int hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 // An example:
 // input: data[2] = {0x12, 0xab}
 // output: hex[4] = {0x31, 0x32, 0x61, 0x62}
-int hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz)
+int
+hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz)
 {
 	const uint8_t *bin = data;
 	size_t i, len;
@@ -1258,7 +1358,9 @@ int hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz)
 
 // pubkey_buf must be equal or greater than 65 bytes
 // out_buf must be equal or greater than 20 bytes
-void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned char *out_buf) {
+void
+eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, unsigned char *out_buf)
+{
 	unsigned char hash1[32], ethrlp_buf[23];
 
 	SHA3_256(hash1, pubkey_buf + 1, 64); // skip 1 byte (the leading 0x04) in uncompressed public key
@@ -1305,7 +1407,9 @@ static char lower[128] = {
 // input is 20-byte binary address
 // output is 40-byte hex string address
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md
-void eth_encode_checksum_addr(void * input, int inlen, char *output, int outlen) {
+void
+eth_encode_checksum_addr(void * input, int inlen, char *output, int outlen)
+{
 	assert(inlen >= 20);
 	assert(outlen >= 40);
 	int i;

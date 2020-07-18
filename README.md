@@ -1,5 +1,5 @@
 # Vanitygen plus plus
-Vanity address generator for BTC, ETH, etc.
+Vanity address generator for BTC, ETH, LTC, etc (more than 100 crypto currencies).
 
 # Build
 Run:

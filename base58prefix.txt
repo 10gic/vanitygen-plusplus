@@ -1,0 +1,129 @@
+# For more infomation, please see https://en.bitcoinwiki.org/wiki/List_of_address_prefixes
+# Please sort this file by `sort -k1.1,1.1 base58prefix.txt>base58prefix.new; mv base58prefix.new base58prefix.txt`
+# Symbol, Coin name, Address prefix, Address base58 version (prefix), Private key base58 version (prefix)
+42,42coin,4,8,136
+AC,Asiacoin,A,23,151
+ACM,Actinium,N,53,181
+AIB,Advanced Internet Block by IOBOND,A,23,151
+ANC,Anoncoin,A,23,151
+AQX,Aquila,A,75,212
+ARS,Arkstone,A,23,151
+ATMOS,Atmos,N,53,153
+AUR,Auroracoin,A,23,151
+AXE,Axe,P,55,204
+BLAST,BLAST,B,25,239
+BLK,Blackcoin,B,25,153
+BQC,BBQcoin,b,85,213
+BTC,Bitcoin,1,0,128,
+BTCD,Bitcoin Dark,R,60,188
+BWK,Bulwark,b,85,212
+CARE,Carebit,C,28,55
+CCBC,CryptoCashBackCoin,C,63,212
+CCC,Chococoin,7,15,224
+CCN,Cannacoin,C,28,156
+CDN,Canadaecoin,C,28,156
+CIV,Civitas,C,28,212
+CLAM,Clamcoin,x,137,133
+CNC,Chinacoin,C,28,156
+CNOTE,C-Note,C,28,186
+CON,PayCon,P,55,183
+CRW,Crown,1,0,128
+DASH,Dash,X,76,204
+DEEPONION,DeepOnion,D,31,159
+DGB,Digibyte,D,30,128
+DGC,Digitalcoin,D,30,158
+DMD,Diamond,d,90,218
+DNR,Denarius,D,30,158
+DOGE,Dogecoin,D,30,158
+DOGED,Doge Dark Coin,D,30,158
+DOPE,Dopecoin,4,8,136
+DVC,Devcoin,1,0,128
+EFL,Electronic-Gulden-Foundation,L,48,176
+EMC,Emercoin,E,33,128
+ETH,Ethereum,0x,,
+EXCL,Exclusivecoin,E,33,161
+FAIR,Faircoin2,f,95,223
+FLOZ,FLOZ,F,35,163
+FTC,Feathercoin,6 or 7,14,142
+GAME,GameCredits,G,38,166
+GAP,Gapcoin,G,38,166
+GCR,Global Currency Reserve,G,38,154
+GRC,GridcoinResearch,R or S,62,190
+GRLC,Garlicoin,G,38,176
+GRN,GreenCoin,G,38,166
+GRS,Groestlcoin,F,36,128
+GRV,Gravium,G,38,166
+GUN,Guncoin,G or H,39,167
+HAM,HamRadiocoin,1,0,128
+HBN,HoboNickels(BottleCaps),E or F,34,162
+HODL,HOdlcoin,H,40,168
+IC,Ignition Coin,i,103,138
+IPS,Ipsum,i,103,138
+IXC,Ixcoin,x,138,266
+JBS,Jumbucks,J,43,171
+JIN,Jincoin,J,43,171
+KMD,Komodo,R,60,188
+KORE,Kore,K,45,128
+LBRY,LBRY,b,85,28
+LEAF,Leafcoin,f,95,223
+LMC,LomoCoin,L,48,176
+LTC,Litecoin,L,48,176
+MGD,MassGrid,M,50,25
+MMC,Memorycoin,M,50,178
+MNC,Mincoin,M,50,178
+MNP,MNPCoin,M,50,55
+MOG,Mogwai,M,50,204
+MONA,Monacoin,M,50,176
+MUE,Monetary Unit,7,15,143
+MYRIAD,Myriadcoin,M,50,178
+MZC,Mazacoin,M,50,224
+NEET,NEETCOIN,N,53,181
+NEOS,Neoscoin,S,63,239
+NLG,Gulden,G,38,166
+NMC,Namecoin,M or N,52,180
+NVC,Novacoin,4,8,136
+NYAN,Nyancoin,K,45,173
+OK,OK Cash,P,55,183
+OMC,Omnicoin,o,115,243
+PIGGY,Piggycoin,p,118,246
+PINK,Pinkcoin,2,3,131
+PIVX,PIVX,D,30,212
+PKB,Parkbyte,P,55,183
+PND,Pandacoin,P,55,183
+POT,Potcoin,P,55,183
+PPC,Peercoin,P,55,183
+PTC,Pesetacoin,K,47,175
+PTS,Protoshares,P,56,184
+QTUM,Qtum,Q,58,128
+RBY,Rubycoin,R,61,189
+RDD,Reddcoin,R,61,189
+RIC,Riecoin,R,60,128
+ROI,ROIcoin: R,60,128
+RVN,Ravencoin,R,60,128
+SCA,Scamcoin,S,63,191
+SDC,Shadowcoin,S,63,191
+SKC,Skeincoin,S,63,226
+SPR,Spreadcoin,S,63,191
+START,Startcoin,s,125,253
+SXC,Sexcoin,R or S,62,190
+TEST,Bitcoin Testnet,m or n,111,239
+TPC,Templecoin,T,65,193
+TUX,Tuxcoin,T,65,193
+UIS,Unitus,U,68,132
+UNO,Unobtanium,u,130,224
+VIA,Viacoin,V,71,199
+VIPS,VIPSTARCOIN,V,70,128
+VPN,Vpncoin,V,71,199
+VTC,Vertcoin,V,71,199
+WDC,Worldcoin Global,W,73,201
+WKC,Wankcoin,1,0,128
+WUBS,Dubstepcoin,D,29,157
+XC,XCurrency,X,75,203
+XPM,Primecoin,A,23,151
+YAC,Yacoin,Y,77,205
+YTN,Yenten,Y,78,123
+ZNY,BitZeny,Z,81,128
+ZOOM,Zoom coin,i,103,231
+ZRC,Ziftrcoin,Z,80,208
+tCIV,Civitas Testnet,y,139,239
+tMNC,Mincoin Testnet,m or n,111,239
