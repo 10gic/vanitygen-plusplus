@@ -8,7 +8,8 @@ CFLAGS=-ggdb -O3 -Wall
 # INCPATHS=-I$(shell brew --prefix)/include -I$(shell brew --prefix openssl)/include
 # LIBPATHS=-L$(shell brew --prefix)/lib -L$(shell brew --prefix openssl)/lib
 # CFLAGS=-ggdb -O3 -Wall -Qunused-arguments $(INCPATHS) $(LIBPATHS)
-OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o
+OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
+     stellar.o base32.o crc16.o
 PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
 
 PLATFORM=$(shell uname -s)
@@ -28,7 +29,10 @@ most: vanitygen++ keyconv
 
 all: $(PROGS)
 
-vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o
+ed25519: ed25519.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
 oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o

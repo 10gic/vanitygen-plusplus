@@ -20,7 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-
+#include <time.h>
 #include <pthread.h>
 
 #include <openssl/sha.h>
@@ -32,6 +32,7 @@
 #include "pattern.h"
 #include "util.h"
 #include "sha3.h"
+#include "ed25519.h"
 
 #include "ticker.h"
 char ticker[10];
@@ -130,15 +131,15 @@ vg_thread_loop(void *arg)
 			EC_KEY_generate_key(pkey);
 			if (vcp->vc_privkey_prefix_length > 0) {
 				BIGNUM *pkbn = BN_dup(EC_KEY_get0_private_key(pkey));
-        unsigned char pkey_arr[32];
-        assert(BN_bn2bin(pkbn, pkey_arr) < 33);
-        memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
+				unsigned char pkey_arr[32];
+				assert(BN_bn2bin(pkbn, pkey_arr) < 33);
+				memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
 				for (i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
 					int k = pkey_arr[i];
 					pkey_arr[i] = pkey_arr[vcp->vc_privkey_prefix_length - 1 - i];
 					pkey_arr[vcp->vc_privkey_prefix_length - 1 - i] = k;
 				}
-        BN_bin2bn(pkey_arr, 32, pkbn);
+				BN_bin2bn(pkey_arr, 32, pkbn);
 				EC_KEY_set_private_key(pkey, pkbn);
 
 				EC_POINT *origin = EC_POINT_new(pgroup);
@@ -265,32 +266,6 @@ out:
 		EC_POINT_free(pbatchinc);
 	return NULL;
 }
-
-
-#if !defined(_WIN32)
-int
-count_processors(void)
-{
-#if defined(__APPLE__)
-    int count = sysconf(_SC_NPROCESSORS_ONLN);
-#else
-	FILE *fp;
-	char buf[512];
-	int count = 0;
-
-	fp = fopen("/proc/cpuinfo", "r");
-	if (!fp)
-		return -1;
-
-	while (fgets(buf, sizeof(buf), fp)) {
-		if (!strncmp(buf, "processor\t", 10))
-			count += 1;
-	}
-	fclose(fp);
-#endif
-    return count;
-}
-#endif
 
 int
 start_threads(vg_context_t *vcp, int nthreads)
@@ -450,6 +425,7 @@ main(int argc, char **argv)
 					"Argument(UPPERCASE) : Coin : Address Prefix\n"
 					"---------------\n"
 					"ETH : Ethereum : 0x\n"
+					"XLM : Stellar Lumens : G\n"
 					);
 				vg_print_alicoin_help_msg();
 				return 1;
@@ -461,6 +437,13 @@ main(int argc, char **argv)
 				addrtype = ADDR_TYPE_ETH;
 				privtype = PRIV_TYPE_ETH;
 				break;
+			}
+			else
+			if (strcmp(optarg, "")) {
+				fprintf(stderr,
+						"Generating XLM Address\n");
+				addrtype = ADDR_TYPE_XLM;
+				privtype = PRIV_TYPE_XLM;
 			}
 			else {
 				// Read from base58prefix.txt
@@ -599,6 +582,71 @@ main(int argc, char **argv)
 			"WARNING: Use OpenSSL 1.0.0d+ for best performance\n");
 	}
 #endif
+
+	if (addrtype == ADDR_TYPE_XLM) {
+		if (optind >= argc) {
+			usage(argv[0]);
+			return 1;
+		}
+		patterns = &argv[optind];
+		printf("XLM patterns %s\n", *patterns);
+
+        vg_context_ed25519_t *vc_ed25519 = NULL;
+        vc_ed25519 = (vg_context_ed25519_t *) malloc(sizeof(*vc_ed25519));
+		vc_ed25519->vc_verbose = verbose;
+		vc_ed25519->vc_addrtype = addrtype;
+		vc_ed25519->vc_privtype = privtype;
+		vc_ed25519->vc_result_file = result_file;
+		vc_ed25519->vc_numpairs = numpairs;
+		if (vc_ed25519->vc_numpairs == 0) {
+            vc_ed25519->vc_numpairs = 1;
+		}
+		vc_ed25519->pattern = *patterns;
+        vc_ed25519->match_location = 1; // match begin location
+
+        size_t pattern_len = strlen(vc_ed25519->pattern);
+
+        if (vc_ed25519->vc_addrtype == ADDR_TYPE_XLM) {
+            if (pattern_len > 56) { // The max length of XLM address is 56
+                fprintf(stderr, "The pattern is too long for XLM address\n");
+                return 1;
+            }
+        }
+        if (regex) {
+            fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
+            if (vc_ed25519->pattern[0] == '^') {
+                vc_ed25519->match_location = 1; // match begin location
+                // skip first char '^'
+				vc_ed25519->pattern = vc_ed25519->pattern + 1;
+            } else if (vc_ed25519->pattern[pattern_len-1] == '$') {
+                vc_ed25519->match_location = 2; // match end location
+                // remove last char '$'
+				vc_ed25519->pattern[pattern_len-1] = '\0';
+            } else {
+                vc_ed25519->match_location = 0; // match any location
+            }
+        }
+
+		if (nthreads <= 0) {
+			/* Determine the number of threads */
+			nthreads = count_processors();
+			if (nthreads <= 0) {
+				fprintf(stderr, "ERROR: could not determine processor count\n");
+				nthreads = 1;
+			}
+
+			if (nthreads > ed25519_max_threads) {
+				fprintf(stderr, "WARNING: too many threads\n");
+				nthreads = ed25519_max_threads;
+			}
+		}
+		vc_ed25519->vc_thread_num = nthreads;
+		vc_ed25519->vc_start_time = (unsigned long)time(NULL);
+
+		if (!start_threads_ed25519(vc_ed25519))
+			return 1;
+		return 0;
+	}
 
 	if (caseinsensitive && regex)
 		fprintf(stderr,

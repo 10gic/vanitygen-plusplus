@@ -40,6 +40,9 @@
 #define ADDR_TYPE_ETH -1
 #define PRIV_TYPE_ETH -1
 
+#define ADDR_TYPE_XLM -2
+#define PRIV_TYPE_XLM -2
+
 typedef struct _vg_context_s vg_context_t;
 
 struct _vg_exec_context_s;
@@ -92,7 +95,7 @@ enum vg_format {
 
 /* Application-level context, incl. parameters and global pattern store */
 struct _vg_context_s {
-        int			vc_compressed;
+	int			vc_compressed;
 	int			vc_addrtype;
 	int			vc_privtype;
 	unsigned long		vc_npatterns;

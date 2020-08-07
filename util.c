@@ -1299,6 +1299,31 @@ vg_get_altcoin(char *altcoin, int *addrtype, int *privtype)
 	return 1;
 }
 
+#if !defined(_WIN32)
+int
+count_processors(void)
+{
+#if defined(__APPLE__)
+    int count = sysconf(_SC_NPROCESSORS_ONLN);
+#else
+    FILE *fp;
+	char buf[512];
+	int count = 0;
+
+	fp = fopen("/proc/cpuinfo", "r");
+	if (!fp)
+		return -1;
+
+	while (fgets(buf, sizeof(buf), fp)) {
+		if (!strncmp(buf, "processor\t", 10))
+			count += 1;
+	}
+	fclose(fp);
+#endif
+    return count;
+}
+#endif
+
 static const char hexdig[] = "0123456789abcdef";
 
 int

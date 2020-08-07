@@ -83,6 +83,8 @@ extern int vg_read_file(FILE *fp, char ***result, int *rescount);
 extern void vg_print_alicoin_help_msg();
 extern int vg_get_altcoin(char *altcoin, int *addrtype, int *privtype);
 
+extern int count_processors(void);
+
 extern int hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz);
 extern int hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz);
 
