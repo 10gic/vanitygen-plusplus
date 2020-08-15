@@ -584,7 +584,10 @@ main(int argc, char **argv)
 #endif
 
 	if (addrtype == ADDR_TYPE_XLM) {
-		if (optind >= argc) {
+#if OPENSSL_VERSION_NUMBER < 0x10101000L
+        fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for XML\n");
+#else
+	    if (optind >= argc) {
 			usage(argv[0]);
 			return 1;
 		}
@@ -645,6 +648,7 @@ main(int argc, char **argv)
 
 		if (!start_threads_ed25519(vc_ed25519))
 			return 1;
+#endif
 		return 0;
 	}
 

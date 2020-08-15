@@ -29,9 +29,6 @@ most: vanitygen++ keyconv
 
 all: $(PROGS)
 
-ed25519: ed25519.o
-	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
-
 vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 

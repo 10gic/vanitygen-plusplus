@@ -68,6 +68,9 @@ output_check_info(vg_context_ed25519_t *vcp)
 void *
 thread_loop_ed25519(void *arg)
 {
+#if OPENSSL_VERSION_NUMBER < 0x10101000L
+    fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for ED25519, please recompile it\n");
+#else
     unsigned char priv_buf[32];
     unsigned char pub_buf[32];
     unsigned char xlm_private_out[56];
@@ -182,6 +185,7 @@ out:
                vc_ed25519->vc_check_count[thread_index]);
     }
     EVP_PKEY_CTX_free(pctx);
+#endif
     return NULL;
 }
 
