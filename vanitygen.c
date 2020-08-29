@@ -439,7 +439,7 @@ main(int argc, char **argv)
 				break;
 			}
 			else
-			if (strcmp(optarg, "")) {
+			if (strcmp(optarg, "XLM")== 0) {
 				fprintf(stderr,
 						"Generating XLM Address\n");
 				addrtype = ADDR_TYPE_XLM;
