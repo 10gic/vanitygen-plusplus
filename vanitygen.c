@@ -630,6 +630,12 @@ main(int argc, char **argv)
             }
         }
 
+        if (vc_ed25519->match_location == 1 && vc_ed25519->pattern[0] != 'G') {
+            fprintf(stderr, "Prefix '%s' not possible\n", vc_ed25519->pattern);
+            fprintf(stderr, "Hint: Run vanitygen++ with \"-C LIST\" for a list of valid prefixes.  Also note that many coins only allow certain characters as the second character in the prefix.\n");
+            return 1;
+        }
+
 		if (nthreads <= 0) {
 			/* Determine the number of threads */
 			nthreads = count_processors();
