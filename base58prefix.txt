@@ -11,6 +11,7 @@ ARS,Arkstone,A,23,151
 ATMOS,Atmos,N,53,153
 AUR,Auroracoin,A,23,151
 AXE,Axe,P,55,204
+BCNA,BitCanna,B,25,155
 BLAST,BLAST,B,25,239
 BLK,Blackcoin,B,25,153
 BQC,BBQcoin,b,85,213
