@@ -1455,3 +1455,21 @@ eth_encode_checksum_addr(void * input, int inlen, char *output, int outlen)
 		}
 	}
 }
+
+// Like memcpy, but length specified by bits (rather than bytes)
+void copy_nbits(unsigned char *dst, unsigned char *src, int nbits) {
+	// An example:
+	// dst(input):  MMMMMMMM NNNNNNNN
+	// src:         IIIIIIII JJJJJJJJ
+	// nbits: 11
+	// dst(output): IIIIIIII JJJNNNNN
+	int nbytes = (nbits / 8) + 1; // (11 / 8) + 1 = 2
+	int extra_nbits = nbytes * 8 - nbits; // 2 * 8 - 11 = 5
+	char tab[8] = {0, 1, 3 /* 2 bits 1 */, 7 /* 3 bits 1 */, 15 /* 4 bits 1 */, 31 /* 5 bits 1 */,
+				   63 /* 6 bits 1 */, 127 /* 7 bits 1 */};
+	unsigned char backup = dst[nbytes - 1]; // NNNNNNNN
+	memcpy(dst, src, nbytes);
+	unsigned char after = dst[nbytes - 1]; // JJJJJJJJ
+	dst[nbytes - 1] = (backup & tab[extra_nbits])  // 000NNNNN
+					| (after & ~tab[extra_nbits]); // JJJ00000
+}

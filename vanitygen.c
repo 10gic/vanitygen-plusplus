@@ -28,6 +28,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
+#include <openssl/objects.h>
 
 #include "pattern.h"
 #include "util.h"
@@ -127,24 +128,29 @@ vg_thread_loop(void *arg)
 	while (!vcp->vc_halt) {
 		if (++npoints >= rekey_at) {
 			vg_exec_context_upgrade_lock(vxcp);
+		regen_key:
 			/* Generate a new random private key */
 			EC_KEY_generate_key(pkey);
-			if (vcp->vc_privkey_prefix_length > 0) {
+			if (vcp->vc_privkey_prefix_nbits > 0) {
+				/* Adjust private key to meet the requirement of privkey prefix (specified by option -Z) */
 				BIGNUM *pkbn = BN_dup(EC_KEY_get0_private_key(pkey));
 				unsigned char pkey_arr[32];
 				assert(BN_bn2bin(pkbn, pkey_arr) < 33);
-				memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
-				for (i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
-					int k = pkey_arr[i];
-					pkey_arr[i] = pkey_arr[vcp->vc_privkey_prefix_length - 1 - i];
-					pkey_arr[vcp->vc_privkey_prefix_length - 1 - i] = k;
-				}
+				copy_nbits((unsigned char *) pkey_arr, (unsigned char *)vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_nbits);
 				BN_bin2bn(pkey_arr, 32, pkbn);
-				EC_KEY_set_private_key(pkey, pkbn);
+				if (BN_is_zero(pkbn)) {
+					fprintf(stderr, "the generated private key is zero, regenerate it\n");
+					goto regen_key;
+				}
+				// FIXME: private key (pbkn) may be too big if prefix specified by -Z has many FF
+				EC_KEY_set_private_key(pkey, pkbn); /* set private key in pkey */
 
 				EC_POINT *origin = EC_POINT_new(pgroup);
+				/* EC_POINT_mul: compute public_key = k * private_key
+				   here, origin is public_key, pkbn is private_key
+				   save public_key into 2nd param (origin) */
 				EC_POINT_mul(pgroup, origin, pkbn, NULL, NULL, vxcp->vxc_bnctx);
-				EC_KEY_set_public_key(pkey, origin);
+				EC_KEY_set_public_key(pkey, origin); /* set public key in pkey */
 			}
 			npoints = 0;
 
@@ -194,6 +200,8 @@ vg_thread_loop(void *arg)
 			for (nbatch = 0;
 			     (nbatch < ptarraysize) && (npoints < rekey_at);
 			     nbatch++, npoints++) {
+				/* compute public keys from continuous private key,
+				   save public keys into array ppnt */
 				EC_POINT_add(pgroup,
 					     ppnt[nbatch],
 					     ppnt[nbatch],
@@ -332,6 +340,7 @@ usage(const char *name)
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
 "-Z <prefix>   Private key prefix in hex (1Address.io Dapp front-running protection)\n"
+"-l <nbits>    Specify the bits of prefix, only relevant when -Z is specified\n"
 "-z            Format output of matches in CSV(disables verbose mode)\n"
 "              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
@@ -368,6 +377,7 @@ main(int argc, char **argv)
 	EC_POINT *pubkey_base = NULL;
 	char privkey_prefix[32];
 	int privkey_prefix_length = 0;
+	int privkey_prefix_nbits = 0;
 
 	FILE *pattfp[MAX_FILE], *fp;
 	int pattfpi[MAX_FILE];
@@ -377,7 +387,7 @@ main(int argc, char **argv)
 
 	int i;
 
-	while ((opt = getopt(argc, argv, "vqnrik1ezE:P:C:X:Y:F:t:h?f:o:s:Z:a:")) != -1) {
+	while ((opt = getopt(argc, argv, "vqnrik1ezE:P:C:X:Y:F:t:h?f:o:s:Z:a:l:")) != -1) {
 		switch (opt) {
 		case 'c':
 		        compressed = 1;
@@ -565,8 +575,11 @@ main(int argc, char **argv)
 			for (i = 0; i < privkey_prefix_length; i++) {
 				int value; // Can't sscanf directly to char array because of overlapping on Win32
 				sscanf(&optarg[i*2], "%2x", &value);
-				privkey_prefix[privkey_prefix_length - 1 - i] = value;
+				privkey_prefix[i] = value;
 			}
+			break;
+		case 'l':
+			privkey_prefix_nbits = atoi(optarg);
 			break;
 		default:
 			usage(argv[0]);
@@ -658,6 +671,24 @@ main(int argc, char **argv)
 		return 0;
 	}
 
+	/* Option -Z can be used with or without option -l
+	   but, option -l must use together with option -Z */
+	if (privkey_prefix_length == 0) { /* -Z not specified */
+		if (privkey_prefix_nbits > 0) { /* -l specified */
+			fprintf(stderr, "-l must use together with -Z)\n");
+			return 1;
+		}
+	} else if (privkey_prefix_length > 0) { /* -Z specified */
+		if (privkey_prefix_nbits == 0) { /* -l not specified */
+			privkey_prefix_nbits = privkey_prefix_length * 8;
+		} else if (privkey_prefix_nbits > 0) { /* -l specified */
+			if (privkey_prefix_nbits > privkey_prefix_length * 8) {
+				fprintf(stderr, "bits (specified by -l) is too big, must small than bits of prefix (%d bits)\n", privkey_prefix_length * 8);
+				return 1;
+			}
+		}
+	}
+
 	if (caseinsensitive && regex)
 		fprintf(stderr,
 			"WARNING: case insensitive mode incompatible with "
@@ -714,7 +745,7 @@ main(int argc, char **argv)
 	vcp->vc_pubkeytype = pubkeytype;
 	vcp->vc_pubkey_base = pubkey_base;
 	memcpy(vcp->vc_privkey_prefix, privkey_prefix, privkey_prefix_length);
-	vcp->vc_privkey_prefix_length = privkey_prefix_length;
+	vcp->vc_privkey_prefix_nbits = privkey_prefix_nbits;
 
 	vcp->vc_output_match = vg_output_match_console;
 	vcp->vc_output_timing = vg_output_timing_console;

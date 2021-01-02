@@ -2100,24 +2100,28 @@ l_rekey:
 	vg_exec_context_upgrade_lock(vxcp);
 
 	pattern_generation = vcp->vc_pattern_generation;
-
+regen_key:
 	/* Generate a new random private key */
 	EC_KEY_generate_key(pkey);
 	npoints = 0;
-	if (vcp->vc_privkey_prefix_length > 0) {
+	if (vcp->vc_privkey_prefix_nbits > 0) {
+		/* Adjust private key to meet the requirement of privkey prefix (specified by option -Z) */
 		BIGNUM *pkbn = BN_dup(EC_KEY_get0_private_key(pkey));
 		unsigned char pkey_arr[32];
 		assert(BN_bn2bin(pkbn, pkey_arr) < 33);
-		memcpy((char *) pkey_arr, vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_length);
-		for (i = 0; i < vcp->vc_privkey_prefix_length / 2; i++) {
-			int k = pkey_arr[i];
-			pkey_arr[i] = pkey_arr[vcp->vc_privkey_prefix_length - 1 - i];
-			pkey_arr[vcp->vc_privkey_prefix_length - 1 - i] = k;
-		}
+		copy_nbits((unsigned char *) pkey_arr, (unsigned char *)vcp->vc_privkey_prefix, vcp->vc_privkey_prefix_nbits);
 		BN_bin2bn(pkey_arr, 32, pkbn);
-		EC_KEY_set_private_key(pkey, pkbn);
+		if (BN_is_zero(pkbn)) {
+			fprintf(stderr, "the generated private key is zero, regenerate it\n");
+			goto regen_key;
+		}
+		// FIXME: private key (pbkn) may be too big if prefix specified by -Z has many FF
+		EC_KEY_set_private_key(pkey, pkbn); /* set private key in pkey */
 
 		EC_POINT *origin = EC_POINT_new(pgroup);
+		/* EC_POINT_mul: compute public_key = k * private_key
+		   here, origin is public_key, pkbn is private_key
+		   save public_key into 2nd param (origin) */
 		EC_POINT_mul(pgroup, origin, pkbn, NULL, NULL, vxcp->vxc_bnctx);
 		EC_KEY_set_public_key(pkey, origin);
 	}

@@ -1,6 +1,7 @@
 ## If compiling on mac, comment out LIBS and CFLAGS below, and use the MacOS ones below
 LIBS=-lpcre -lcrypto -lm -lpthread
 CFLAGS=-ggdb -O3 -Wall
+# CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
 
 ## If compiling on a mac make sure you install and use homebrew and run the following command `brew install pcre pcre++`
 ## Uncomment lines below and run `make all` 

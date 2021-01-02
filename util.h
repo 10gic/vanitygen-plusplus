@@ -92,4 +92,5 @@ extern void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, uns
 
 extern void eth_encode_checksum_addr(void *input, int inlen, char *output, int outlen);
 
+extern void copy_nbits(unsigned char *dst, unsigned char *src, int nbits);
 #endif /* !defined (__VG_UTIL_H__) */

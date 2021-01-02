@@ -88,6 +88,7 @@ usage(const char *name)
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
 "-Z <prefix>   Private key prefix in hex (1Address.io Dapp front-running protection)\n"
+"-l <nbits>    Specify the bits of prefix, only relevant when -Z is specified\n"
 "-z            Format output of matches in CSV(disables verbose mode)\n"
 "              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
@@ -131,6 +132,7 @@ main(int argc, char **argv)
 	int opened = 0;
 	char privkey_prefix[32];
 	int privkey_prefix_length = 0;
+	int privkey_prefix_nbits = 0;
 
 	FILE *pattfp[MAX_FILE], *fp;
 	int pattfpi[MAX_FILE];
@@ -142,7 +144,7 @@ main(int argc, char **argv)
 	int i;
 
 	while ((opt = getopt(argc, argv,
-			     "vqrik1zC:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:")) != -1) {
+			     "vqrik1zC:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:l:")) != -1) {
 		switch (opt) {
 		case 'r':
 			regex = 1;
@@ -368,8 +370,11 @@ main(int argc, char **argv)
 			for (i = 0; i < privkey_prefix_length; i++) {
 				int value; // Can't sscanf directly to char array because of overlapping on Win32
 				sscanf(&optarg[i*2], "%2x", &value);
-				privkey_prefix[privkey_prefix_length - 1 - i] = value;
+				privkey_prefix[i] = value;
 			}
+			break;
+		case 'l':
+			privkey_prefix_nbits = atoi(optarg);
 			break;
 		default:
 			usage(argv[0]);
@@ -385,6 +390,24 @@ main(int argc, char **argv)
 			"WARNING: Use OpenSSL 1.0.0d+ for best performance\n");
 	}
 #endif
+
+	/* Option -Z can be used with or without option -l
+	   but, option -l must use together with option -Z */
+	if (privkey_prefix_length == 0) { /* -Z not specified */
+		if (privkey_prefix_nbits > 0) { /* -l specified */
+			fprintf(stderr, "-l must use together with -Z)\n");
+			return 1;
+		}
+	} else if (privkey_prefix_length > 0) { /* -Z specified */
+		if (privkey_prefix_nbits == 0) { /* -l not specified */
+			privkey_prefix_nbits = privkey_prefix_length * 8;
+		} else if (privkey_prefix_nbits > 0) { /* -l specified */
+			if (privkey_prefix_nbits > privkey_prefix_length * 8) {
+				fprintf(stderr, "bits (specified by -l) is too big, must small than bits of prefix (%d bits)\n", privkey_prefix_length * 8);
+				return 1;
+			}
+		}
+	}
 
 	if (caseinsensitive && regex)
 		fprintf(stderr,
@@ -430,7 +453,7 @@ main(int argc, char **argv)
 	vcp->vc_pubkeytype = addrtype;
 	vcp->vc_pubkey_base = pubkey_base;
 	memcpy(vcp->vc_privkey_prefix, privkey_prefix, privkey_prefix_length);
-	vcp->vc_privkey_prefix_length = privkey_prefix_length;
+	vcp->vc_privkey_prefix_nbits = privkey_prefix_nbits;
 
 	vcp->vc_output_match = vg_output_match_console;
 	vcp->vc_output_timing = vg_output_timing_console;
