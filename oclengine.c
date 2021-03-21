@@ -28,6 +28,10 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 
+#if defined(_WIN32)
+#include "winglue.h"
+#endif
+
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #ifdef __APPLE__
@@ -339,9 +343,9 @@ vg_ocl_dump_info(vg_ocl_context_t *vocp)
 	       vg_ocl_device_getsizet(did, CL_DEVICE_MAX_COMPUTE_UNITS));
 	fprintf(stderr, "Max workgroup size: %" PRSIZET "d\n",
 	       vg_ocl_device_getsizet(did, CL_DEVICE_MAX_WORK_GROUP_SIZE));
-	fprintf(stderr, "Global memory: %ld\n",
+	fprintf(stderr, "Global memory: %llu\n",
 	       vg_ocl_device_getulong(did, CL_DEVICE_GLOBAL_MEM_SIZE));
-	fprintf(stderr, "Max allocation: %ld\n",
+	fprintf(stderr, "Max allocation: %llu\n",
 	       vg_ocl_device_getulong(did, CL_DEVICE_MAX_MEM_ALLOC_SIZE));
 	vocp->voc_dump_done = 1;
 }
@@ -1238,7 +1242,7 @@ vg_ocl_kernel_start(vg_ocl_context_t *vocp, int slot, int ncol, int nrow,
 {
 	cl_int val, ret;
 	cl_event ev;
-	size_t globalws[2] = { ncol, nrow };
+	size_t globalws[2] = { (size_t)ncol, (size_t)nrow };
 	size_t invws = (ncol * nrow) / invsize;
 
 	assert(!vocp->voc_oclkrnwait[slot]);

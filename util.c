@@ -1330,8 +1330,8 @@ int
 hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 {
 	size_t binsz = *binszp;
-	const unsigned char *hexu = (void*)hex;
-	uint8_t *binu = bin;
+	const unsigned char *hexu = (const unsigned char *)hex;
+	uint8_t *binu = (uint8_t *)bin;
 	size_t i;
 
 	if (!hexsz) hexsz = strlen((const char *)hex);
@@ -1366,7 +1366,7 @@ hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 int
 hex_enc(char *hex, size_t *hexszp, const void *data, size_t binsz)
 {
-	const uint8_t *bin = data;
+	const uint8_t *bin = (const uint8_t *)data;
 	size_t i, len;
 	if (*hexszp < binsz*2) { return -1; }
 	len = 0;

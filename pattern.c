@@ -35,7 +35,6 @@
 #include "pattern.h"
 #include "util.h"
 #include "avl.h"
-#include "sha3.h"
 
 /*
  * Common code for execution helper
@@ -1623,7 +1622,7 @@ research:
 			plen -= 2;
 		}
 		// perform case-sensitive comparing
-		if (memcmp(checksum_addr, pattern, plen)) {
+		if (memcmp(checksum_addr, pattern, plen) != 0) {
 			if (vxcp->vxc_vc->vc_verbose > 1) {
 				fprintf(stderr, "case-sensitive comparing fail, pattern %s\n", vp->vp_pattern);
 			}
