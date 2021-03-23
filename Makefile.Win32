@@ -3,7 +3,7 @@ CC = cl
 #### CUDA
 #### From: https://developer.nvidia.com/cuda-10.0-download-archive
 OPENCL_DIR = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0"
-OPENCL_INCLUDE = $(OPENCL_DIR)\include\CL
+OPENCL_INCLUDE = $(OPENCL_DIR)\include
 OPENCL_LIBS = $(OPENCL_DIR)\lib\Win32\OpenCL.lib
 
 #### OpenSSL
@@ -27,7 +27,7 @@ PCRE_LIBS = .\third_party\windows\pcre-7.0-lib\lib\pcre.lib
 #CURL_INCLUDE = /I$(CURL_DIR)\include /DCURL_STATICLIB
 #CURL_LIBS = $(CURL_DIR)\lib\libcurl_a.lib
 
-CFLAGS_BASE = /D_WIN32 /DPCRE_STATIC /DPTW32_STATIC_LIB /DHAVE_STRUCT_TIMESPEC /I$(PTHREADS_INCLUDE) /I$(PCRE_INCLUDE) /I$(OPENSSL_INCLUDE) /Ox /Zi
+CFLAGS_BASE = /D_WIN32 /DPTW32_STATIC_LIB /DHAVE_STRUCT_TIMESPEC /I$(PTHREADS_INCLUDE) /I$(PCRE_INCLUDE) /I$(OPENSSL_INCLUDE) /I$(OPENCL_INCLUDE) /Ox /Zi
 CFLAGS = $(CFLAGS_BASE) /GL
 LIBS = $(OPENSSL_LIBS) $(PTHREADS_LIBS) $(PCRE_LIBS) ws2_32.lib user32.lib advapi32.lib gdi32.lib /LTCG /DEBUG
 OBJS = vanitygen.obj oclvanitygen.obj oclengine.obj oclvanityminer.obj keyconv.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ed25519.obj stellar.o base32.o crc16.o
@@ -44,7 +44,7 @@ oclvanityminer.exe: oclvanityminer.obj oclengine.obj pattern.obj util.obj winglu
 	link /nologo /out:$@ $** $(LIBS) $(OPENCL_LIBS) $(CURL_LIBS)
 
 keyconv.exe: keyconv.obj util.obj winglue.obj groestl.obj sha3.obj
-	link /nologo /out:$@ $** $(LIBS) $(OPENCL_LIBS)
+	link /nologo /out:$@ $** $(LIBS)
 
 .c.obj:
 	@$(CC) /nologo $(CFLAGS) /c /Tp$< /Fo$@
