@@ -2433,10 +2433,7 @@ get_device(cl_platform_id pid, int num)
 		return NULL;
 	}
 	if (num < 0) {
-		if (nd == 1)
-			num = 0;
-		else
-			num = nd;
+		num = nd - 1;  // use the last device
 	}
 	if (num < nd) {
 		id = ids[num];
@@ -2525,10 +2522,7 @@ get_platform(int num)
 		return NULL;
 	}
 	if (num < 0) {
-		if (np == 1)
-			num = 0;
-		else
-			num = np;
+		num = np - 1; // use the last platform
 	}
 	if (num < np) {
 		id = ids[num];
@@ -2593,7 +2587,7 @@ vg_ocl_context_new(vg_context_t *vcp,
 	/* Find the device */
 	did = get_opencl_device(platformidx, deviceidx);
 	if (!did) {
-		return 0;
+		return NULL;
 	}
 
 	vocp = (vg_ocl_context_t *) malloc(sizeof(*vocp));
