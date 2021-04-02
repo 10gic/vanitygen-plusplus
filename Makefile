@@ -1,14 +1,19 @@
-## If compiling on mac, comment out LIBS and CFLAGS below, and use the MacOS ones below
+## CentOS/Redhat:
+# yum install openssl-devel
+# yum install libcurl-devel
+# yum install check                # Only need if you want to run tests
+
+## Ubuntu:
+# apt install build-essential
+# apt install libssl-dev
+# apt install libpcre3-dev
+# apt install libcurl4-openssl-dev
+# apt install check                # Only need if you want to run tests
+
 LIBS=-lpcre -lcrypto -lm -lpthread
 CFLAGS=-ggdb -O3 -Wall
 # CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
 
-## If compiling on a mac make sure you install and use homebrew and run the following command `brew install pcre pcre++`
-## Uncomment lines below and run `make all` 
-# LIBS= -lpcre -lcrypto -lm -lpthread
-# INCPATHS=-I$(shell brew --prefix)/include -I$(shell brew --prefix openssl)/include
-# LIBPATHS=-L$(shell brew --prefix)/lib -L$(shell brew --prefix openssl)/lib
-# CFLAGS=-ggdb -O3 -Wall -Qunused-arguments $(INCPATHS) $(LIBPATHS)
 OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
      stellar.o base32.o crc16.o
 PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
@@ -42,5 +47,13 @@ oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o groestl.o sha3.o
 keyconv: keyconv.o util.o groestl.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
+run_tests.o: tests.h util_test.h
+
+run_tests: run_tests.o util.o groestl.o sha3.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcheck
+
+test: run_tests
+	./run_tests
+
 clean:
-	rm -f $(OBJS) $(PROGS) $(TESTS) *.oclbin
+	rm -f $(OBJS) $(PROGS) $(TESTS) *.oclbin run_tests

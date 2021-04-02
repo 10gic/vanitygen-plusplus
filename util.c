@@ -1326,6 +1326,9 @@ count_processors(void)
 
 static const char hexdig[] = "0123456789abcdef";
 
+// An example:
+// input: hex[4] = {0x31, 0x32, 0x61, 0x62}
+// output: bin[2] = {0x12, 0xab}
 int
 hex_dec(void *bin, size_t *binszp, const char *hex, size_t hexsz)
 {
