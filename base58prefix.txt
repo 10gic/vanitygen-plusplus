@@ -75,6 +75,7 @@ MNC,Mincoin,M,50,178
 MNP,MNPCoin,M,50,55
 MOG,Mogwai,M,50,204
 MONA,Monacoin,M,50,176
+MOON,Mooncoin,2,3,131
 MUE,Monetary Unit,7,15,143
 MYRIAD,Myriadcoin,M,50,178
 MZC,Mazacoin,M,50,224
