@@ -1396,8 +1396,15 @@ vg_ocl_get_bignum_tpa(BIGNUM *bn, const unsigned char *buf, int cell)
  */
 
 struct ec_point_st {
+	/* Before we remove definition of ec_point_st here,
+	 * We must keep it same as it in ec_local.h: https://github.com/openssl/openssl/blob/05aed12f54de44df586d8912172b4ec05a8af855/crypto/ec/ec_local.h#L309
+	 * It's error-prone!
+	 */
 	const EC_METHOD *meth;
 #if OPENSSL_VERSION_NUMBER >= 0x0010100000
+#if OPENSSL_VERSION_NUMBER >= 0x0010100090  /* field curve_name is introduced in version 1.1.0i */
+	int curve_name;
+#endif
 	BIGNUM *X;
 	BIGNUM *Y;
 	BIGNUM *Z;
@@ -1435,6 +1442,7 @@ vg_ocl_put_point_tpa(unsigned char *buf, int cell, const EC_POINT *ppnt)
 	unsigned char pntbuf[64];
 	int start, i;
 
+	//	__builtin_dump_struct(ppnt, &printf);
 	vg_ocl_put_point(pntbuf, ppnt);
 
 	start = ((((2 * cell) / ACCESS_STRIDE) * ACCESS_BUNDLE) +
