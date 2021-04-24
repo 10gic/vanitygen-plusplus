@@ -592,7 +592,7 @@ bn_mul_mont(bignum *r, bignum *a, bignum *b)
 		*r = t;
 
 #else
-	for (q = 1; q < BN_NWORDS; q++) {
+	for (q = 1; q < (int)BN_NWORDS; q++) {
 		bn_mul_mont_inner3(q);
 	}
 	c = tea || (t.d[BN_NWORDS-1] >= modulus[BN_NWORDS-1]);
@@ -682,7 +682,7 @@ bn_mod_inverse(bignum *r, bignum *n)
 	bignum a, b, x, y;
 	int shift;
 	bn_word xc, yc;
-	for (shift = 0; shift < BN_NWORDS; shift++) {
+	for (shift = 0; shift < (int)BN_NWORDS; shift++) {
 		a.d[shift] = modulus[shift];
 		x.d[shift] = 0;
 		y.d[shift] = 0;
@@ -1523,7 +1523,7 @@ hash_ec_point_eth(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
     hash1[BN_NWORDS + i] = bswap32(c.d[(BN_NWORDS - 1) - i]);
 
     bn_unroll(hash_ec_point_inner_5);
-    sha3_256(hash2, hash1, 64);
+    sha3_256((unsigned char *)hash2, (unsigned char *)hash1, 64);
     // the length of uncompressed public key (hash1) are 64 bytes (exclude the leading 0x04)
 	// the length of sha3_256 result (hash2) are 32 bytes
 	// the length of eth address (hash_out) are 20 bytes (skip first 12 bytes in previous hash)
@@ -1561,7 +1561,7 @@ hash_ec_point_eth(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
 		ethrlp_buf[21] = hash_out[4] >> 24;
 		ethrlp_buf[22] = 0x80;
 
-		sha3_256(hash2, ethrlp_buf, 23);
+		sha3_256((unsigned char *)hash2, (unsigned char *)ethrlp_buf, 23);
 		hash_out[0] = hash2[3]; // skip first 12 bytes
 		hash_out[1] = hash2[4];
 		hash_out[2] = hash2[5];

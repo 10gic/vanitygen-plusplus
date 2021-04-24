@@ -28,11 +28,9 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
-#include <openssl/objects.h>
 
 #include "pattern.h"
 #include "util.h"
-#include "sha3.h"
 #include "ed25519.h"
 
 #include "ticker.h"
@@ -331,7 +329,7 @@ usage(const char *name)
 "-X <version>  Generate address with the given version\n"
 "-Y <version>  Specify private key version (-X provides public key)\n"
 "-F <format>   Generate address with the given format (pubkey, compressed, script)\n"
-"-P <pubkey>   Specify base public key for piecewise key generation\n"
+"-P <pubkey>   Use split-key method with <pubkey> as base public key\n"
 "-e            Encrypt private keys, prompt for password\n"
 "-E <password> Encrypt private keys with <password> (UNSAFE)\n"
 "-t <threads>  Set number of worker threads (Default: number of CPUs)\n"
@@ -340,7 +338,7 @@ usage(const char *name)
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
 "-Z <prefix>   Private key prefix in hex (1Address.io Dapp front-running protection)\n"
-"-l <nbits>    Specify the bits of prefix, only relevant when -Z is specified\n"
+"-l <nbits>    Specify number of bits in prefix, only relevant when -Z is specified\n"
 "-z            Format output of matches in CSV(disables verbose mode)\n"
 "              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
@@ -580,6 +578,10 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			privkey_prefix_nbits = atoi(optarg);
+			if (privkey_prefix_nbits == 0) {
+				fprintf(stderr, "Invalid number of bits `%s` specified\n", optarg);
+				return 1;
+			}
 			break;
 		default:
 			usage(argv[0]);

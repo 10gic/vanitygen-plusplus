@@ -88,7 +88,7 @@ usage(const char *name)
 "-o <file>     Write pattern matches to <file>\n"
 "-s <file>     Seed random number generator from <file>\n"
 "-Z <prefix>   Private key prefix in hex (1Address.io Dapp front-running protection)\n"
-"-l <nbits>    Specify the bits of prefix, only relevant when -Z is specified\n"
+"-l <nbits>    Specify number of bits in prefix, only relevant when -Z is specified\n"
 "-z            Format output of matches in CSV(disables verbose mode)\n"
 "              Output as [COIN],[PREFIX],[ADDRESS],[PRIVKEY]\n",
 version, name);
@@ -375,6 +375,10 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			privkey_prefix_nbits = atoi(optarg);
+			if (privkey_prefix_nbits == 0) {
+				fprintf(stderr, "Invalid number of bits `%s` specified\n", optarg);
+				return 1;
+			}
 			break;
 		default:
 			usage(argv[0]);
