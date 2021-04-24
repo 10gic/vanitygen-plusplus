@@ -79,6 +79,39 @@ Address: 1HsMJxNiV7TLxmoF6uJNkydxPFDog4NQum
 Privkey: KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rHfuE2Tg4nJW
 ```
 
+# Split-key Vanity Address Generation
+This tool supports [split-key](https://en.bitcoin.it/wiki/Split-key_vanity_address) vanity address generation.
+
+Step 1, Alice generates a key pair on her computer:
+```shell
+$ ./keyconv -G
+Pubkey (hex): 044a9fef408ec4db7e264c8f1bfc712a9f6089025bd1980660f7f72c731b7d4c6a6fa5e0fe2174aaa02fffb6ed4a5735fc3109bae2fefe060d8a09bdb8f819f38b
+Privkey (hex): B6761A9A575C3C125F24B09A7ADB5F3613BB654F73ADB7097657D737FCD1C310
+Address: 1AF518xd1zBNCQh2q1qsneaxAs5nPyXzNf
+Privkey: 5KCeK2bzDq2YzUMfwUrNp79mEsk2eeY1dzYtCTTxEgbbFav8RtA
+```
+Then, Alice send the generated public key and the wanted prefix (for example `1ALice`) to Bob. Nevertheless, Alice has to keep safely the private key and not expose it.
+
+Step 2, Bob runs vanitygen++ (or oclvanitygen++) using the Alice's public key and the wanted prefix (`1ALice`).
+```shell
+$ ./vanitygen++ -P 044a9fef408ec4db7e264c8f1bfc712a9f6089025bd1980660f7f72c731b7d4c6a6fa5e0fe2174aaa02fffb6ed4a5735fc3109bae2fefe060d8a09bdb8f819f38b 1ALice
+Difficulty: 259627881
+Pattern: 1ALice
+Address: 1ALicexPg59dVvYgtAP8QCphdrFep6nRwy
+PrivkeyPart: 5KAuZAyz71TFwgDpiBPyMJX6YFxKyJEJDsr2tNr8uraw6JLBMpQ
+```
+Bob sends back the generated PrivkeyPart to Alice. The partial private key does not allow anyone to guess the final Alice's private key.
+
+Step 3, Alice reconstructs the final private key using her private key (the one generated in step 1) and the PrivkeyPart from Bob:
+```shell
+$ ./keyconv -c 5KAuZAyz71TFwgDpiBPyMJX6YFxKyJEJDsr2tNr8uraw6JLBMpQ 5KCeK2bzDq2YzUMfwUrNp79mEsk2eeY1dzYtCTTxEgbbFav8RtA
+Address: 1ALicexPg59dVvYgtAP8QCphdrFep6nRwy
+Privkey: 5JcX7HgrPxEbYKcWhtBT83L3BHcdJ8K8p8X1sNHmcJLsSyMNycZ
+```
+
+## How Split-key Works
+See the explanation in another similar [project](https://github.com/JeanLucPons/VanitySearch#how-it-works).
+
 # Credit
 Many thanks to following projects:
 1. https://github.com/samr7/vanitygen
@@ -88,9 +121,6 @@ Many thanks to following projects:
 # Known Issue
 1. oclvanitygen++ (GPU version) can't find vanity ETH address start with 0x00.
 2. ETH vanity address difficulty estimation is **always** for case-insensative searching.
-
-# Next Work
-1. Support split-key vanity address.
 
 # License
 GNU Affero General Public License
