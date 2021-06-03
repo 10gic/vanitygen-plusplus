@@ -983,6 +983,21 @@ vg_decode_privkey_any(EC_KEY *pkey, int *addrtype, const char *input,
 {
 	int res;
 
+	// For ETH
+	if (*addrtype == ADDR_TYPE_ETH) {
+		BIGNUM * bnpriv = BN_new();
+
+		uint8_t bin[64];
+		size_t binsz = 64;
+
+		hex_dec(bin, &binsz, input, strlen(input));
+
+		BN_bin2bn((const unsigned char *)bin, binsz, bnpriv);
+		res = vg_set_privkey(bnpriv, pkey);
+		BN_clear_free(bnpriv);
+		return res;
+	}
+
 	if ((res = vg_decode_privkey(input, pkey, addrtype)))
 		return res;
 	if (vg_protect_decode_privkey(pkey, addrtype, input, NULL)) {
