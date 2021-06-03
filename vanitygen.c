@@ -600,7 +600,7 @@ main(int argc, char **argv)
 
 	if (addrtype == ADDR_TYPE_XLM) {
 #if OPENSSL_VERSION_NUMBER < 0x10101000L
-        fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for XML\n");
+        fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for XLM\n");
 #else
 	    if (optind >= argc) {
 			usage(argv[0]);
