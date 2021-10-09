@@ -100,7 +100,7 @@ QTUM,Qtum,Q,58,128
 RBY,Rubycoin,R,61,189
 RDD,Reddcoin,R,61,189
 RIC,Riecoin,R,60,128
-ROI,ROIcoin: R,60,128
+ROI,ROIcoin,R,60,128
 RVN,Ravencoin,R,60,128
 SCA,Scamcoin,S,63,191
 SDC,Shadowcoin,S,63,191
