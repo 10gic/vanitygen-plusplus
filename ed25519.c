@@ -9,7 +9,7 @@
 #include "stellar.h"
 #include "pattern.h"
 
-pthread_t TID[ed25519_max_threads];
+static pthread_t TID[ed25519_max_threads];
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER; // protect vc_ed25519->vc_found_num
 
@@ -111,7 +111,9 @@ check_thread_index:
         vc_ed25519->vc_check_count[thread_index]++;
         output_timeout++;
 
-        // get public key from EVP_PKEY
+        // Get public key from EVP_PKEY
+        // EVP_PKEY_get_raw_public_key only works for algorithms that support raw public keys.
+        // Currently this is: EVP_PKEY_X25519, EVP_PKEY_ED25519, EVP_PKEY_X448 or EVP_PKEY_ED448.
         EVP_PKEY_get_raw_public_key(pkey, (unsigned char *)&pub_buf, &buf_len);
         //dumphex(pub_buf, sizeof(pub_buf));
 
@@ -147,7 +149,10 @@ check_thread_index:
 
                 printf("\rXLM Address: %.56s\n", xlm_addr_out);
 
-                // get private key from EVP_PKEY
+                // Get private key from EVP_PKEY
+                // EVP_PKEY_get_raw_private_key only works for algorithms that support raw private keys.
+                // Currently this is: EVP_PKEY_HMAC, EVP_PKEY_POLY1305, EVP_PKEY_SIPHASH, EVP_PKEY_X25519,
+                // EVP_PKEY_ED25519, EVP_PKEY_X448 or EVP_PKEY_ED448.
                 EVP_PKEY_get_raw_private_key(pkey, (unsigned char *)&priv_buf, &buf_len);
                 //dumphex(priv_buf, sizeof(priv_buf));
 

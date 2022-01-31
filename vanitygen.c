@@ -32,6 +32,7 @@
 #include "pattern.h"
 #include "util.h"
 #include "ed25519.h"
+#include "simplevanitygen.h"
 
 #include "ticker.h"
 char ticker[10];
@@ -475,13 +476,19 @@ main(int argc, char **argv)
 		case 'Y':
 			/* Overrides privtype of 'X' but leaves all else intact */
 			privtype = atoi(optarg);
- 			break;
+			break;
 		case 'F':
 			if (!strcmp(optarg, "contract"))
 				format = VCF_CONTRACT;
 			else
 			if (!strcmp(optarg, "script"))
 				format = VCF_SCRIPT;
+			else
+			if (!strcmp(optarg, "p2wpkh"))
+				format = VCF_P2WPKH;
+			else
+			if (!strcmp(optarg, "p2tr"))
+				format = VCF_P2TR;
 			else
 			if (!strcmp(optarg, "compressed"))
 				compressed = 1;
@@ -670,6 +677,77 @@ main(int argc, char **argv)
 		if (!start_threads_ed25519(vc_ed25519))
 			return 1;
 #endif
+		return 0;
+	}
+
+	if (format == VCF_P2WPKH || format == VCF_P2TR) {
+		if (optind >= argc) {
+			usage(argv[0]);
+			return 1;
+		}
+		patterns = &argv[optind];
+		printf("Pattern: %s\n", *patterns);
+
+		vg_context_simplevanitygen_t *vc_simplevanitygen = NULL;
+		vc_simplevanitygen = (vg_context_simplevanitygen_t *) malloc(sizeof(*vc_simplevanitygen));
+		vc_simplevanitygen->vc_format = format;
+		vc_simplevanitygen->vc_verbose = verbose;
+		vc_simplevanitygen->vc_addrtype = addrtype;
+		vc_simplevanitygen->vc_privtype = privtype;
+		vc_simplevanitygen->vc_result_file = result_file;
+		vc_simplevanitygen->vc_numpairs = numpairs;
+		if (vc_simplevanitygen->vc_numpairs == 0) {
+			vc_simplevanitygen->vc_numpairs = 1;
+		}
+		vc_simplevanitygen->pattern = *patterns;
+		vc_simplevanitygen->match_location = 1; // By default, match begin location
+
+		size_t pattern_len = strlen(vc_simplevanitygen->pattern);
+
+		if (regex) {
+			fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
+			if (vc_simplevanitygen->pattern[0] == '^') {
+				vc_simplevanitygen->match_location = 1; // match begin location
+				// skip first char '^'
+				vc_simplevanitygen->pattern = vc_simplevanitygen->pattern + 1;
+			} else if (vc_simplevanitygen->pattern[pattern_len-1] == '$') {
+				vc_simplevanitygen->match_location = 2; // match end location
+				// remove last char '$'
+				vc_simplevanitygen->pattern[pattern_len-1] = '\0';
+			} else {
+				vc_simplevanitygen->match_location = 0; // match any location
+			}
+		}
+
+		if (vc_simplevanitygen->match_location == 1) {
+			if (vc_simplevanitygen->vc_format == VCF_P2WPKH && strncmp(vc_simplevanitygen->pattern, "bc1q", strlen("bc1q")) != 0) {
+				fprintf(stderr, "Prefix '%s' not possible, address must starts with bc1q for p2wpkh\n", vc_simplevanitygen->pattern);
+				return 1;
+			} else if (vc_simplevanitygen->vc_format == VCF_P2TR && strncmp(vc_simplevanitygen->pattern, "bc1p", strlen("bc1p")) != 0) {
+				fprintf(stderr, "Prefix '%s' not possible, address must starts with bc1p for p2tr\n", vc_simplevanitygen->pattern);
+				return 1;
+			}
+		}
+
+		if (nthreads <= 0) {
+			/* Determine the number of threads */
+			nthreads = count_processors();
+			if (nthreads <= 0) {
+				fprintf(stderr, "ERROR: could not determine processor count\n");
+				nthreads = 1;
+			}
+
+			if (nthreads > simplevanitygen_max_threads) {
+				fprintf(stderr, "WARNING: too many threads\n");
+				nthreads = simplevanitygen_max_threads;
+			}
+		}
+		vc_simplevanitygen->vc_thread_num = nthreads;
+		vc_simplevanitygen->vc_start_time = (unsigned long)time(NULL);
+
+		if (!start_threads_simplevanitygen(vc_simplevanitygen))
+			return 1;
+
 		return 0;
 	}
 

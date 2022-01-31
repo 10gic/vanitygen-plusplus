@@ -1,19 +1,6 @@
 # Vanitygen plus plus
 Vanity address generator for BTC, ETH, LTC, etc (more than 100 crypto currencies).
 
-# Build
-Intall building dependencies in Redhat/CentOS:
-```
-$ yum install openssl-devel
-$ yum install libcurl-devel
-```
-
-Build executable file:
-```
-$ make          # build: vanitygen++ keyconv
-$ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
-```
-
 # Usage
 List all supported crypto currencies:
 ```
@@ -24,7 +11,7 @@ LTC : Litecoin : L
 ...... (skip many output)
 ```
 
-Generate BTC vanity address:
+Generate BTC vanity address (legacy):
 ```
 $ ./vanitygen++ 1Love
 Difficulty: 4476342
@@ -32,6 +19,22 @@ Difficulty: 4476342
 Pattern: 1Love
 Address: 1Love1ZYE2nzXGibw9rtMCPq2tmg2qLtfx
 Privkey: 5KDnavUAswEzQDYY1sAwKPVMUZhZh5hhyS2MnZs8q6SEsQMk2k4
+```
+
+Generate BTC vanity address (native witness):
+```
+$ ./vanitygen++ -F p2wpkh bc1qqqq
+Pattern: bc1qqqq
+BTC Address: bc1qqqqlp27ga4awzu67r5ffn8w6ku5k2wve35453a
+BTC Privkey (hex): 04eff710d1cc965f5ae9d4918af24d6900e86fbb8ae802acc19134b2e442f3af
+```
+
+Generate BTC vanity address (taproot):
+```
+$ ./vanitygen++ -F p2tr bc1pppp
+Pattern: bc1pppp
+BTC Address: bc1pppphk840d8etdgav2xm3yvkz4me86cnm3cmzcthhqd6a3nda8e4qx6kfh7
+BTC Privkey (hex): f6a4665fcf77e9e83085aa473757b7550e93261e58ec2bd3f8cda8ea42e3efb9
 ```
 
 Generate ETH vanity address:
@@ -57,6 +60,19 @@ ETH Privkey: 0xdb3813534c0c9595f9b8b35d6f544827065b33930ae42c38a9d7ce41a1d74669
 ```
 
 If you have OpenCL-compatible GPU, please use `oclvanitygen++`, it's faster.
+
+# Build
+Intall building dependencies in Redhat/CentOS:
+```
+$ yum install openssl-devel
+$ yum install libcurl-devel
+```
+
+Build executable file:
+```
+$ make          # build: vanitygen++ keyconv
+$ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
+```
 
 # Solve Puzzle
 This tool can be used for solving the [Bitcoin puzzle](https://bitcointalk.org/index.php?topic=1306983.0).

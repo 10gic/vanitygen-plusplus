@@ -91,6 +91,8 @@ enum vg_format {
 	VCF_PUBKEY,
 	VCF_SCRIPT,
 	VCF_CONTRACT, // VCF_CONTRACT only valid for ETH
+	VCF_P2WPKH,
+	VCF_P2TR
 };
 
 /* Application-level context, incl. parameters and global pattern store */

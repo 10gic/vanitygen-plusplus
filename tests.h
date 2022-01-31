@@ -1,5 +1,6 @@
 #include "util.h"
 #include "pattern.h"
+#include "segwit_addr.h"
 #include <check.h>
 
 #define FROM_HEX_MAXLEN 512
@@ -28,6 +29,7 @@ START_TEST(test_sample)
 END_TEST
 
 #include "util_test.h"
+#include "segwit_addr_test.h"
 
 
 Suite* create_sample_suite(void)
@@ -47,6 +49,10 @@ Suite* create_sample_suite(void)
 	tc = tcase_create("util eth test");
 	tcase_add_test(tc, test_eth_pubkey2addr);
 	tcase_add_test(tc, test_eth_encode_checksum_addr);
+	suite_add_tcase(suite, tc);
+
+	tc = tcase_create("segwit addr test");
+	tcase_add_test(tc, test_segwit_addr_encode);
 	suite_add_tcase(suite, tc);
 
     return suite;
