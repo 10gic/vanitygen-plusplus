@@ -778,14 +778,31 @@ get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
 		memset(lowbin, 0, sizeof(lowbin));
 		memset(upbin, 0xff, sizeof(upbin));
 
+		int pfx_len = strlen(pfx);
+		char pfx_with_padding[40];  // padding with '0'
+		memset(pfx_with_padding, 48, sizeof(pfx_with_padding)); // decimal 48 = char '0'
+		if (pfx_len >= 2 && pfx[0] == '0' && (pfx[1] == 'x' || pfx[1] == 'X')) { // with leading 0x
+			pfx_len = pfx_len - strlen("0x");
+			memcpy(pfx_with_padding, pfx + 2, pfx_len);
+		} else { // without leading 0x
+			memcpy(pfx_with_padding, pfx, pfx_len);
+		}
+		// Function hex_dec only handles the hex string with even length (e.g. 0xAA, 0xAAAA),
+		// In order to process hex string with odd length (e.g. 0xA, 0xAAA), we pad it first.
+		// Some examples:
+		// If pfx = 0xA,    then pfx_with_padding = A000000000000000000000000000000000000000
+		// If pfx = 0xAA,   then pfx_with_padding = AA00000000000000000000000000000000000000
+		// If pfx = 0xAAA,  then pfx_with_padding = AAA0000000000000000000000000000000000000
+		// If pfx = 0xAAAA, then pfx_with_padding = AAAA000000000000000000000000000000000000
+
 		size_t bLen = ethkeylen;
-		if (hex_dec(binres, &bLen, pfx, p) < 0) {
-			fprintf(stderr, "Invalid eth address prefix (%s) keylen: %d\n", pfx, (int)ethkeylen);
+		if (hex_dec(binres, &bLen, pfx_with_padding, sizeof(pfx_with_padding)) < 0) {
+			fprintf(stderr, "Invalid eth address prefix (%s)\n", pfx);
 			goto out;
 		}
 
-		memcpy(upbin, binres, bLen);
-		memcpy(lowbin, binres, bLen);
+		copy_nbits(upbin, binres, 4 * pfx_len);
+		copy_nbits(lowbin, binres, 4 * pfx_len);
 
 		bnlow = BN_new();
 		bnhigh = BN_new();
