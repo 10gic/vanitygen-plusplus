@@ -1,4 +1,3 @@
-#include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -11,6 +10,9 @@
 #include "simplevanitygen.h"
 #include "pattern.h"
 #include "segwit_addr.h"
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/core_names.h>
 
 static pthread_t TID[simplevanitygen_max_threads];
 
@@ -308,3 +310,4 @@ int start_threads_simplevanitygen(vg_context_simplevanitygen_t *vc_simplevanityg
     }
     return 1;
 }
+#endif

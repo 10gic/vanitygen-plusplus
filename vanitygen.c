@@ -681,6 +681,10 @@ main(int argc, char **argv)
 	}
 
 	if (format == VCF_P2WPKH || format == VCF_P2TR) {
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+		fprintf(stderr, "OpenSSL 3.0 (or higher) is required for P2WPKH or P2TR address\n");
+		return 1;
+#else
 		if (optind >= argc) {
 			usage(argv[0]);
 			return 1;
@@ -749,6 +753,7 @@ main(int argc, char **argv)
 			return 1;
 
 		return 0;
+#endif
 	}
 
 	/* Option -Z can be used with or without option -l
