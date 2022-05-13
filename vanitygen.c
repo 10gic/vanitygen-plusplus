@@ -435,6 +435,7 @@ main(int argc, char **argv)
 					"---------------\n"
 					"ETH : Ethereum : 0x\n"
 					"XLM : Stellar Lumens : G\n"
+					"ATOM : Cosmos : cosmos1\n"
 					);
 				vg_print_alicoin_help_msg();
 				return 1;
@@ -453,6 +454,12 @@ main(int argc, char **argv)
 						"Generating XLM Address\n");
 				addrtype = ADDR_TYPE_XLM;
 				privtype = PRIV_TYPE_XLM;
+			}
+			if (strcmp(optarg, "ATOM")== 0) {
+				fprintf(stderr,
+						"Generating ATOM Address\n");
+				addrtype = ADDR_TYPE_ATOM;
+				privtype = PRIV_TYPE_ATOM;
 			}
 			else {
 				// Read from base58prefix.txt
@@ -680,7 +687,72 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-	if (format == VCF_P2WPKH || format == VCF_P2TR) {
+	if (addrtype == ADDR_TYPE_ATOM) {
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+		fprintf(stderr, "OpenSSL 3.0 (or higher) is required for Cosmos address\n");
+		return 1;
+#else
+		if (optind >= argc) {
+			usage(argv[0]);
+			return 1;
+		}
+		patterns = &argv[optind];
+		printf("Pattern: %s\n", *patterns);
+
+		vg_context_simplevanitygen_t *vc_simplevanitygen = NULL;
+		vc_simplevanitygen = (vg_context_simplevanitygen_t *) malloc(sizeof(*vc_simplevanitygen));
+		vc_simplevanitygen->vc_format = format;
+		vc_simplevanitygen->vc_verbose = verbose;
+		vc_simplevanitygen->vc_addrtype = addrtype;
+		vc_simplevanitygen->vc_privtype = privtype;
+		vc_simplevanitygen->vc_result_file = result_file;
+		vc_simplevanitygen->vc_numpairs = numpairs;
+		if (vc_simplevanitygen->vc_numpairs == 0) {
+			vc_simplevanitygen->vc_numpairs = 1;
+		}
+		vc_simplevanitygen->pattern = *patterns;
+		vc_simplevanitygen->match_location = 1; // By default, match begin location
+
+		size_t pattern_len = strlen(vc_simplevanitygen->pattern);
+
+		if (regex) {
+			fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
+			if (vc_simplevanitygen->pattern[0] == '^') {
+				vc_simplevanitygen->match_location = 1; // match begin location
+				// skip first char '^'
+				vc_simplevanitygen->pattern = vc_simplevanitygen->pattern + 1;
+			} else if (vc_simplevanitygen->pattern[pattern_len-1] == '$') {
+				vc_simplevanitygen->match_location = 2; // match end location
+				// remove last char '$'
+				vc_simplevanitygen->pattern[pattern_len-1] = '\0';
+			} else {
+				vc_simplevanitygen->match_location = 0; // match any location
+			}
+		}
+
+		if (nthreads <= 0) {
+			/* Determine the number of threads */
+			nthreads = count_processors();
+			if (nthreads <= 0) {
+				fprintf(stderr, "ERROR: could not determine processor count\n");
+				nthreads = 1;
+			}
+
+			if (nthreads > simplevanitygen_max_threads) {
+				fprintf(stderr, "WARNING: too many threads\n");
+				nthreads = simplevanitygen_max_threads;
+			}
+		}
+		vc_simplevanitygen->vc_thread_num = nthreads;
+		vc_simplevanitygen->vc_start_time = (unsigned long)time(NULL);
+
+		if (!start_threads_simplevanitygen(vc_simplevanitygen))
+			return 1;
+
+		return 0;
+#endif
+	}
+	else if (format == VCF_P2WPKH || format == VCF_P2TR) {
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 		fprintf(stderr, "OpenSSL 3.0 (or higher) is required for P2WPKH or P2TR address\n");
 		return 1;

@@ -9,6 +9,7 @@
 #include "util.h"
 #include "simplevanitygen.h"
 #include "pattern.h"
+#include "bech32.h"
 #include "segwit_addr.h"
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -96,7 +97,7 @@ thread_loop_simplevanitygen(void *arg) {
     unsigned char pub_buf[128];  // 65 bytes enough
     size_t pub_buf_len = 128;
 
-    char address[128] = {'\0'};
+    char address[1024] = {'\0'};
 
     int find_it = 0;
     size_t pattern_len;
@@ -132,6 +133,11 @@ thread_loop_simplevanitygen(void *arg) {
 
     int output_timeout = 0;
 
+	char *coin = "BTC";
+	if (vc_simplevanitygen->vc_addrtype == ADDR_TYPE_ATOM) {
+		coin = "ATOM";
+	}
+
     while (!vc_simplevanitygen->vc_halt) {
         // Generate a key-pair
         // EVP_PKEY_keygen is slow!
@@ -143,7 +149,26 @@ thread_loop_simplevanitygen(void *arg) {
         vc_simplevanitygen->vc_check_count[thread_index]++;
         output_timeout++;
 
-        if (vc_simplevanitygen->vc_format == VCF_P2WPKH) {
+        if (vc_simplevanitygen->vc_addrtype == ADDR_TYPE_ATOM) {
+            // Get compressed public key from EVP_PKEY
+            size_t output_len = 0;
+            get_public_key(pkey, pub_buf, pub_buf_len, POINT_CONVERSION_COMPRESSED, &output_len);
+
+            unsigned char hash1[32], hash2[20];
+            SHA256(pub_buf, output_len, hash1);
+            RIPEMD160(hash1, sizeof(hash1), hash2);
+
+            uint8_t data[64];
+            size_t datalen = 0;
+            // Convert 8-bit unsigned integers to 5-bit integers, see https://en.bitcoin.it/wiki/Bech32
+            convert_bits(data, &datalen, 5, hash2, 20, 8, 1);
+            // Do bech32 encoding
+            if (bech32_encode(address, "cosmos", data, datalen, BECH32_ENCODING_BECH32) != 1) {
+                fprintf(stderr, "bech32_encode fail\n");
+                goto out;
+            }
+        }
+        else if (vc_simplevanitygen->vc_format == VCF_P2WPKH) {
             // Get compressed public key from EVP_PKEY
             size_t output_len = 0;
             get_public_key(pkey, pub_buf, pub_buf_len, POINT_CONVERSION_COMPRESSED, &output_len);
@@ -250,13 +275,13 @@ thread_loop_simplevanitygen(void *arg) {
 
             vc_simplevanitygen->vc_found_num++;
 
-            printf("\rBTC Address: %s\n", address);
+            printf("\r%s Address: %s\n", coin, address);
 
             // get private key from EVP_PKEY
             size_t output_len = 0;
             get_private_key(pkey, (unsigned char *) &priv_buf, pub_buf_len, &output_len);
 
-            fprintf(stdout, "BTC Privkey (hex): ");
+            fprintf(stdout, "%s Privkey (hex): ", coin);
             dumphex(priv_buf, output_len);
 
             vc_simplevanitygen->vc_halt = 1;
@@ -267,8 +292,8 @@ thread_loop_simplevanitygen(void *arg) {
                     fprintf(stderr, "ERROR: could not open result file: %s\n", strerror(errno));
                 } else {
                     fprintf(fp, "Pattern: %s\n", vc_simplevanitygen->pattern);
-                    fprintf(fp, "BTC Address: %s\n", address);
-                    fprintf(fp, "BTC Privkey (hex): ");
+                    fprintf(fp, "%s Address: %s\n", coin, address);
+                    fprintf(fp, "%s Privkey (hex): ", coin);
                     fdumphex(fp, priv_buf, output_len);
                     fclose(fp);
                 }
