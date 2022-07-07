@@ -143,6 +143,31 @@ Privkey: 5JcX7HgrPxEbYKcWhtBT83L3BHcdJ8K8p8X1sNHmcJLsSyMNycZ
 ## How Split-key Works
 See the explanation in another similar [project](https://github.com/JeanLucPons/VanitySearch#how-it-works).
 
+# CUDA Docker Image
+
+## Build Image
+```shell
+$ docker build -f docker/Dockerfile.cuda -t vanitygen-plusplus:latest .
+```
+
+The CUDA version from the base image must work with the driver available
+through the `container-toolkit`, so YMMV with the `Dockerfile.cuda` default
+versions of the images. so you can specify different versions with Docker's
+`--build-arg` on:
+
+- `BASE_CUDA_DEV_CONTAINER`
+- `BASE_CUDA_RUN_CONTAINER`
+
+## Running with [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html)
+```shell
+$ docker run -it --network none --gpus all vanitygen-plusplus:latest 1Love
+Difficulty: 4476342
+Compiling kernel, can take minutes...done!
+Pattern: 1Love
+Address: 1LovebbyvEuCnJoKZBXDA6kqts6Q2KG1WJ
+Privkey: 5K3J3aA8XkvfdjhJcZ8BJhTUKAjYATCey9AdgahRvoxGB9gLUoD
+```
+
 # Credit
 Many thanks to following projects:
 1. https://github.com/samr7/vanitygen
