@@ -82,6 +82,7 @@ get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form,
                                      pub_buf,
                                      buf_len,
                                      NULL);
+    EC_KEY_free(ec_key);
 }
 
 void *
@@ -89,6 +90,7 @@ get_private_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, size_t *
     EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
     BIGNUM *pkbn = EC_KEY_get0_private_key(ec_key);
     *output_len = BN_bn2bin(pkbn, pub_buf);
+    EC_KEY_free(ec_key);
 }
 
 void *
@@ -223,6 +225,8 @@ thread_loop_simplevanitygen(void *arg) {
 
                 // P = public key, if Y of public key is even
                 EC_POINT *P = EC_KEY_get0_public_key(ec_key);
+
+                EC_KEY_free(ec_key);
 
                 // Compute tweaked pubkey Q
                 // Q = P + T
