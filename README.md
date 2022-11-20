@@ -62,6 +62,21 @@ ETH Privkey: 0xdb3813534c0c9595f9b8b35d6f544827065b33930ae42c38a9d7ce41a1d74669
 If you have OpenCL-compatible GPU, please use `oclvanitygen++`, it's faster.
 
 # Build
+## nix-build (install dependencies automatically)
+You need install nix-build firstly, for more information please visit: https://nixos.org/manual/nix/stable/installation/installing-binary.html
+
+After you install nix-build successfully, just run:
+```
+$ git clone https://github.com/10gic/vanitygen-plusplus.git
+$ cd vanitygen-plusplus
+$ nix-build                           # Build: vanitygen++ oclvanitygen++ keyconv oclvanityminer
+$ ./result/bin/vanitygen++ 1Love      # Executable files are stored at ./result/bin/
+Pattern: 1Love
+Address: 1Love3h1c5qd9ZRoDKkCLSeWfBKR5MTF7t
+Privkey: 5JYtyNYLTRX3dvpN5PCiYF1AKFnETmgBLukCNgfkoBjDHZ2yJp1
+```
+
+## make (install dependencies mannully)
 Intall building dependencies in Redhat/CentOS:
 ```
 $ yum install openssl-devel
@@ -140,3 +155,8 @@ Many thanks to following projects:
 
 # License
 GNU Affero General Public License
+
+# Donate
+I don't have much time to maintain this project, donations will encourage me to keep going.
+1. BTC: 123456WcsbL1NRiU2H3jNSSDEp3q8M9u8t
+2. ETH: 0x123456E35147E215FBec2A1B4502C7Cf6Ecb62cD
