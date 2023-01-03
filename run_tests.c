@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 int GRSFlag = 0; // avoid link error when test function in util.c
+int TRXFlag = 0; // avoid link error when test function in util.c
 
 // run suite
 //

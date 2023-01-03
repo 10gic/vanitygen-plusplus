@@ -30,7 +30,7 @@ END_TEST
 
 #include "util_test.h"
 #include "segwit_addr_test.h"
-
+#include "pattern_test.h"
 
 Suite* create_sample_suite(void)
 {
@@ -53,6 +53,10 @@ Suite* create_sample_suite(void)
 
 	tc = tcase_create("segwit addr test");
 	tcase_add_test(tc, test_segwit_addr_encode);
+	suite_add_tcase(suite, tc);
+
+	tc = tcase_create("pattern func test");
+	tcase_add_test(tc, test_get_prefix_ranges);
 	suite_add_tcase(suite, tc);
 
     return suite;

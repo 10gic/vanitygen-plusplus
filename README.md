@@ -1,5 +1,5 @@
 # Vanitygen plus plus
-Vanity address generator for BTC, ETH, LTC, etc (more than 100 crypto currencies).
+Vanity address generator for BTC, ETH, LTC, TRX etc (more than 100 crypto currencies).
 
 # Usage
 List all supported crypto currencies:
@@ -76,8 +76,8 @@ Address: 1Love3h1c5qd9ZRoDKkCLSeWfBKR5MTF7t
 Privkey: 5JYtyNYLTRX3dvpN5PCiYF1AKFnETmgBLukCNgfkoBjDHZ2yJp1
 ```
 
-## make (install dependencies mannully)
-Intall building dependencies in Redhat/CentOS:
+## make (install dependencies manually)
+Install building dependencies in Redhat/CentOS:
 ```
 $ yum install openssl-devel
 $ yum install libcurl-devel
@@ -145,13 +145,13 @@ See the explanation in another similar [project](https://github.com/JeanLucPons/
 
 # Credit
 Many thanks to following projects:
-1. https://github.com/samr7/vanitygen
-2. https://github.com/exploitagency/vanitygen-plus
+1. https://github.com/samr7/vanitygen, see https://bitcointalk.org/index.php?topic=25804.0
+2. https://github.com/exploitagency/vanitygen-plus (now it's 404)
 3. https://github.com/kjx98/vanitygen-eth
 
 # Known Issue
 1. oclvanitygen++ (GPU version) can't find vanity ETH address start with 0x00.
-2. ETH vanity address difficulty estimation is **always** for case-insensative searching.
+2. ETH vanity address difficulty estimation is **always** for case-insensitive searching.
 
 # License
 GNU Affero General Public License

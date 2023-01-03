@@ -26,6 +26,7 @@
 #include <openssl/ec.h>
 
 extern int GRSFlag;
+extern int TRXFlag;
 
 extern const char *vg_b58_alphabet;
 extern const signed char vg_b58_reverse_map[256];

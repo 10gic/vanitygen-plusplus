@@ -978,6 +978,9 @@ vg_ocl_init(vg_context_t *vcp, vg_ocl_context_t *vocp, cl_device_id did,
 	if (vcp->vc_format == VCF_CONTRACT)
 		end += snprintf(optbuf + end, sizeof(optbuf) - end,
 						"-DVCF_CONTRACT ");
+	if (TRXFlag)
+		end += snprintf(optbuf + end, sizeof(optbuf) - end,
+						"-DTRX_FLAG ");
 	if (vocp->voc_quirks & VG_OCL_NV_VERBOSE)
 		end += snprintf(optbuf + end, sizeof(optbuf) - end,
 				"-cl-nv-verbose ");
@@ -1502,6 +1505,7 @@ show_elapsed(struct timeval *tv, const char *place)
 static int
 vg_ocl_gethash_check(vg_ocl_context_t *vocp, int slot)
 {
+	// fprintf(stderr, "func vg_ocl_gethash_check called\n");
 	vg_exec_context_t *vxcp = &vocp->base;
 	vg_context_t *vcp = vocp->base.vxc_vc;
 	vg_test_func_t test_func = vcp->vc_test;
@@ -1615,6 +1619,7 @@ vg_ocl_prefix_rekey(vg_ocl_context_t *vocp)
 static int
 vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 {
+	// fprintf(stderr, "func vg_ocl_prefix_check called\n");
 	vg_exec_context_t *vxcp = &vocp->base;
 	vg_context_t *vcp = vocp->base.vxc_vc;
 	vg_test_func_t test_func = vcp->vc_test;
@@ -1635,6 +1640,8 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 	found_delta = ocl_found_out[0];
 
 	if (found_delta != 0xffffffff) {
+		// fprintf(stderr, "GPU version claims match, verify with CPU version\n");
+
 		/* GPU code claims match, verify with CPU version */
 		orig_delta = vxcp->vxc_delta;
 		vxcp->vxc_delta += found_delta;
@@ -1647,10 +1654,11 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 				res = test_func(vxcp); // test the address derived from hash if match pattern
 			}
 		} else {
-			if (!memcmp(vxcp->vxc_binres + 1, ocl_found_out + 2, 20)) {
+			if (!memcmp(vxcp->vxc_binres + 1 /* + 1 means skip [ver] in [ver][ripemd160][checksum] */, ocl_found_out + 2, 20)) {
 				res = test_func(vxcp);
 			}
 		}
+		// Note: res = 0 (not found), 1 (found), 2 (not continue)
 		if (res == 0) { // not match using test_func
 			if (vcp->vc_addrtype == ADDR_TYPE_ETH && (!vg_prefix_context_get_case_insensitive(vcp))) {
 				// eth address match fail possibility caused by case mismatched in case sensitive searching
@@ -1986,6 +1994,7 @@ out:
 static void *
 vg_opencl_loop(vg_exec_context_t *arg)
 {
+	// fprintf(stderr, "vg_opencl_loop called\n");
 	vg_ocl_context_t *vocp = (vg_ocl_context_t *) arg;
 	int i;
 	int round, nrows, ncols;
@@ -2206,7 +2215,7 @@ regen_key:
 			slot_done = 0;
 
 			/* Call the result check function */
-			switch (vocp->voc_check_func(vocp, slot)) {
+			switch (vocp->voc_check_func(vocp, slot)) {  // voc_check_func return 0 (not found), 1 (found), 2 (not continue)
 			case 1:
 				rekey_at = 0;
 				break;

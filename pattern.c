@@ -35,6 +35,7 @@
 #include "pattern.h"
 #include "util.h"
 #include "avl.h"
+#include "sha3.h"
 
 /*
  * Common code for execution helper
@@ -263,6 +264,10 @@ vg_exec_context_calc_address(vg_exec_context_t *vxcp)
 	if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
 		// Save ETH address into vxcp->vxc_binres
 		eth_pubkey2addr(eckey_buf, vxcp->vxc_vc->vc_format, vxcp->vxc_binres);
+	} else if (TRXFlag == 1) {
+		// See: https://secretscan.org/PrivateKeyTron
+		SHA3_256(hash1, eckey_buf + 1, 64); // skip 1 byte (the leading 0x04) in uncompressed public key
+		memcpy(&vxcp->vxc_binres[1], hash1 + 12, 20); // skip first 12 bytes in public key hash
 	} else {
 		SHA256(eckey_buf, len, hash1);
 		RIPEMD160(hash1, sizeof(hash1), hash2);
@@ -715,6 +720,9 @@ vg_context_start_threads(vg_context_t *vcp)
 			vg_context_stop_threads(vcp);
 			return -1;
 		}
+		if (vcp->vc_verbose > 0) {
+			fprintf(stderr, "create thread!\n");
+		}
 		vxcp->vxc_thread_active = 1;
 	}
 	return 0;
@@ -744,6 +752,17 @@ vg_context_wait_for_completion(vg_context_t *vcp)
 
 /*
  * Find the bignum ranges that produce a given prefix.
+ * 
+ * For ETH, if address (hex) pfx = "0xAA", then:
+ *  result[0] = AA00000000000000000000000000000000000000
+ *  result[1] = AAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+ * 
+ * For BTC, if address (base58check) pfx = "12", then:
+ *  result[0] = 0AF820335D9B3D9CF58B911D87035677FB7F528100000000
+ *  result[1] = 15F04066BB367B39EB17223B0E06ACEFF6FEA501FFFFFFFF
+ *              \_________________  ___________________/    |
+ *                                \/                        |
+ *                         [ripemd160_hash]         [checksum (not set)]
  */
 static int
 get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
@@ -1622,7 +1641,7 @@ vg_prefix_test(vg_exec_context_t *vxcp)
 		 * a match without generating the lower four byte
 		 * check code.
 		 */
-		BN_bin2bn(vxcp->vxc_binres, 25, vxcp->vxc_bntarg);
+		BN_bin2bn(vxcp->vxc_binres, 25, vxcp->vxc_bntarg); // 25 = [version(1 byte)][ripemd160_hash(20 bytes)][checksum(4 bytes)]
 	}
 
 research:
@@ -1651,6 +1670,8 @@ research:
 			goto research;
 
 		vg_exec_context_consolidate_key(vxcp);
+
+		// Output the match information!
 		vcpp->base.vc_output_match(&vcpp->base, vxcp->vxc_key,
 					   vp->vp_pattern);
 

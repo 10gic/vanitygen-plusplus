@@ -33,11 +33,13 @@
 #include "util.h"
 #include "ed25519.h"
 #include "simplevanitygen.h"
+#include "sha3.h"
 
 #include "ticker.h"
 char ticker[10];
 
 int GRSFlag = 0;
+int TRXFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
 
@@ -105,6 +107,8 @@ vg_thread_loop(void *arg)
 	rekey_at = 0;
 	nbatch = 0;
 	vxcp->vxc_key = pkey;
+	// Input data for base58check: [version(addrtype)][ripemd160_hash][checksum]
+	// Save version, i.e. addrtype, into first byte of vxcp->vxc_binres
 	vxcp->vxc_binres[0] = vcp->vc_addrtype;
 	c = 0;
 	output_interval = 1000;
@@ -233,6 +237,10 @@ vg_thread_loop(void *arg)
 			if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
 				// Save ETH address into vxcp->vxc_binres
 				eth_pubkey2addr(eckey_buf, vxcp->vxc_vc->vc_format, vxcp->vxc_binres);
+			} else if (TRXFlag == 1) {
+				// See: https://secretscan.org/PrivateKeyTron
+				SHA3_256(hash1, eckey_buf + 1, 64); // skip 1 byte (the leading 0x04) in uncompressed public key
+				memcpy(&vxcp->vxc_binres[1], hash1 + 12, 20); // skip first 12 bytes in public key hash
 			} else {
 				SHA256(hash_buf, hash_len, hash1);
 				RIPEMD160(hash1, sizeof(hash1), &vxcp->vxc_binres[1]);
@@ -469,7 +477,9 @@ main(int argc, char **argv)
 				}
                 if (strcmp(optarg, "GRS")== 0) {
                     GRSFlag = 1;
-                }
+                } else if (strcmp(optarg, "TRX") == 0) {
+					TRXFlag = 1;
+				}
 			}
 			break;
 

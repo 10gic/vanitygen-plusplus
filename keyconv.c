@@ -23,6 +23,7 @@ char ticker[10];
 const char *version = VANITYGEN_VERSION;
 
 int GRSFlag = 0;
+int TRXFlag = 0;
 
 static void
 usage(const char *progname)
@@ -108,6 +109,8 @@ main(int argc, char **argv)
 				}
 				if (strcmp(optarg, "GRS")== 0) {
 					GRSFlag = 1;
+				} else if (strcmp(optarg, "TRX")== 0) {
+					TRXFlag = 1;
 				}
 			}
 			break;

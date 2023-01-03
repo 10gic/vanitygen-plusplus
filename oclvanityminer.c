@@ -41,6 +41,7 @@ char workurl[2048];
 int workurlFlag = 0;
 
 int GRSFlag = 0;
+int TRXFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
 const int debug = 0;

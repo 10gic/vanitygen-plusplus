@@ -311,8 +311,14 @@ vg_encode_address(const EC_POINT *ppoint, const EC_GROUP *pgroup,
 			   NULL);
 	pend = eckey_buf + 0x41;
 	binres[0] = addrtype;
-	SHA256(eckey_buf, pend - eckey_buf, hash1);
-	RIPEMD160(hash1, sizeof(hash1), &binres[1]);
+	if (TRXFlag == 1) {
+		// See: https://secretscan.org/PrivateKeyTron
+		SHA3_256(hash1, eckey_buf + 1, 64); // skip 1 byte (the leading 0x04) in uncompressed public key
+		memcpy(&binres[1], hash1 + 12, 20); // skip first 12 bytes in public key hash
+	} else {
+		SHA256(eckey_buf, pend - eckey_buf, hash1);
+		RIPEMD160(hash1, sizeof(hash1), &binres[1]);
+	}
 
 	vg_b58_encode_check(binres, sizeof(binres), result);
 }

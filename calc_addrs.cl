@@ -68,7 +68,8 @@
  * - Compute Px = Pxj * (1/Pz)^2
  * - Compute Py = Pyj * (1/Pz)^3
  * - Compute H = RIPEMD160(SHA256({0x02|0x03|0x04} | Px | Py?)) or
- *   Compute H = SHA3 (Px, Py) when ETH
+ *   Compute H = SHA3 (Px, Py) when ETH or
+ *   Compute H = SHA3 (Px, Py) when TRX
  *
  * Output:
  * - Array of 20-byte address hash values
@@ -112,6 +113,12 @@
 	__constant bool vcf_contract = 1;
 #else
 	__constant bool vcf_contract = 0;
+#endif
+
+#ifdef TRX_FLAG
+	__constant bool trx_flag = 1;
+#else
+	__constant bool trx_flag = 0;
 #endif
 
 /*
@@ -1570,6 +1577,61 @@ hash_ec_point_eth(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
     }
 }
 
+void
+hash_ec_point_trx(uint *hash_out, __global bn_word *xy, __global bn_word *zip)
+{
+	uint hash1[16], hash2[16];
+	bignum c, zi, zzi;
+
+	/*
+	 * Multiply the coordinates by the inverted Z values.
+	 * Stash the coordinates in the hash buffer.
+	 */
+#define hash_ec_point_inner_1(i)		\
+	zi.d[i] = zip[i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_1);
+
+	bn_mul_mont(&zzi, &zi, &zi);  /* 1 / Z^2 */
+
+#define hash_ec_point_inner_2(i)		\
+	c.d[i] = xy[i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_2);
+
+	bn_mul_mont(&c, &c, &zzi);  /* X / Z^2 */
+	bn_from_mont(&c, &c);
+
+#define hash_ec_point_inner_3(i)		\
+	hash1[i] = bswap32(c.d[(BN_NWORDS - 1) - i]);
+
+	bn_unroll(hash_ec_point_inner_3);
+
+	bn_mul_mont(&zzi, &zzi, &zi);  /* 1 / Z^3 */
+
+#define hash_ec_point_inner_4(i)				\
+	c.d[i] = xy[(ACCESS_STRIDE/2) + i*ACCESS_STRIDE];
+
+	bn_unroll(hash_ec_point_inner_4);
+
+	bn_mul_mont(&c, &c, &zzi);  /* Y / Z^3 */
+	bn_from_mont(&c, &c);
+
+#define hash_ec_point_inner_5(i)			\
+    hash1[BN_NWORDS + i] = bswap32(c.d[(BN_NWORDS - 1) - i]);
+
+    bn_unroll(hash_ec_point_inner_5);
+    sha3_256((unsigned char *)hash2, (unsigned char *)hash1, 64);
+    // the length of uncompressed public key (hash1) are 64 bytes (exclude the leading 0x04)
+	// the length of sha3_256 result (hash2) are 32 bytes
+	// skip first 12 bytes in previous hash, keep last 20 bytes
+	// See: https://secretscan.org/PrivateKeyTron
+    hash_out[0] = hash2[3];
+    hash_out[1] = hash2[4];
+    hash_out[2] = hash2[5];
+    hash_out[3] = hash2[6];
+    hash_out[4] = hash2[7];
+}
 
 __kernel void
 hash_ec_point_get(__global uint *hashes_out,
@@ -1590,6 +1652,8 @@ hash_ec_point_get(__global uint *hashes_out,
 	/* Complete the coordinates and hash */
 	if (addr_type_eth) {
 		hash_ec_point_eth(hash, points_in, z_heap);
+	} else if (trx_flag) {
+		hash_ec_point_trx(hash, points_in, z_heap);
 	} else {
 		hash_ec_point(hash, points_in, z_heap);
 	}
@@ -1652,6 +1716,8 @@ hash_ec_point_search_prefix(__global uint *found,
 	/* Complete the coordinates and hash */
 	if (addr_type_eth) {
 		hash_ec_point_eth(hash, points_in, z_heap);
+	} else if (trx_flag) {
+		hash_ec_point_trx(hash, points_in, z_heap);
 	} else {
 		hash_ec_point(hash, points_in, z_heap);
 	}

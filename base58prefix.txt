@@ -15,7 +15,7 @@ BCNA,BitCanna,B,25,155
 BLAST,BLAST,B,25,239
 BLK,Blackcoin,B,25,153
 BQC,BBQcoin,b,85,213
-BTC,Bitcoin,1,0,128,
+BTC,Bitcoin,1,0,128
 BTCD,Bitcoin Dark,R,60,188
 BWK,Bulwark,b,85,212
 CARE,Carebit,C,28,55
@@ -110,6 +110,7 @@ START,Startcoin,s,125,253
 SXC,Sexcoin,R or S,62,190
 TEST,Bitcoin Testnet,m or n,111,239
 TPC,Templecoin,T,65,193
+TRX,Tron,T,65,
 TUX,Tuxcoin,T,65,193
 UIS,Unitus,U,68,132
 UNO,Unobtanium,u,130,224
