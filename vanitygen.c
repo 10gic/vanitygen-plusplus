@@ -394,6 +394,9 @@ main(int argc, char **argv)
 
 	int i;
 
+	const char *coin = "BTC";
+	char *bech32_hrp = "bc";
+
 	while ((opt = getopt(argc, argv, "vqnrik1ezE:P:C:X:Y:F:t:h?f:o:s:Z:a:l:")) != -1) {
 		switch (opt) {
 		case 'c':
@@ -434,6 +437,7 @@ main(int argc, char **argv)
 			strcpy(ticker, optarg);
 			strcat(ticker, " ");
 			/* Start AltCoin Generator */
+			coin = optarg;
 			if (strcmp(optarg, "LIST")== 0) {
 				fprintf(stderr,
 					"Usage example \"./vanitygen++ -C ETH 0x1234\"\n"
@@ -472,7 +476,7 @@ main(int argc, char **argv)
 			else {
 				// Read from base58prefix.txt
 				fprintf(stderr, "Generating %s Address\n", optarg);
-				if (vg_get_altcoin(optarg, &addrtype, &privtype)) {
+				if (vg_get_altcoin(optarg, &addrtype, &privtype, &bech32_hrp)) {
 					return 1;
 				}
                 if (strcmp(optarg, "GRS")== 0) {
@@ -715,6 +719,8 @@ main(int argc, char **argv)
 		vc_simplevanitygen->vc_verbose = verbose;
 		vc_simplevanitygen->vc_addrtype = addrtype;
 		vc_simplevanitygen->vc_privtype = privtype;
+		vc_simplevanitygen->vc_coin = coin;
+		vc_simplevanitygen->vc_hrp = NULL;
 		vc_simplevanitygen->vc_result_file = result_file;
 		vc_simplevanitygen->vc_numpairs = numpairs;
 		if (vc_simplevanitygen->vc_numpairs == 0) {
@@ -780,6 +786,8 @@ main(int argc, char **argv)
 		vc_simplevanitygen->vc_verbose = verbose;
 		vc_simplevanitygen->vc_addrtype = addrtype;
 		vc_simplevanitygen->vc_privtype = privtype;
+		vc_simplevanitygen->vc_coin = coin;
+		vc_simplevanitygen->vc_hrp = bech32_hrp;
 		vc_simplevanitygen->vc_result_file = result_file;
 		vc_simplevanitygen->vc_numpairs = numpairs;
 		if (vc_simplevanitygen->vc_numpairs == 0) {
@@ -802,16 +810,6 @@ main(int argc, char **argv)
 				vc_simplevanitygen->pattern[pattern_len-1] = '\0';
 			} else {
 				vc_simplevanitygen->match_location = 0; // match any location
-			}
-		}
-
-		if (vc_simplevanitygen->match_location == 1) {
-			if (vc_simplevanitygen->vc_format == VCF_P2WPKH && strncmp(vc_simplevanitygen->pattern, "bc1q", strlen("bc1q")) != 0) {
-				fprintf(stderr, "Prefix '%s' not possible, address must starts with bc1q for p2wpkh\n", vc_simplevanitygen->pattern);
-				return 1;
-			} else if (vc_simplevanitygen->vc_format == VCF_P2TR && strncmp(vc_simplevanitygen->pattern, "bc1p", strlen("bc1p")) != 0) {
-				fprintf(stderr, "Prefix '%s' not possible, address must starts with bc1p for p2tr\n", vc_simplevanitygen->pattern);
-				return 1;
 			}
 		}
 

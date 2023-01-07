@@ -1,6 +1,6 @@
 # For more infomation, please see https://en.bitcoinwiki.org/wiki/List_of_address_prefixes
 # Please sort this file by `sort -k1.1,1.1 base58prefix.txt>base58prefix.new; mv base58prefix.new base58prefix.txt`
-# Symbol, Coin name, Address prefix, Address base58 version (prefix), Private key base58 version (prefix)
+# Symbol, Coin name, Base58 address prefix, Address base58 version (prefix), Private key base58 version (prefix), hrp
 42,42coin,4,8,136
 AC,Asiacoin,A,23,151
 ACM,Actinium,N,53,181
@@ -15,7 +15,7 @@ BCNA,BitCanna,B,25,155
 BLAST,BLAST,B,25,239
 BLK,Blackcoin,B,25,153
 BQC,BBQcoin,b,85,213
-BTC,Bitcoin,1,0,128
+BTC,Bitcoin,1,0,128,bc
 BTCD,Bitcoin Dark,R,60,188
 BWK,Bulwark,b,85,212
 CARE,Carebit,C,28,55
@@ -68,7 +68,7 @@ KORE,Kore,K,45,128
 LBRY,LBRY,b,85,28
 LEAF,Leafcoin,f,95,223
 LMC,LomoCoin,L,48,176
-LTC,Litecoin,L,48,176
+LTC,Litecoin,L,48,176,ltc
 MGD,MassGrid,M,50,25
 MMC,Memorycoin,M,50,178
 MNC,Mincoin,M,50,178

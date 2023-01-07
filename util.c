@@ -1271,7 +1271,7 @@ vg_print_alicoin_help_msg() {
 			}
 			part = strtok_r_keep_empty_fields(NULL, ",", &save);
 		}
-		if (partindex < 5) {
+		if (partindex < 4) {
 			fprintf(stderr,	"Invalid line found in base58prefix.txt\n");
 			continue;
 		}
@@ -1280,7 +1280,7 @@ vg_print_alicoin_help_msg() {
 }
 
 int
-vg_get_altcoin(char *altcoin, int *addrtype, int *privtype)
+vg_get_altcoin(char *altcoin, int *addrtype, int *privtype, char **hrp)
 {
 	char line[1024];
 	char *save;
@@ -1293,7 +1293,13 @@ vg_get_altcoin(char *altcoin, int *addrtype, int *privtype)
 	}
 	// read file line by line
 	while (fgets(line, 1024, fp)) {
-		//printf("%s",line);
+		// remove trailing newline (LF, CR, CRLF) from line
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\r') {
+			line[strlen(line)-1] ='\0';
+		}
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+			line[strlen(line)-1] ='\0';
+		}
 		if (!strncmp(altcoin, line, strlen(altcoin)) && line[strlen(altcoin)] == ',') {
 			// find coin at line beginning
 			partindex = 0;
@@ -1306,10 +1312,14 @@ vg_get_altcoin(char *altcoin, int *addrtype, int *privtype)
 				} else if (partindex == 5) {
 					// parse privtype
 					*privtype = (int)strtol(part, NULL, 0);
+				} else if (partindex == 6) {
+					if (hrp != NULL) {
+						*hrp = strdup(part);
+					}
 				}
 				part = strtok_r_keep_empty_fields(NULL, ",", &save);
 			}
-            if (partindex < 5) {
+            if (partindex < 4) {
                 fprintf(stderr,	"Cannot find coin %s: invalid line found in base58prefix.txt\n", altcoin);
                 return 1;
             }

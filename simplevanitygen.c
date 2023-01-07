@@ -20,7 +20,7 @@ static pthread_t TID[simplevanitygen_max_threads];
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER; // protect vc_simplevanitygen->vc_found_num
 
 // return thread index in array TID, return -1 if not found (you need check again).
-int get_thread_index1(int max_index) {
+static int get_thread_index(int max_index) {
     pthread_t t = pthread_self();
     int i;
     for (i = 0; i < max_index; i++) {
@@ -31,8 +31,8 @@ int get_thread_index1(int max_index) {
     return -1;
 }
 
-void
-output_check_info1(vg_context_simplevanitygen_t *vcp) {
+static void
+output_check_info(vg_context_simplevanitygen_t *vcp) {
     double targ;
     char linebuf[80];
     int rem, p;
@@ -72,17 +72,29 @@ output_check_info1(vg_context_simplevanitygen_t *vcp) {
 
 void *
 get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form, size_t *output_len) {
-    // See https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
-    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
-    EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
-    EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
-    *output_len = EC_POINT_point2oct(pgroup,
-                                     ppoint,
-                                     form,
-                                     pub_buf,
-                                     buf_len,
-                                     NULL);
-    EC_KEY_free(ec_key);
+    // There are two methods to get public key from EVP_PKEY
+    // Method 1: use EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, ...)
+    // Method 2: use EVP_PKEY_get1_EC_KEY/EC_KEY_get0_public_key/EC_POINT_point2oct
+    // In my test, method 1 is slightly faster than method 2 if we want to calculate a large number of public keys
+    // But, the method 1 always return compressed public key. If we want get uncompressed public key, we use method 2.
+    if (form == POINT_CONVERSION_COMPRESSED) { // Method 1
+        // Get the pubkey length, and save it to output_len
+        EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, NULL, 0, output_len);
+        // Get the compressed pubkey, and save it to pub_buf
+        EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, pub_buf, buf_len, NULL);
+    } else { // Method 2
+        // See https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
+        EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+        EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
+        EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
+        *output_len = EC_POINT_point2oct(pgroup,
+                                         ppoint,
+                                         form,
+                                         pub_buf,
+                                         buf_len,
+                                         NULL);
+        EC_KEY_free(ec_key);
+    }
 }
 
 void *
@@ -124,7 +136,7 @@ thread_loop_simplevanitygen(void *arg) {
     pattern_len = strlen(vc_simplevanitygen->pattern);
 
     check_thread_index:
-    thread_index = get_thread_index1(vc_simplevanitygen->vc_thread_num);
+    thread_index = get_thread_index(vc_simplevanitygen->vc_thread_num);
     if (thread_index == -1) {
         // check again
         if (vc_simplevanitygen->vc_verbose > 1) {
@@ -134,11 +146,6 @@ thread_loop_simplevanitygen(void *arg) {
     }
 
     int output_timeout = 0;
-
-	char *coin = "BTC";
-	if (vc_simplevanitygen->vc_addrtype == ADDR_TYPE_ATOM) {
-		coin = "ATOM";
-	}
 
     while (!vc_simplevanitygen->vc_halt) {
         // Generate a key-pair
@@ -181,7 +188,7 @@ thread_loop_simplevanitygen(void *arg) {
 
             // Compute p2wpkh address
             segwit_addr_encode(address,
-                               "bc",
+                               vc_simplevanitygen->vc_hrp,
                                0,
                                hash2,
                                20);
@@ -246,7 +253,7 @@ thread_loop_simplevanitygen(void *arg) {
 
                 // Compute p2tr address
                 segwit_addr_encode(address,
-                                   "bc",
+                                   vc_simplevanitygen->vc_hrp,
                                    1,
                                    pub_buf + 1, // Skip first byte (0x02 or 0x03)
                                    32); // Only get X party
@@ -279,13 +286,13 @@ thread_loop_simplevanitygen(void *arg) {
 
             vc_simplevanitygen->vc_found_num++;
 
-            printf("\r%s Address: %s\n", coin, address);
+            printf("\r%s Address: %s\n", vc_simplevanitygen->vc_coin, address);
 
             // get private key from EVP_PKEY
             size_t output_len = 0;
             get_private_key(pkey, (unsigned char *) &priv_buf, pub_buf_len, &output_len);
 
-            fprintf(stdout, "%s Privkey (hex): ", coin);
+            fprintf(stdout, "%s Privkey (hex): ", vc_simplevanitygen->vc_coin);
             dumphex(priv_buf, output_len);
 
             vc_simplevanitygen->vc_halt = 1;
@@ -296,8 +303,8 @@ thread_loop_simplevanitygen(void *arg) {
                     fprintf(stderr, "ERROR: could not open result file: %s\n", strerror(errno));
                 } else {
                     fprintf(fp, "Pattern: %s\n", vc_simplevanitygen->pattern);
-                    fprintf(fp, "%s Address: %s\n", coin, address);
-                    fprintf(fp, "%s Privkey (hex): ", coin);
+                    fprintf(fp, "%s Address: %s\n", vc_simplevanitygen->vc_coin, address);
+                    fprintf(fp, "%s Privkey (hex): ", vc_simplevanitygen->vc_coin);
                     fdumphex(fp, priv_buf, output_len);
                     fclose(fp);
                 }
@@ -307,7 +314,7 @@ thread_loop_simplevanitygen(void *arg) {
         }
 
         if (output_timeout > 1500) {
-            output_check_info1(vc_simplevanitygen);
+            output_check_info(vc_simplevanitygen);
             output_timeout = 0;
         }
     }

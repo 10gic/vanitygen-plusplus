@@ -104,7 +104,7 @@ main(int argc, char **argv)
 			else {
 				// Read from base58prefix.txt
 				fprintf(stderr, "Generating/Decrypting %s Address\n", optarg);
-				if (vg_get_altcoin(optarg, &addrtype_opt, &privtype_opt)) {
+				if (vg_get_altcoin(optarg, &addrtype_opt, &privtype_opt, NULL)) {
 					return 1;
 				}
 				if (strcmp(optarg, "GRS")== 0) {

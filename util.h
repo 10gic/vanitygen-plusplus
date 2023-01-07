@@ -82,7 +82,7 @@ extern int vg_check_password_complexity(const char *pass, int verbose);
 extern int vg_read_file(FILE *fp, char ***result, int *rescount);
 
 extern void vg_print_alicoin_help_msg();
-extern int vg_get_altcoin(char *altcoin, int *addrtype, int *privtype);
+extern int vg_get_altcoin(char *altcoin, int *addrtype, int *privtype, char **hrp);
 
 extern int count_processors(void);
 

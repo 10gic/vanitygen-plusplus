@@ -11,6 +11,8 @@ typedef struct _vg_context_simplevanitygen_s vg_context_simplevanitygen_t;
 struct _vg_context_simplevanitygen_s {
     int vc_addrtype;
     int vc_privtype;
+    const char *vc_coin;
+    const char *vc_hrp; // Human-Readable Part of bech32
     const char *vc_result_file;
     int vc_numpairs;
     char *pattern;
