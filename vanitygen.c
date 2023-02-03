@@ -467,6 +467,7 @@ main(int argc, char **argv)
 				addrtype = ADDR_TYPE_XLM;
 				privtype = PRIV_TYPE_XLM;
 			}
+			else
 			if (strcmp(optarg, "ATOM")== 0) {
 				fprintf(stderr,
 						"Generating ATOM Address\n");
