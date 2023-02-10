@@ -578,13 +578,6 @@ vg_output_match_console(vg_context_t *vcp, EC_KEY *pkey, const char *pattern)
 			tickerlength=(strlen(ticker)-1);
 	}
 
-	if (strncmp(ticker, "TRX", 3) == 0) {
-		// For tron, output hex string for private key
-		char *buf = BN_bn2hex(EC_KEY_get0_private_key(pkey));
-		strcpy(privkey_buf, buf);
-		if (buf) OPENSSL_free(buf);
-	}
-
 	if (!vcp->vc_result_file || (vcp->vc_verbose > 0)) {
 		if (vcp->vc_csv) {
 			printf("\r%79s\r%.*s,%s,", "", tickerlength, ticker, pattern);

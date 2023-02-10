@@ -41,6 +41,7 @@
 #include "util.h"
 #include "sph_groestl.h"
 #include "sha3.h"
+#include "ticker.h"
 
 const char *vg_b58_alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -397,6 +398,13 @@ vg_encode_privkey(const EC_KEY *pkey, int privtype, char *result)
 		memcpy(result, "0x", 2);
 		hex_enc(result + 2, &len, eckey_buf + 1, 32);
 		result[len+2] = '\0';
+		return;
+	}
+	if (strncmp(ticker, "TRX", 3) == 0) {
+		// For tron, private key is just hex string without prefix 0x
+		char *buf = BN_bn2hex(bn); // Must be freed later using OPENSSL_free
+		strcpy(result, buf);
+		if (buf) OPENSSL_free(buf);
 		return;
 	}
 
@@ -989,8 +997,9 @@ vg_decode_privkey_any(EC_KEY *pkey, int *addrtype, const char *input,
 {
 	int res;
 
-	// For ETH
-	if (*addrtype == ADDR_TYPE_ETH) {
+	// For ETH, private key is just hex string
+	// For TRON, private key is just hex string
+	if (*addrtype == ADDR_TYPE_ETH || strncmp(ticker, "TRX", 3) == 0) {
 		BIGNUM * bnpriv = BN_new();
 
 		uint8_t bin[64];
