@@ -89,6 +89,20 @@ $ make          # build: vanitygen++ keyconv
 $ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
 ```
 
+## macOS + Apple silicon
+Install dependencies through [Homebrew](https://brew.sh):
+```
+$ brew install openssl pcre
+# Optionally: brew install check # to run tests
+```
+
+Build the main executables:
+```
+$ C_INCLUDE_PATH=/opt/homebrew/opt/openssl/include:/opt/homebrew/include \
+  LIBRARY_PATH=/opt/homebrew/opt/openssl/lib \
+  make all
+```
+
 # Solve Puzzle
 This tool can be used for solving the [Bitcoin puzzle](https://bitcointalk.org/index.php?topic=1306983.0).
 
