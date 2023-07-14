@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+source_relative() {
+  PATH="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" source "$1"
+}
+
+source_relative tinytestlib
+
+_vanitygen_test() {
+  begin_test_suite
+    local current_output
+    declare -A outs # this associative array will hold any state changes captured by "capture", below
+    ASSERTION="'nix run' should run vanitygen++ by default, output help and exit 1" \
+    capture outs nix run # runs vanitygen++ by default and returns its help with error code 1
+    assert "${outs[stderr]}\n${outs[stdout]}" =~ "PLUS PLUS"
+    assert "${outs[retval]}" == "1"
+    # assert_success "nix run . -- -h" # Specifically asking for help SHOULD exit 0, but doesn't
+    capture outs nix run .\#vanitygen -- -q -z -a 1 1BTC
+    ASSERTION="When running 'vanitygen++ 1BTC', '1BTC' should be part of the generated address in the stderr output" \
+    assert "${outs[stderr]} ${outs[stdout]}" =~ "1BTC[[:alnum:]]{30}" # why is it outputting on stderr and not stdout? No idea.
+    # ASSERTION="vanitygen++ should not segfault or error if successful" \
+    # assert "${outs[retval]}" == "0"
+    capture outs nix run .\#oclvanitygen -- -q -z -a 1 1BTC
+    ASSERTION="When running 'oclvanitygen++ 1BTC', '1BTC' should be part of the generated address in the stderr output" \
+    assert "${outs[stderr]} ${outs[stdout]}" =~ "1BTC[[:alnum:]]{30}" # why is it outputting on stderr and not stdout? No idea.
+    # ASSERTION="oclvanitygen++ should not segfault or error if successful" \
+    # assert "${outs[retval]}" == "0"
+
+    # feel free to add more tests here. you can see example usage here: https://github.com/pmarreck/tinytestlib/blob/yolo/test
+
+  end_test_suite # this triggers the report output
+}
+_vanitygen_test
