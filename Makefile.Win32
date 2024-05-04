@@ -1,26 +1,26 @@
+#### Build command: nmake -f Makefile.Win32
+
 CC = cl
 
-#### CUDA
-#### From: https://developer.nvidia.com/cuda-10.0-download-archive
-OPENCL_DIR = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0"
-OPENCL_INCLUDE = $(OPENCL_DIR)\include
-OPENCL_LIBS = $(OPENCL_DIR)\lib\Win32\OpenCL.lib
+#### OpenCL
+#### From: https://github.com/KhronosGroup/OpenCL-SDK/releases/download/v2023.12.14/OpenCL-SDK-v2023.12.14-Win-x64.zip
+OPENCL_INCLUDE =  .\third_party\windows\OpenCL-SDK-v2023.12.14-Win-x64\include
+OPENCL_LIBS =.\third_party\windows\OpenCL-SDK-v2023.12.14-Win-x64\lib\OpenCL.lib
 
 #### OpenSSL
 #### From: https://kb.firedaemon.com/support/solutions/articles/4000121705
-OPENSSL_INCLUDE = .\third_party\windows\openssl-1.1\x86\include
-OPENSSL_LIBS = .\third_party\windows\openssl-1.1\x86\lib\libcrypto.lib
+OPENSSL_INCLUDE = .\third_party\windows\openssl-3.0\x64\include
+OPENSSL_LIBS = .\third_party\windows\openssl-3.0\x64\lib\libcrypto.lib
 
 #### Pthread
-#### From: http://sourceware.org/pthreads-win32/
-#### ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.zip
+#### From: https://sourceforge.net/projects/pthreads4w/files/
 PTHREADS_INCLUDE = .\third_party\windows\pthread\Pre-built.2\include
-PTHREADS_LIBS = .\third_party\windows\pthread\Pre-built.2\lib\x86\pthreadVC2.lib
+PTHREADS_LIBS = .\third_party\windows\pthread\Pre-built.2\lib\x64\pthreadVC2.lib
 
 #### PCRE
-#### From: http://gnuwin32.sourceforge.net/packages/pcre.htm
-PCRE_INCLUDE = .\third_party\windows\pcre-7.0-lib\include
-PCRE_LIBS = .\third_party\windows\pcre-7.0-lib\lib\pcre.lib
+#### From: https://freeswitch.org/bamboo/browse/SP-PW-1/artifact/shared/pcre-windows-binaries-zip/
+PCRE_INCLUDE = .\third_party\windows\pcre-8.34\include
+PCRE_LIBS = .\third_party\windows\pcre-8.34\binaries\x64\Release\lib\pcre.lib
 
 
 #CURL_DIR = C:\curl-7.26.0-x86\builds\libcurl-release-static-ssl-static-ipv6-sspi
@@ -34,7 +34,7 @@ OBJS = vanitygen.obj oclvanitygen.obj oclengine.obj oclvanityminer.obj keyconv.o
 
 all: vanitygen++.exe oclvanitygen++.exe
 
-vanitygen++.exe: vanitygen.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ed25519.obj stellar.obj base32.obj crc16.obj
+vanitygen++.exe: vanitygen.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ed25519.obj stellar.obj base32.obj crc16.obj simplevanitygen.obj bech32.obj segwit_addr.obj
 	link /nologo /out:$@ $** $(LIBS)
 
 oclvanitygen++.exe: oclvanitygen.obj oclengine.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj

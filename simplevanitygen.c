@@ -70,7 +70,7 @@ output_check_info(vg_context_simplevanitygen_t *vcp) {
     fflush(stdout);
 }
 
-void *
+void
 get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form, size_t *output_len) {
     // There are two methods to get public key from EVP_PKEY
     // Method 1: use EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, ...)
@@ -85,11 +85,11 @@ get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form,
     } else { // Method 2
         // See https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
         EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
-        EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
-        EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
+        const EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
+        const EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
         *output_len = EC_POINT_point2oct(pgroup,
                                          ppoint,
-                                         form,
+                                         (point_conversion_form_t)form,
                                          pub_buf,
                                          buf_len,
                                          NULL);
@@ -97,10 +97,10 @@ get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form,
     }
 }
 
-void *
+void
 get_private_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, size_t *output_len) {
     EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
-    BIGNUM *pkbn = EC_KEY_get0_private_key(ec_key);
+    const BIGNUM *pkbn = EC_KEY_get0_private_key(ec_key);
     *output_len = BN_bn2bin(pkbn, pub_buf);
     EC_KEY_free(ec_key);
 }
@@ -224,14 +224,14 @@ thread_loop_simplevanitygen(void *arg) {
                 BN_bin2bn(tagged_hash, 32, t);
 
                 EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
-                EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
+                const EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
 
                 // Compute T = t * G
                 EC_POINT *T = EC_POINT_new(pgroup);
                 EC_POINT_mul(pgroup, T, t, NULL, NULL, NULL);
 
                 // P = public key, if Y of public key is even
-                EC_POINT *P = EC_KEY_get0_public_key(ec_key);
+                const EC_POINT *P = EC_KEY_get0_public_key(ec_key);
 
                 EC_KEY_free(ec_key);
 
