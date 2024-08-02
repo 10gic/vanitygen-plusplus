@@ -10,27 +10,25 @@
 # apt install libcurl4-openssl-dev
 # apt install check                # Only need if you want to run tests
 
-LIBS=-lpcre -lcrypto -lm -lpthread
-CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
-# CFLAGS=-ggdb -Wall -Wno-deprecated -fsanitize=address
-# CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
+CC = gcc
+CFLAGS = -ggdb -O3 -Wall -Wno-deprecated
+LIBS = -lpcre -lcrypto -lm -lpthread
 
-OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
-     stellar.o base32.o crc16.o bech32.o segwit_addr.o
-PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
+OBJS = vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
+       stellar.o base32.o crc16.o bech32.o segwit_addr.o simplevanitygen.o
+PROGS = vanitygen++ keyconv oclvanitygen++ oclvanityminer
 
-PLATFORM=$(shell uname -s)
+PLATFORM = $(shell uname -s)
 ifeq ($(PLATFORM),Darwin)
-	OPENCL_LIBS=-framework OpenCL
-	LIBS+=-L/usr/local/opt/openssl/lib
-	CFLAGS+=-I/usr/local/opt/openssl/include
+	OPENCL_LIBS = -framework OpenCL
+	LIBS += -L/usr/local/opt/openssl/lib
+	CFLAGS += -I/usr/local/opt/openssl/include
 else ifeq ($(PLATFORM),NetBSD)
-	LIBS+=`pcre-config --libs`
-	CFLAGS+=`pcre-config --cflags`
+	LIBS += `pcre-config --libs`
+	CFLAGS += `pcre-config --cflags`
 else
-	OPENCL_LIBS=-lOpenCL
+	OPENCL_LIBS = -lOpenCL
 endif
-
 
 most: vanitygen++ keyconv
 
