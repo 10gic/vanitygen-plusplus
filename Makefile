@@ -10,6 +10,10 @@
 # apt install libcurl4-openssl-dev
 # apt install check                # Only need if you want to run tests
 
+## MacOS:
+# brew install openssl@3
+# brew install pcre
+
 LIBS=-lpcre -lcrypto -lm -lpthread
 CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
 # CFLAGS=-ggdb -Wall -Wno-deprecated -fsanitize=address
@@ -22,8 +26,10 @@ PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
 PLATFORM=$(shell uname -s)
 ifeq ($(PLATFORM),Darwin)
 	OPENCL_LIBS=-framework OpenCL
-	LIBS+=-L/usr/local/opt/openssl/lib
-	CFLAGS+=-I/usr/local/opt/openssl/include
+	LIBS+=-L/opt/homebrew/opt/openssl/lib
+	CFLAGS+=-I/opt/homebrew/opt/openssl/include
+	LIBS+=-L/opt/homebrew/opt/pcre/lib
+	CFLAGS+=-I/opt/homebrew/opt/pcre/include
 else ifeq ($(PLATFORM),NetBSD)
 	LIBS+=`pcre-config --libs`
 	CFLAGS+=`pcre-config --cflags`

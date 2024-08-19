@@ -62,7 +62,36 @@ ETH Privkey: 0xdb3813534c0c9595f9b8b35d6f544827065b33930ae42c38a9d7ce41a1d74669
 If you have OpenCL-compatible GPU, please use `oclvanitygen++`, it's faster.
 
 # Build
-## nix-build (install dependencies automatically)
+## Method 1: Install dependencies manually
+Step 1: Install dependencies
+
+On Redhat/CentOS:
+```
+$ yum install openssl-devel
+$ yum install libcurl-devel
+```
+
+On Ubuntu:
+```
+$ apt install build-essential
+$ apt install libssl-dev
+$ apt install libpcre3-dev
+$ apt install libcurl4-openssl-dev
+```
+
+On MacOS:
+```
+$ brew install openssl@3
+$ brew install pcre
+```
+
+Step 2: Build executable file:
+```
+$ make          # build: vanitygen++ keyconv
+$ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
+```
+
+## Method 2: Install dependencies automatically (nix-build)
 You need install nix-build firstly, for more information please visit: https://nixos.org/manual/nix/stable/installation/installing-binary.html
 
 After you install nix-build successfully, just run:
@@ -74,19 +103,6 @@ $ ./result/bin/vanitygen++ 1Love      # Executable files are stored at ./result/
 Pattern: 1Love
 Address: 1Love3h1c5qd9ZRoDKkCLSeWfBKR5MTF7t
 Privkey: 5JYtyNYLTRX3dvpN5PCiYF1AKFnETmgBLukCNgfkoBjDHZ2yJp1
-```
-
-## make (install dependencies manually)
-Install building dependencies in Redhat/CentOS:
-```
-$ yum install openssl-devel
-$ yum install libcurl-devel
-```
-
-Build executable file:
-```
-$ make          # build: vanitygen++ keyconv
-$ make all      # build: vanitygen++ keyconv oclvanitygen++ oclvanityminer
 ```
 
 # Solve Puzzle
