@@ -1,0 +1,41 @@
+# The CUDA version matters to some degree, and must at least work with the
+# driver used in the container host.
+ARG BASE_CUDA_DEV_CONTAINER=nvidia/cuda:11.6.2-devel-ubuntu20.04
+ARG BASE_CUDA_RUN_CONTAINER=nvidia/cuda:11.6.2-runtime-ubuntu20.04
+
+FROM $BASE_CUDA_DEV_CONTAINER as build
+
+# Bring in source
+WORKDIR /vanitygen-plusplus
+COPY . /vanitygen-plusplus
+
+# Build Requirements
+#
+# NOTE(canardleteer): I didn't have any luck getting `make test` to work, so
+#                     have omitted `check`.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+   apt install -y make gcc libssl-dev libpcre3-dev libcurl4-openssl-dev nvidia-opencl-dev && \
+   rm -rf /var/lib/apt/lists/*
+
+# NOTE(canardleteer): `make install` target wanted.
+RUN make all
+
+# The runtime image is approximately half the size of the `build` image.
+FROM $BASE_CUDA_RUN_CONTAINER
+
+# NOTE(canardleteer): `libcurl4` is needed by oclvanityminer. I'd like to use
+#                     something smaller than `nvidia-opencl-dev` if anyone has
+#                     any suggestions.
+RUN apt update && apt install -y libcurl4 nvidia-opencl-dev && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /vanitygen-plusplus/oclvanitygen++ /usr/bin 
+COPY --from=build /vanitygen-plusplus/oclvanityminer /usr/bin 
+COPY --from=build /vanitygen-plusplus/vanitygen++ /usr/bin 
+COPY --from=build /vanitygen-plusplus/keyconv /usr/bin 
+COPY --from=build /vanitygen-plusplus/calc_addrs.cl .
+COPY --from=build /vanitygen-plusplus/base58prefix.txt .
+
+# The other binaries are available by setting `--entrypoint` upon a `docker run`.
+ENTRYPOINT ["/usr/bin/oclvanitygen++"]
+
