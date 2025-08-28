@@ -105,7 +105,7 @@ ROI,ROIcoin,R,60,128
 RVN,Ravencoin,R,60,128
 SCA,Scamcoin,S,63,191
 SDC,Shadowcoin,S,63,191
-SHIC,ShibaInuCoin,S,63,158
+SHIC,ShibaCoin,S,63,158
 SKC,Skeincoin,S,63,226
 SPR,Spreadcoin,S,63,191
 START,Startcoin,s,125,253
