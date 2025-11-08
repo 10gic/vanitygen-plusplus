@@ -72,29 +72,16 @@ output_check_info(vg_context_simplevanitygen_t *vcp) {
 
 void
 get_public_key(EVP_PKEY *pkey, unsigned char *pub_buf, size_t buf_len, int form, size_t *output_len) {
-    // There are two methods to get public key from EVP_PKEY
-    // Method 1: use EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, ...)
-    // Method 2: use EVP_PKEY_get1_EC_KEY/EC_KEY_get0_public_key/EC_POINT_point2oct
-    // In my test, method 1 is slightly faster than method 2 if we want to calculate a large number of public keys
-    // But, the method 1 always return compressed public key. If we want get uncompressed public key, we use method 2.
-    if (form == POINT_CONVERSION_COMPRESSED) { // Method 1
-        // Get the pubkey length, and save it to output_len
-        EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, NULL, 0, output_len);
-        // Get the compressed pubkey, and save it to pub_buf
-        EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, pub_buf, buf_len, NULL);
-    } else { // Method 2
-        // See https://stackoverflow.com/questions/18155559/how-does-one-access-the-raw-ecdh-public-key-private-key-and-params-inside-opens
-        EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
-        const EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
-        const EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
-        *output_len = EC_POINT_point2oct(pgroup,
-                                         ppoint,
-                                         (point_conversion_form_t)form,
-                                         pub_buf,
-                                         buf_len,
-                                         NULL);
-        EC_KEY_free(ec_key);
-    }
+    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+    const EC_POINT *ppoint = EC_KEY_get0_public_key(ec_key);
+    const EC_GROUP *pgroup = EC_KEY_get0_group(ec_key);
+    *output_len = EC_POINT_point2oct(pgroup,
+                                     ppoint,
+                                     (point_conversion_form_t)form,
+                                     pub_buf,
+                                     buf_len,
+                                     NULL);
+    EC_KEY_free(ec_key);
 }
 
 void
@@ -148,8 +135,13 @@ thread_loop_simplevanitygen(void *arg) {
     int output_timeout = 0;
 
     while (!vc_simplevanitygen->vc_halt) {
+        // Reset find_it flag for each iteration
+        find_it = 0;
+
         // Generate a key-pair
         // EVP_PKEY_keygen is slow!
+        // EVP_PKEY_keygen will allocate new EVP_PKEY on first call (when pkey is NULL)
+        // On subsequent calls, it will reuse the existing EVP_PKEY structure
         if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
             fprintf(stderr, "EVP_PKEY_keygen fail\n");
             return NULL;
@@ -286,16 +278,16 @@ thread_loop_simplevanitygen(void *arg) {
 
             vc_simplevanitygen->vc_found_num++;
 
-            printf("\r%s Address: %s\n", vc_simplevanitygen->vc_coin, address);
-
             // get private key from EVP_PKEY
             size_t output_len = 0;
             get_private_key(pkey, (unsigned char *) &priv_buf, pub_buf_len, &output_len);
 
+            // Now halt all threads
+            vc_simplevanitygen->vc_halt = 1;
+
+            printf("\r%s Address: %s\n", vc_simplevanitygen->vc_coin, address);
             fprintf(stdout, "%s Privkey (hex): ", vc_simplevanitygen->vc_coin);
             dumphex(priv_buf, output_len);
-
-            vc_simplevanitygen->vc_halt = 1;
 
             if (vc_simplevanitygen->vc_result_file) {
                 FILE *fp = fopen(vc_simplevanitygen->vc_result_file, "a");
@@ -324,6 +316,12 @@ thread_loop_simplevanitygen(void *arg) {
         fprintf(stderr, "thread %d check %lld keys\n", thread_index,
                 vc_simplevanitygen->vc_check_count[thread_index]);
     }
+
+    // Free the last generated key
+    if (pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
+
     EVP_PKEY_CTX_free(pctx);
 
     return NULL;
