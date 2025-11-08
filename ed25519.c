@@ -105,6 +105,12 @@ check_thread_index:
 
     int output_timeout = 0;
     while (!vc_ed25519->vc_halt) {
+        // Free old key if it exists
+        if (pkey != NULL) {
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
+        }
+
         // generate a key-pair
         EVP_PKEY_keygen(pctx, &pkey);
 
@@ -189,6 +195,12 @@ out:
         fprintf(stderr, "thread %d check %lld keys\n", thread_index,
                vc_ed25519->vc_check_count[thread_index]);
     }
+
+    // Free the last generated key
+    if (pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
+
     EVP_PKEY_CTX_free(pctx);
 #endif
     return NULL;
