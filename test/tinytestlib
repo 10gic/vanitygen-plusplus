@@ -1,0 +1,401 @@
+#!/usr/bin/env bash
+
+# github:pmarreck/tinytestlib
+# Because all the other solutions I found to do basic bash shell script testing were too large.
+
+if (( BASH_VERSINFO < 4 )); then
+  printf -- '[ERROR]: %s\n' "bash v4.x or higher required" >&2
+  exit 1
+fi
+
+save_shellenv() {
+  _prev_shell_opts=$(set +o; shopt -p;)
+}
+
+restore_shellenv() {
+  eval "$_prev_shell_opts"
+  # clean up after ourselves, don't want to pollute the ENV
+  unset _prev_shell_opts
+}
+
+# Is this a color TTY? Or, is one (or the lack of one) being faked for testing reasons?
+isacolortty() {
+  [[ -v FAKE_COLORTTY ]] && return 0
+  [[ -v FAKE_NOCOLORTTY ]] && return 1
+  [[ "$TERM" =~ 'color' ]] && return 0 || return 1
+}
+
+# trim utility functions
+ltrim() {
+  local var="$*";
+  var="${var#"${var%%[![:space:]]*}"}";
+  printf '%s' "$var"
+}
+rtrim() {
+  local var="$*";
+  var="${var%"${var##*[![:space:]]}"}";
+  printf '%s' "$var"
+}
+trim() {
+  local var="$*";
+  var="$(ltrim "$var")";
+  var="$(rtrim "$var")";
+  printf '%s' "$var"
+}
+
+# echo has nonstandard behavior, so...
+puts() {
+  local print_fmt end_fmt print_spec newline
+  print_spec='%s'
+  newline='\n'
+  end_fmt='\e[0m'
+  while true; do
+    case "${1}" in
+      (--green)   print_fmt='\e[32m' ;;
+      (--yellow)  print_fmt='\e[93m' ;;
+      (--red)     print_fmt='\e[31m' ;;
+      (-n)        newline='' ;;
+      (-e)        print_spec='%b' ;;
+      (-en|-ne)   print_spec='%b'; newline='' ;;
+      (-E)        print_spec='%s' ;;
+      (-*)        die "Unknown format specifier: ${1}" ;;
+      (*)         break ;;
+    esac
+    shift
+  done
+
+  # If we're not interactive/color, override print_fmt and end_fmt to remove ansi
+  isacolortty || unset -v print_fmt end_fmt
+
+  # shellcheck disable=SC2059
+  printf -- "${print_fmt}${print_spec}${end_fmt}${newline}" "${*}"
+}
+
+# ANSI color helpers
+red_text() {
+  puts --red -en "${1}"
+}
+
+green_text() {
+  puts --green -en "${1}"
+}
+
+yellow_text() {
+  puts --yellow -en "${1}"
+}
+
+binhex() {
+  if [ -z "$1" ]; then
+    if read -t 0; then
+      xxd -pu;
+    else
+      echo "Encodes binary data to hexadecimal."
+      echo "Usage: binhex <string>";
+      echo "    (or pipe something to binhex)";
+      echo "This function is defined in ${BASH_SOURCE[0]}";
+    fi;
+  else
+    printf "%b" "$1" | xxd -pu;
+  fi
+}
+
+hexbin() {
+  if [ -z "$1" ]; then
+    if read -t 0; then
+      xxd -r -p;
+    else
+      echo "Decodes hexadecimal data to binary data."
+      echo "Usage: hexbin <hex string>";
+      echo "    (or pipe something to hexbin)";
+      echo "This function is defined in ${BASH_SOURCE[0]}";
+    fi;
+  else
+    printf "%b" "$1" | xxd -r -p;
+  fi
+}
+
+# Captures stdout, stderr and return code of any command into the named variable (a 'declare -A var' variable name) passed as an argument.
+capture() {
+  local _out _err _ret
+  if [ "${1}" = "--debug" ]; then
+    local debugflag=1
+    shift
+  fi
+  # So this is a "name reference" (bash 4.5+). Any references to this name here will actually refer to the passed-in name on ${1}.
+  # Which should be declared in that scope as `declare -A` (associative array/dictionary).
+  local aa_alias=${1}
+  declare -n outs_dict=${1}
+  shift
+  # check to make sure we were given an associative array
+  if is_associative_array $aa_alias; then
+    : # we're fine (colon is a "no-op" in Bash. TYL.)
+  else
+    die "Error: $aa_alias is not an associative array (that is, declared via 'declare -A $aa_alias')"
+  fi
+
+  if [ "$#" -lt 1 ]; then
+      echo "Usage: capture [--debug] <outputs-dict-varname> command [arg ...]"
+      echo "The <outputs-dict-varname> is any variable defined as \`declare -A\`"
+      echo "The stdout, stderr and retval can be accessed via (assuming it's named \"outs\"):"
+      echo '${outs[stdout]}, ${outs[stderr]} and ${outs[retval]}.'
+      return 1
+  fi
+
+  # just a modification of some nutso magic I found online that captures stdout into $_out, stderr into $_err and return/status code into $_ret
+  # (along with any special ttl-namespaced vars which might have changed)
+  # WITHOUT opening files, because touching the filesystem unnecessarily is sad (slows down tests, etc)
+  # and WITH only running the command once.
+  # Modified from an answer here and only works in bash 4+: https://stackoverflow.com/questions/13806626/capture-both-stdout-and-stderr-in-bash
+  . <({ _err=$({ _out=$("$@"); _ret="$?"; } 2>&1; declare -p _out _ret >&2); declare -p _err; } 2>&1)
+
+  if [[ -v debugflag ]]; then
+    yellow_text "\ncmd: ${*}" >&2
+    yellow_text "\nout: $_out" >&2
+    yellow_text "\nerr: $_err" >&2
+    yellow_text "\nret: $_ret\n" >&2
+  fi
+  outs_dict[stdout]="$(printf "%b" "$_out")"
+  outs_dict[stderr]="$(printf "%b" "$_err")"
+  outs_dict[retval]="$(printf "%b" "$_ret")"
+  unset -n outs_dict # unsets the *name reference*, NOT the variable referenced by the name
+  return $_ret
+}
+
+# exit with red text to stderr
+die() {
+  red_text "${1}" >&2
+  exit ${2:-1}
+}
+
+# an encoding-agnostic way to do binary comparisons
+_compare() {
+  local comp_op arg1 arg2 arg1_enc arg2_enc
+  comp_op="${1}"
+  arg1="${2}"
+  arg2="${3}"
+  # to tapdance around escaping, ANSI etc. issues, I just encode to hex and compare those.
+  # This may or may not be necessary anymore, but it fixed issues in the past
+  # Wish it didn't have to fire up a subshell though; future tweak?
+  arg1_enc=$(binhex "$arg1")
+  arg2_enc=$(binhex "$arg2")
+  local comparison_encoded comparison
+  case $comp_op in
+    = | == )
+      comparison_encoded="[ \"$arg1_enc\" $comp_op \"$arg2_enc\" ]"
+      comparison="[ \"$arg1\" $comp_op \"$arg2\" ]"
+    ;;
+    != | !== )
+      comparison_encoded="[ \"$arg1_enc\" \!= \"$arg2_enc\" ]"
+      comparison="[ \"$arg1\" \!= \"$arg2\" ]"
+    ;;
+    =~ ) # can't do encoded regex comparisons, so just do a plaintext comparison
+      # See note about compat31 elsewhere in this file
+      comparison_encoded="[[ '$arg1' =~ \"$arg2\" ]]"
+      comparison="[[ '$arg1' =~ \"$arg2\" ]]"
+    ;;
+    !=~ | !~ )
+      comparison_encoded="[[ ! \"$arg1\" =~ \"$arg2\" ]]"
+      comparison="[[ ! \"$arg1\" =~ \"$arg2\" ]]"
+    ;;
+    * ) 
+      echo "Unknown comparison operator: $comp_op" >&2
+      return 1
+    ;;
+  esac
+  # I don't really like eval'ing here, but it's the only way I could get it to work
+  # Since the arguments are already hex encoded, this should be safe
+  # echo "$comparison_encoded" >&2
+  [ "$TTL_COLLECTING_TESTDATA" = "true" ] && ((ttl_test_count++))
+  if eval "$comparison_encoded"; then
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ttl_abbreviated_output="$ttl_abbreviated_output$(green_text ".")"
+      return 0
+    fi
+  else
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ((ttl_fails++))
+      ttl_abbreviated_output="$ttl_abbreviated_output$(red_text "F")"
+      [[ -v ASSERTION ]] && ttl_errors="$ttl_errors$(yellow_text "$ASSERTION")\n"
+      ttl_errors="$ttl_errors$(red_text "Expected: $comparison")\n"
+      return 1
+    else
+      die "Error. Expected: $comparison"
+    fi
+  fi
+}
+
+begin_test_suite() {
+  export TTL_COLLECTING_TESTDATA=true
+  export ttl_test_count=0
+  export ttl_fails=0
+  export ttl_abbreviated_output=""
+  export ttl_errors=""
+  save_shellenv
+  shopt -s compat31 # necessary for quoted regex matches on the RHS to work, see: http://ftp.gnu.org/gnu/bash/bash-3.2-patches/bash32-039
+}
+
+_ttl_unset_vars() {
+  unset ttl_test_count
+  unset ttl_fails
+  unset ttl_abbreviated_output
+  unset ttl_errors
+}
+
+end_test_suite() {
+  unset TTL_COLLECTING_TESTDATA
+  restore_shellenv
+  echo
+  if [ $ttl_test_count = 0 ]; then
+    yellow_text "No assertions!"
+		echo
+    _ttl_unset_vars
+    return 1
+  fi
+  puts -e "$ttl_abbreviated_output"
+  puts -e "$ttl_test_count assertions"
+  if [ $ttl_fails = 0 ]; then
+    green_text "Success"
+    echo
+    _ttl_unset_vars
+    return 0
+  else
+    red_text "Failures: $ttl_fails\n"
+    puts -ne "$ttl_errors"
+    _ttl_unset_vars && return $ttl_fails
+  fi
+}
+
+assert() {
+  _compare "${2}" "${1}" "${3}"
+  return $?
+}
+
+assert_equal() {
+  _compare "==" "${1}" "${2}"
+  return $?
+}
+
+assert_not_equal() {
+  _compare "!=" "${1}" "${2}"
+  return $?
+}
+
+assert_match() {
+  _compare "=~" "${1}" "${2}"
+  return $?
+}
+
+assert_no_match() {
+  _compare "!~" "${1}" "${2}"
+  return $?
+}
+
+is_array() {
+  local declaredtype=$(declare -p "${1}" 2>/dev/null | awk '{print $2}')
+  case "$declaredtype" in
+  -a)
+    return 0
+    ;;
+  *)
+    return 1
+    ;;
+  esac
+}
+
+is_associative_array() {
+  local declaredtype=$(declare -p "${1}" 2>/dev/null | awk '{print $2}')
+  case "$declaredtype" in
+  -A)
+    return 0
+    ;;
+  *)
+    return 1
+    ;;
+  esac
+}
+
+# currently only works with 1 type applied at a time
+assert_type() {
+  local vartype=${1}
+  local varname=${2}
+  local declaredtype=$(declare -p "$varname" | awk '{print $2}')
+  case "$declaredtype" in
+  -A)
+    assert_equal "associative_array" "$vartype"
+    ;;
+  --)
+    assert_equal "string" "$vartype"
+    ;;
+  -a)
+    assert_equal "array" "$vartype"
+    ;;
+  -i)
+    assert_equal "integer" "$vartype"
+    ;;
+  -r)
+    assert_equal "readonly" "$vartype"
+    ;;
+  -x)
+    assert_equal "exported" "$vartype"
+    ;;
+  *)
+    die "Type assertion expected ${1} for ${2} but declare gave $declaredtype which is currently undefined"
+    ;;
+  esac
+}
+
+strip_ansi() {
+  local ansiregex="s/[\x1b\x9b]\[([0-9]{1,4}(;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]//g"
+  # Take stdin if it's there; otherwise expect arguments.
+  # The following exits code 0 if stdin not empty; 1 if empty; does not consume any bytes.
+  # This may only be a Bash-ism, FYI. Not sure if it's shell-portable.
+  if read -t 0; then # consume stdin
+    sed -E "$ansiregex"
+  else
+    puts -en "${1}" | sed -E "$ansiregex"
+  fi
+}
+
+assert_success() {
+  [ "$TTL_COLLECTING_TESTDATA" = "true" ] && ((ttl_test_count++))
+  declare -A outs
+  capture outs "$@"
+  if [ "${outs[retval]}" = "0" ]; then
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ttl_abbreviated_output="$ttl_abbreviated_output$(green_text ".")"
+      return 0
+    fi
+  else
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ((ttl_fails++))
+      ttl_abbreviated_output="$ttl_abbreviated_output$(red_text "F")"
+      [[ -v ASSERTION ]] && ttl_errors="$ttl_errors\n$(yellow_text "$ASSERTION")\n"
+      ttl_errors="$ttl_errors$(yellow_text "assert_success failure: <${*}>\nstdout: ${outs[stdout]}\nstderr: ${outs[stderr]}\nretval: ${outs[retval]}\n")"
+      return 1
+    else
+      die "$(strip_ansi "assert_success failure: <${*}>\nstdout: ${outs[stdout]}\nstderr: ${outs[stderr]}\nretval: ${outs[retval]}")"
+    fi
+  fi
+}
+
+assert_failure() {
+  [ "$TTL_COLLECTING_TESTDATA" = "true" ] && ((ttl_test_count++))
+  declare -A outs
+  capture outs "$@"
+  if [ "${outs[retval]}" != "0" ]; then
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ttl_abbreviated_output="$ttl_abbreviated_output$(green_text ".")"
+      return 0
+    fi
+  else
+    if [ "$TTL_COLLECTING_TESTDATA" = "true" ]; then
+      ((ttl_fails++))
+      ttl_abbreviated_output="$ttl_abbreviated_output$(red_text "F")"
+      [[ -v ASSERTION ]] && ttl_errors="$ttl_errors\n$(yellow_text "$ASSERTION")\n"
+      ttl_errors="$ttl_errors$(yellow_text "assert_failure was actually successful: <${*}>\nstdout: ${outs[stdout]}\nstderr: ${outs[stderr]}\nretval: ${outs[retval]}\n")"
+      return 1
+    else
+      die "$(strip_ansi "assert_failure was actually successful: <${*}>\nstdout: ${outs[stdout]}\nstderr: ${outs[stderr]}\nretval: ${outs[retval]}")"
+    fi
+  fi
+}
