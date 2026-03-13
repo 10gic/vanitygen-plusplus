@@ -81,8 +81,10 @@ $ apt install libcurl4-openssl-dev
 
 On Ubuntu 24 with AMD GPU (ROCm OpenCL):
 ```
-$ apt install build-essential libssl-dev libpcre3-dev libcurl4-openssl-dev
-$ apt install rocm-opencl-runtime rocm-opencl-dev
+$ sudo apt install build-essential libssl-dev libpcre3-dev libcurl4-openssl-dev
+$ sudo apt install rocm-opencl-runtime rocm-opencl-dev
+$ make all
+$ ./oclvanitygen++ -v -d 0 1YourPrefix
 ```
 
 On MacOS:
