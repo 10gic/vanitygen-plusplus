@@ -10,6 +10,9 @@
 # apt install libcurl4-openssl-dev
 # apt install check                # Only need if you want to run tests
 
+## Ubuntu 24 with AMD GPU (ROCm OpenCL):
+# apt install rocm-opencl-runtime rocm-opencl-dev
+
 ## MacOS:
 # brew install openssl@3
 # brew install pcre
@@ -38,6 +41,12 @@ else ifeq ($(PLATFORM),NetBSD)
 	CFLAGS+=`pcre-config --cflags`
 else
 	OPENCL_LIBS=-lOpenCL
+	# Auto-detect ROCm installation (AMD GPU OpenCL)
+	ROCM_PATH ?= /opt/rocm
+	ifneq ($(wildcard $(ROCM_PATH)/include/CL/cl.h),)
+		CFLAGS+=-I$(ROCM_PATH)/include
+		LIBS+=-L$(ROCM_PATH)/lib
+	endif
 endif
 
 

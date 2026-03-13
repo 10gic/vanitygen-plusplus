@@ -465,27 +465,55 @@ vg_ocl_get_quirks(vg_ocl_context_t *vocp)
 		break;
 	case 0x1002: /* AMD/ATI */
 		/*
-		 * AMD's compiler works best with preprocesor unrolling.
-		 * Pragma unroll is unreliable with AMD's compiler and
-		 * seems to crash based on whether the gods were smiling
-		 * when Catalyst was last installed/upgraded.
+		 * AMD's compiler works best with preprocessor unrolling.
+		 * Pragma unroll is unreliable with AMD's compiler.
 		 */
 		if (vg_ocl_device_gettype(vocp->voc_ocldid) &
 		    CL_DEVICE_TYPE_GPU) {
-			quirks |= VG_OCL_EXPENSIVE_BRANCHES;
-			quirks |= VG_OCL_DEEP_VLIW;
-			dvn = vg_ocl_device_getstr(vocp->voc_ocldid,
-						   CL_DEVICE_EXTENSIONS);
-			if (dvn && strstr(dvn, "cl_amd_media_ops"))
-				quirks |= VG_OCL_AMD_BFI_INT;
-
 			dvn = vg_ocl_device_getstr(vocp->voc_ocldid,
 						   CL_DEVICE_NAME);
-			if (!strcmp(dvn, "Tahiti") || !strcmp(dvn, "Barts") || !strcmp(dvn, "Pitcairn"))
-				quirks &= ~VG_OCL_AMD_BFI_INT;
-			if (!strcmp(dvn, "ATI RV710")) {
-				quirks &= ~VG_OCL_OPTIMIZATIONS;
-				quirks |= VG_OCL_NO_BINARIES;
+
+			/*
+			 * Detect RDNA architecture (gfx10xx/11xx/12xx or Navi).
+			 * RDNA is scalar (no VLIW), has cheap branches, and
+			 * uses 32-wide wavefronts. Skip legacy GCN quirks.
+			 */
+			int is_rdna = (dvn && (
+				!strncmp(dvn, "gfx10", 5) ||
+				!strncmp(dvn, "gfx11", 5) ||
+				!strncmp(dvn, "gfx12", 5) ||
+				!strncasecmp(dvn, "Navi", 4)));
+
+			if (is_rdna) {
+				/*
+				 * RDNA (1/2/3/4): scalar arch, no VLIW,
+				 * branches are cheap. Keep preprocessor
+				 * unrolling only.
+				 */
+			} else {
+				/*
+				 * Legacy GCN/VLIW architecture:
+				 * expensive branches, VLIW scheduling,
+				 * BFI_INT binary patching.
+				 */
+				quirks |= VG_OCL_EXPENSIVE_BRANCHES;
+				quirks |= VG_OCL_DEEP_VLIW;
+
+				dvn = vg_ocl_device_getstr(vocp->voc_ocldid,
+							   CL_DEVICE_EXTENSIONS);
+				if (dvn && strstr(dvn, "cl_amd_media_ops"))
+					quirks |= VG_OCL_AMD_BFI_INT;
+
+				dvn = vg_ocl_device_getstr(vocp->voc_ocldid,
+							   CL_DEVICE_NAME);
+				if (!strcmp(dvn, "Tahiti") ||
+				    !strcmp(dvn, "Barts") ||
+				    !strcmp(dvn, "Pitcairn"))
+					quirks &= ~VG_OCL_AMD_BFI_INT;
+				if (!strcmp(dvn, "ATI RV710")) {
+					quirks &= ~VG_OCL_OPTIMIZATIONS;
+					quirks |= VG_OCL_NO_BINARIES;
+				}
 			}
 		}
 		break;

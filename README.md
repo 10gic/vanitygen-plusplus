@@ -79,6 +79,12 @@ $ apt install libpcre3-dev
 $ apt install libcurl4-openssl-dev
 ```
 
+On Ubuntu 24 with AMD GPU (ROCm OpenCL):
+```
+$ apt install build-essential libssl-dev libpcre3-dev libcurl4-openssl-dev
+$ apt install rocm-opencl-runtime rocm-opencl-dev
+```
+
 On MacOS:
 ```
 $ brew install openssl@3
