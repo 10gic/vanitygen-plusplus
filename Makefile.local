@@ -1,0 +1,65 @@
+# Isolated OpenCL build for vanitygen++
+#
+# Uses locally-downloaded OpenCL headers from third_party/linux/opencl-headers/
+# instead of system-wide OpenCL dev packages, so your existing GPU drivers
+# (e.g. for sha1-miner) are never modified.
+#
+# Setup:
+#   ./setup_isolated_opencl.sh
+#
+# Usage:
+#   make -f Makefile.local          # CPU-only (vanitygen++, keyconv)
+#   make -f Makefile.local all      # All tools including GPU (oclvanitygen++)
+#   make -f Makefile.local test     # Run tests
+
+# ---- Local OpenCL paths (isolated from system drivers) ----
+LOCAL_OPENCL_INCLUDE=third_party/linux/opencl-headers
+LOCAL_OPENCL_LIB=/usr/lib/x86_64-linux-gnu
+
+# ---- Base configuration ----
+LIBS=-lpcre -lcrypto -lm -lpthread
+CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
+
+# Add local OpenCL headers (takes priority over system headers)
+CFLAGS+=-I$(LOCAL_OPENCL_INCLUDE)
+
+# OpenCL library (uses the ICD loader, not a vendor driver directly)
+OPENCL_LIBS=-L$(LOCAL_OPENCL_LIB) -lOpenCL
+
+# Auto-detect ROCm if present (for AMD GPU users)
+ROCM_PATH ?= /opt/rocm
+ifneq ($(wildcard $(ROCM_PATH)/include/CL/cl.h),)
+	CFLAGS+=-I$(ROCM_PATH)/include
+	LIBS+=-L$(ROCM_PATH)/lib
+endif
+
+OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
+     stellar.o base32.o crc16.o bech32.o segwit_addr.o
+PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
+
+most: vanitygen++ keyconv
+
+all: $(PROGS)
+
+vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o simplevanitygen.o bech32.o segwit_addr.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS)
+
+oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o groestl.o sha3.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcurl
+
+keyconv: keyconv.o util.o groestl.o sha3.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
+
+run_tests.o: tests.h util_test.h segwit_addr_test.h pattern_test.h
+
+run_tests: run_tests.o util.o groestl.o sha3.o bech32.o segwit_addr.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcheck
+
+test: run_tests
+	./run_tests
+
+clean:
+	rm -f $(OBJS) $(PROGS) *.oclbin run_tests
