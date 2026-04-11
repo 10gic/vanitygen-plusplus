@@ -3,6 +3,6 @@
 
 #include <stddef.h>
 
-void strkey_encode(unsigned char versionByte, unsigned char *in, size_t in_len, unsigned char *out);
+void strkey_encode(unsigned char versionByte, const unsigned char *in, size_t in_len, unsigned char *out);
 
 #endif //VANITYGEN_PLUSPLUS_STELLAR_H

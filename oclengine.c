@@ -77,7 +77,7 @@
 #endif
 
 #define MAX_SLOT 2
-#define MAX_ARG 6
+#define MAX_ARG 8
 #define MAX_KERNEL 3
 
 #define is_pow2(v) (!((v) & ((v)-1)))
@@ -1024,6 +1024,10 @@ static int vg_ocl_arg_map[][8] = {
 	{ 0, 3, -1 },
 	/* target_table */
 	{ 2, 3, -1 },
+	/* suffix_mask */
+	{ 2, 5, -1 },
+	/* suffix_target */
+	{ 2, 6, -1 },
 };
 
 static int
@@ -1251,7 +1255,7 @@ vg_ocl_kernel_start(vg_ocl_context_t *vocp, int slot, int ncol, int nrow,
 	assert(!vocp->voc_oclkrnwait[slot]);
 
 	/* heap_invert() preconditions */
-	assert(is_pow2(invsize) && (invsize > 1));
+	assert(invsize > 1);
 
 	val = invsize;
 	ret = clSetKernelArg(vocp->voc_oclkernel[slot][1],
@@ -1571,6 +1575,7 @@ vg_ocl_prefix_rekey(vg_ocl_context_t *vocp)
 	unsigned char *ocl_targets_in;
 	uint32_t *ocl_found_out;
 	int i;
+	int has_suffix = vg_prefix_context_has_suffix(vcp);
 
 	/* Set the found indicator for each slot to -1 */
 	for (i = 0; i < vocp->voc_nslots; i++) {
@@ -1587,28 +1592,86 @@ vg_ocl_prefix_rekey(vg_ocl_context_t *vocp)
 	}
 
 	if (vocp->voc_pattern_rewrite) {
+		/* Upload suffix mask and target if present */
+		if (has_suffix) {
+			if (TRXFlag) {
+				/* TRX: upload divisor and target as uint64
+				 * stored in big-endian word order (high, low)
+				 * into the existing 20-byte buffers */
+				unsigned char buf[20];
+				uint64_t divisor, b58target;
+				vg_prefix_context_get_suffix_mod(
+					vcp, &divisor, &b58target);
+				memset(buf, 0, 20);
+				/* High word first, then low word */
+				buf[0] = (divisor >> 56) & 0xff;
+				buf[1] = (divisor >> 48) & 0xff;
+				buf[2] = (divisor >> 40) & 0xff;
+				buf[3] = (divisor >> 32) & 0xff;
+				buf[4] = (divisor >> 24) & 0xff;
+				buf[5] = (divisor >> 16) & 0xff;
+				buf[6] = (divisor >> 8) & 0xff;
+				buf[7] = divisor & 0xff;
+				if (!vg_ocl_copyout_arg(vocp, -1, 6, buf, 20))
+					return -1;
+				memset(buf, 0, 20);
+				buf[0] = (b58target >> 56) & 0xff;
+				buf[1] = (b58target >> 48) & 0xff;
+				buf[2] = (b58target >> 40) & 0xff;
+				buf[3] = (b58target >> 32) & 0xff;
+				buf[4] = (b58target >> 24) & 0xff;
+				buf[5] = (b58target >> 16) & 0xff;
+				buf[6] = (b58target >> 8) & 0xff;
+				buf[7] = b58target & 0xff;
+				if (!vg_ocl_copyout_arg(vocp, -1, 7, buf, 20))
+					return -1;
+			} else {
+				unsigned char mask[20], target[20];
+				vg_prefix_context_get_suffix(vcp, mask, target);
+				if (!vg_ocl_copyout_arg(vocp, -1, 6, mask, 20))
+					return -1;
+				if (!vg_ocl_copyout_arg(vocp, -1, 7, target, 20))
+					return -1;
+			}
+		}
+
 		/* Count number of range records */
 		i = vg_context_addr_sort(vcp, NULL);
-		if (!i)
+
+		if (i == 0 && !has_suffix)
 			return 0;
 
-		if (i > vocp->voc_pattern_alloc) {
-			/* (re)allocate target buffer */
-			if (!vg_ocl_kernel_arg_alloc(vocp, -1, 5, 40 * i, 0))
+		if (i > 0) {
+			if (i > vocp->voc_pattern_alloc) {
+				/* (re)allocate target buffer */
+				if (!vg_ocl_kernel_arg_alloc(vocp, -1, 5, 40 * i, 0))
+					return -1;
+				vocp->voc_pattern_alloc = i;
+			}
+
+			/* Write range records */
+			ocl_targets_in = (unsigned char *)
+				vg_ocl_map_arg_buffer(vocp, 0, 5, 1);
+			if (!ocl_targets_in) {
+				fprintf(stderr,
+					"ERROR: Could not map hash target buffer\n");
 				return -1;
-			vocp->voc_pattern_alloc = i;
+			}
+			vg_context_addr_sort(vcp, ocl_targets_in);
+			vg_ocl_unmap_arg_buffer(vocp, 0, 5, ocl_targets_in);
+		} else if (has_suffix && vocp->voc_pattern_alloc == 0) {
+			/*
+			 * Suffix-only mode: no prefix ranges, but OpenCL
+			 * requires all kernel args to be set before enqueue.
+			 * Allocate a minimal dummy target_table so that
+			 * kernel arg 3 is valid.  The kernel never reads it
+			 * because ntargets == 0.
+			 */
+			if (!vg_ocl_kernel_arg_alloc(vocp, -1, 5, 40, 0))
+				return -1;
+			vocp->voc_pattern_alloc = 1;
 		}
 
-		/* Write range records */
-		ocl_targets_in = (unsigned char *)
-			vg_ocl_map_arg_buffer(vocp, 0, 5, 1);
-		if (!ocl_targets_in) {
-			fprintf(stderr,
-				"ERROR: Could not map hash target buffer\n");
-			return -1;
-		}
-		vg_context_addr_sort(vcp, ocl_targets_in);
-		vg_ocl_unmap_arg_buffer(vocp, 0, 5, ocl_targets_in);
 		vg_ocl_kernel_int_arg(vocp, -1, 4, i);
 
 		vocp->voc_pattern_rewrite = 0;
@@ -1701,15 +1764,31 @@ vg_ocl_prefix_check(vg_ocl_context_t *vocp, int slot)
 static int
 vg_ocl_prefix_init(vg_ocl_context_t *vocp)
 {
+	vg_context_t *vcp = vocp->base.vxc_vc;
 	int i;
+	int has_suffix = vg_prefix_context_has_suffix(vcp);
 
-	if (!vg_ocl_create_kernel(vocp, 2, "hash_ec_point_search_prefix"))
-		return 0;
+	if (has_suffix) {
+		if (!vg_ocl_create_kernel(vocp, 2, "hash_ec_point_search_prefix_suffix"))
+			return 0;
+	} else {
+		if (!vg_ocl_create_kernel(vocp, 2, "hash_ec_point_search_prefix"))
+			return 0;
+	}
 
 	for (i = 0; i < vocp->voc_nslots; i++) {
 		if (!vg_ocl_kernel_arg_alloc(vocp, i, 0, 28, 1))
 			return 0;
 	}
+
+	if (has_suffix) {
+		/* Allocate suffix_mask (arg 6) and suffix_target (arg 7) */
+		if (!vg_ocl_kernel_arg_alloc(vocp, -1, 6, 20, 0))
+			return 0;
+		if (!vg_ocl_kernel_arg_alloc(vocp, -1, 7, 20, 0))
+			return 0;
+	}
+
 	vocp->voc_rekey_func = vg_ocl_prefix_rekey;
 	vocp->voc_check_func = vg_ocl_prefix_check;
 	vocp->voc_pattern_rewrite = 1;
@@ -1725,10 +1804,10 @@ vg_ocl_config_pattern(vg_ocl_context_t *vocp)
 	int i;
 
 	i = vg_context_addr_sort(vcp, NULL);
-	if (i > 0) {
+	if (i > 0 || vg_prefix_context_has_suffix(vcp)) {
 		if (vcp->vc_verbose > 1)
 			fprintf(stderr, "Using OpenCL prefix matcher\n");
-		/* Configure for prefix matching */
+		/* Configure for prefix (and/or suffix) matching */
 		return vg_ocl_prefix_init(vocp);
 	}
 
@@ -2089,7 +2168,7 @@ vg_opencl_loop(vg_exec_context_t *arg)
 	 * - The row point array
 	 */
 	if (!vg_ocl_kernel_arg_alloc(vocp, -1, 1,
-			     round_up_pow2(32 * 2 * round, 4096), 0) ||
+			     round_up_pow2(32 * round, 4096), 0) ||
 	    !vg_ocl_kernel_arg_alloc(vocp, -1, 2,
 			     round_up_pow2(32 * 2 * round, 4096), 0) ||
 	    !vg_ocl_kernel_arg_alloc(vocp, -1, 3,
@@ -2715,10 +2794,16 @@ vg_ocl_context_new(vg_context_t *vcp,
 	round = nrows * ncols;
 
 	if (!invsize) {
-		invsize = 2;
-		while (!(round % (invsize << 1)) &&
-		       ((round / invsize) > full_threads))
-			invsize <<= 1;
+		/* Default to 255 (product-chain batch inversion).
+		 * Fall back to a divisor of round if 255 doesn't divide evenly. */
+		invsize = 255;
+		if (round % invsize) {
+			/* Find the largest divisor <= 255 */
+			for (invsize = 255; invsize > 1; invsize--) {
+				if (!(round % invsize))
+					break;
+			}
+		}
 	}
 
 	if (vcp->vc_verbose > 1) {
@@ -2727,7 +2812,7 @@ vg_ocl_context_new(vg_context_t *vcp,
 			round/invsize, invsize);
 	}
 
-	if ((round % invsize) || !is_pow2(invsize) || (invsize < 2)) {
+	if ((round % invsize) || (invsize < 2) || (invsize > 255)) {
 		if (vcp->vc_verbose <= 1) {
 			fprintf(stderr, "Grid size: %dx%d\n", ncols, nrows);
 			fprintf(stderr,
@@ -2741,7 +2826,7 @@ vg_ocl_context_new(vg_context_t *vcp,
 		else
 			fprintf(stderr,
 				"Modular inverse work per task (%d) "
-				"must be a power of 2\n", invsize);
+				"must be 2-255\n", invsize);
 		goto out_fail;
 	}
 
@@ -2809,16 +2894,11 @@ vg_ocl_context_new_from_devstr(vg_context_t *vcp, const char *devstr,
 
 		else if (!strcmp(part, "invsize")) {
 			invsize = atoi(param);
-			if (!invsize) {
+			if (invsize < 2 || invsize > 255) {
 				fprintf(stderr,
-					"Invalid modular inverse size '%s'\n",
+					"Invalid modular inverse size '%s' "
+					"(must be 2-255)\n",
 					param);
-				continue;
-			}
-			if (invsize & (invsize - 1)) {
-				fprintf(stderr,
-					"Modular inverse size %d must be "
-					"a power of 2\n", invsize);
 				invsize = 0;
 				continue;
 			}

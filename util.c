@@ -180,6 +180,64 @@ vg_b58_encode_check(void *buf, size_t len, char *result)
 	BN_CTX_free(bnctx);
 }
 
+/*
+ * vg_b58_encode_raw: plain Base58 encoding without any checksum or version.
+ * Used for Solana addresses (raw 32-byte Ed25519 public key → Base58).
+ */
+void
+vg_b58_encode_raw(const void *buf, size_t len, char *result)
+{
+	int d, p;
+
+	BN_CTX *bnctx;
+	BIGNUM *bn, *bndiv, *bntmp;
+	BIGNUM *bna, *bnb, *bnbase, *bnrem;
+	unsigned char *binres;
+	int brlen, zpfx;
+
+	bnctx = BN_CTX_new();
+	bna = BN_new();
+	bnb = BN_new();
+	bnbase = BN_new();
+	bnrem = BN_new();
+	BN_set_word(bnbase, 58);
+
+	bn = bna;
+	bndiv = bnb;
+
+	brlen = (2 * (int)len) + 2;
+	binres = (unsigned char*) malloc(brlen);
+	memcpy(binres, buf, len);
+
+	BN_bin2bn(binres, (int)len, bn);
+
+	for (zpfx = 0; zpfx < (int)len && binres[zpfx] == 0; zpfx++);
+
+	p = brlen;
+	while (!BN_is_zero(bn)) {
+		BN_div(bndiv, bnrem, bn, bnbase, bnctx);
+		bntmp = bn;
+		bn = bndiv;
+		bndiv = bntmp;
+		d = BN_get_word(bnrem);
+		binres[--p] = vg_b58_alphabet[d];
+	}
+
+	while (zpfx--) {
+		binres[--p] = vg_b58_alphabet[0];
+	}
+
+	memcpy(result, &binres[p], brlen - p);
+	result[brlen - p] = '\0';
+
+	free(binres);
+	BN_clear_free(bna);
+	BN_clear_free(bnb);
+	BN_clear_free(bnbase);
+	BN_clear_free(bnrem);
+	BN_CTX_free(bnctx);
+}
+
 #define skip_char(c) \
 	(((c) == '\r') || ((c) == '\n') || ((c) == ' ') || ((c) == '\t'))
 

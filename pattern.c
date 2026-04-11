@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include <pthread.h>
 
@@ -1007,6 +1008,13 @@ get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
 
 	BN_set_word(bntmp, addrtype + 1);
 	BN_lshift(bntmp2, bntmp, 192);
+	/* bntmp2 is the exclusive upper bound for this addrtype.
+	 * Convert to inclusive: subtract 1 so that clipping the high
+	 * bound doesn't collapse the range when the version byte rolls over.
+	 * Without this, prefix "T" for TRX (addrtype=65) would clip bnhigh
+	 * to 0x4200...0000 instead of 0x41FF...FFFF, causing the stripped
+	 * hash160 high bound to become 0x0000...0000. */
+	BN_sub(bntmp2, bntmp2, BN_value_one());
 
 	if (check_upper) {
 		if (BN_cmp(bntmp2, bnlow2) < 0) {
@@ -1017,7 +1025,7 @@ get_prefix_ranges(int addrtype, const char *pfx, BIGNUM **result,
 			bnlow2 = NULL;
 		}
 		else if (BN_cmp(bntmp2, bnhigh2) < 0)
-			BN_copy(bnlow2, bntmp2);
+			BN_copy(bnhigh2, bntmp2);
 	}
 
 	if (BN_cmp(bntmp2, bnlow) < 0) {
@@ -1345,6 +1353,13 @@ typedef struct _vg_prefix_context_s {
 	avl_root_t		vcp_avlroot;
 	BIGNUM			*vcp_difficulty;
 	int			vcp_caseinsensitive;
+	int			vcp_has_suffix;
+	int			vcp_suffix_len; /* number of hex/base58 chars */
+	unsigned char		vcp_suffix_mask[20];
+	unsigned char		vcp_suffix_target[20];
+	char			vcp_suffix_pattern[41]; /* original suffix string */
+	uint64_t		vcp_suffix_divisor;  /* 58^suffix_len for TRX */
+	uint64_t		vcp_suffix_b58target; /* Base58 suffix numeric value for TRX */
 } vg_prefix_context_t;
 
 void
@@ -1357,6 +1372,30 @@ int
 vg_prefix_context_get_case_insensitive(vg_context_t *vcp)
 {
 	return ((vg_prefix_context_t *) vcp)->vcp_caseinsensitive;
+}
+
+int
+vg_prefix_context_has_suffix(vg_context_t *vcp)
+{
+	return ((vg_prefix_context_t *) vcp)->vcp_has_suffix;
+}
+
+void
+vg_prefix_context_get_suffix(vg_context_t *vcp,
+			     unsigned char *mask, unsigned char *target)
+{
+	vg_prefix_context_t *vcpp = (vg_prefix_context_t *) vcp;
+	memcpy(mask, vcpp->vcp_suffix_mask, 20);
+	memcpy(target, vcpp->vcp_suffix_target, 20);
+}
+
+void
+vg_prefix_context_get_suffix_mod(vg_context_t *vcp,
+				 uint64_t *divisor, uint64_t *target)
+{
+	vg_prefix_context_t *vcpp = (vg_prefix_context_t *) vcp;
+	*divisor = vcpp->vcp_suffix_divisor;
+	*target = vcpp->vcp_suffix_b58target;
 }
 
 static void
@@ -1373,10 +1412,15 @@ vg_prefix_context_clear_all_patterns(vg_context_t *vcp)
 		npfx_left++;
 	}
 
+	/* Suffix-only patterns are counted in vc_npatterns but not in AVL tree */
+	if (vcpp->vcp_has_suffix && avl_root_empty(&vcpp->vcp_avlroot))
+		npfx_left = vcpp->base.vc_npatterns;
 	assert(npfx_left == vcpp->base.vc_npatterns);
 	vcpp->base.vc_npatterns = 0;
 	vcpp->base.vc_npatterns_start = 0;
 	vcpp->base.vc_found = 0;
+	vcpp->vcp_has_suffix = 0;
+	vcpp->vcp_suffix_len = 0;
 	BN_clear(vcpp->vcp_difficulty);
 }
 
@@ -1445,9 +1489,185 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 	for (i = 0; i < npatterns; i++) {
 		if (vcp->vc_addrtype == ADDR_TYPE_ETH) {
 			vp = NULL;
-			ret = get_prefix_ranges(vcpp->base.vc_addrtype, patterns[i], ranges, bnctx);
-			if (!ret) {
-				vp = vg_prefix_add_ranges(&vcpp->vcp_avlroot, patterns[i], ranges, NULL);
+
+			/* Check for wildcard suffix syntax */
+			const char *star = strchr(patterns[i], '*');
+			if (star) {
+				const char *suffix = star + 1;
+				size_t suffix_len = strlen(suffix);
+
+				/* Validate suffix hex characters */
+				for (size_t s = 0; s < suffix_len; s++) {
+					char c = suffix[s];
+					if (!((c >= '0' && c <= '9') ||
+					      (c >= 'a' && c <= 'f') ||
+					      (c >= 'A' && c <= 'F'))) {
+						fprintf(stderr,
+							"Invalid hex character '%c' in suffix '%s'\n",
+							c, suffix);
+						goto fail;
+					}
+				}
+				if (suffix_len == 0 || suffix_len > 40) {
+					fprintf(stderr,
+						"Invalid suffix length %zu (must be 1-40 hex chars)\n",
+						suffix_len);
+					goto fail;
+				}
+
+				/* Compute suffix mask and target */
+				memset(vcpp->vcp_suffix_mask, 0, 20);
+				memset(vcpp->vcp_suffix_target, 0, 20);
+
+				/* Pad suffix to 40 hex chars aligned to the right */
+				char sfx_padded[40];
+				memset(sfx_padded, '0', sizeof(sfx_padded));
+				memcpy(sfx_padded + (40 - suffix_len), suffix, suffix_len);
+
+				/* Convert full padded hex to binary target */
+				size_t bLen = 20;
+				if (hex_dec(vcpp->vcp_suffix_target, &bLen, sfx_padded, 40) < 0) {
+					fprintf(stderr, "Invalid hex in suffix '%s'\n", suffix);
+					goto fail;
+				}
+
+				/* Build mask: set bits for the suffix portion (right-aligned) */
+				int suffix_bits = suffix_len * 4;
+				int full_bytes = suffix_bits / 8;
+				int extra_bits = suffix_bits % 8;
+				/* Fill mask from the right */
+				memset(vcpp->vcp_suffix_mask + (20 - full_bytes), 0xff, full_bytes);
+				if (extra_bits > 0) {
+					/* partial byte: e.g. 3 hex chars = 12 bits, extra_bits = 4 */
+					vcpp->vcp_suffix_mask[20 - full_bytes - 1] =
+						(unsigned char)(0xff >> (8 - extra_bits));
+				}
+
+				vcpp->vcp_has_suffix = 1;
+				vcpp->vcp_suffix_len = suffix_len;
+				strncpy(vcpp->vcp_suffix_pattern, suffix,
+					sizeof(vcpp->vcp_suffix_pattern) - 1);
+				vcpp->vcp_suffix_pattern[sizeof(vcpp->vcp_suffix_pattern) - 1] = '\0';
+
+				/* Handle prefix portion (before the '*') */
+				size_t prefix_part_len = star - patterns[i];
+				if (prefix_part_len > 0) {
+					/* Build temporary prefix-only string */
+					char prefix_buf[64];
+					if (prefix_part_len >= sizeof(prefix_buf)) {
+						fprintf(stderr, "Prefix too long\n");
+						goto fail;
+					}
+					memcpy(prefix_buf, patterns[i], prefix_part_len);
+					prefix_buf[prefix_part_len] = '\0';
+
+					ret = get_prefix_ranges(vcpp->base.vc_addrtype,
+								prefix_buf, ranges, bnctx);
+					if (!ret) {
+						vp = vg_prefix_add_ranges(
+							&vcpp->vcp_avlroot,
+							patterns[i], ranges, NULL);
+					}
+				} else {
+					/* Suffix-only: no prefix ranges, still count as a pattern */
+					vcpp->base.vc_npatterns++;
+					vcpp->base.vc_npatterns_start++;
+					/* Compute range for suffix-only:
+					 * suffix_len hex chars = suffix_bits constrained bits
+					 * Range of matching addresses = 2^(160 - suffix_bits) */
+					int suffix_bits = suffix_len * 4;
+					BN_clear(bntmp2);
+					BN_set_bit(bntmp2, 160 - suffix_bits);
+					BN_add(vcpp->vcp_difficulty, vcpp->vcp_difficulty, bntmp2);
+					vg_prefix_context_next_difficulty(
+						vcpp, bntmp, bntmp3, bnctx);
+					npfx++;
+					continue;
+				}
+			} else {
+				ret = get_prefix_ranges(vcpp->base.vc_addrtype, patterns[i], ranges, bnctx);
+				if (!ret) {
+					vp = vg_prefix_add_ranges(&vcpp->vcp_avlroot, patterns[i], ranges, NULL);
+				}
+			}
+
+		} else if (TRXFlag && strchr(patterns[i], '*')) {
+			vp = NULL;
+
+			const char *star = strchr(patterns[i], '*');
+			const char *suffix = star + 1;
+			size_t suffix_len = strlen(suffix);
+
+			/* Validate suffix as Base58 characters */
+			for (size_t s = 0; s < suffix_len; s++) {
+				if (vg_b58_reverse_map[(int)(unsigned char)suffix[s]] == -1) {
+					fprintf(stderr,
+						"Invalid Base58 character '%c' in suffix '%s'\n",
+						suffix[s], suffix);
+					goto fail;
+				}
+			}
+			if (suffix_len == 0 || suffix_len > 9) {
+				fprintf(stderr,
+					"Invalid suffix length %zu (must be 1-9 Base58 chars)\n",
+					suffix_len);
+				goto fail;
+			}
+
+			/* Decode Base58 suffix to numeric target */
+			uint64_t b58_target = 0;
+			for (size_t s = 0; s < suffix_len; s++) {
+				b58_target = b58_target * 58 +
+					(uint64_t)vg_b58_reverse_map[(int)(unsigned char)suffix[s]];
+			}
+
+			/* Compute divisor = 58^suffix_len */
+			uint64_t b58_divisor = 1;
+			for (size_t s = 0; s < suffix_len; s++)
+				b58_divisor *= 58;
+
+			vcpp->vcp_has_suffix = 1;
+			vcpp->vcp_suffix_len = suffix_len;
+			vcpp->vcp_suffix_divisor = b58_divisor;
+			vcpp->vcp_suffix_b58target = b58_target;
+			strncpy(vcpp->vcp_suffix_pattern, suffix,
+				sizeof(vcpp->vcp_suffix_pattern) - 1);
+			vcpp->vcp_suffix_pattern[sizeof(vcpp->vcp_suffix_pattern) - 1] = '\0';
+
+			/* Handle prefix portion (before the '*') */
+			size_t prefix_part_len = star - patterns[i];
+			if (prefix_part_len > 0) {
+				char prefix_buf[64];
+				if (prefix_part_len >= sizeof(prefix_buf)) {
+					fprintf(stderr, "Prefix too long\n");
+					goto fail;
+				}
+				memcpy(prefix_buf, patterns[i], prefix_part_len);
+				prefix_buf[prefix_part_len] = '\0';
+
+				ret = get_prefix_ranges(vcpp->base.vc_addrtype,
+							prefix_buf, ranges, bnctx);
+				if (!ret) {
+					vp = vg_prefix_add_ranges(
+						&vcpp->vcp_avlroot,
+						patterns[i], ranges, NULL);
+				}
+			} else {
+				/* Suffix-only: no prefix ranges */
+				vcpp->base.vc_npatterns++;
+				vcpp->base.vc_npatterns_start++;
+				/* Difficulty = 58^suffix_len.
+				 * Express as: range = 2^192 / 58^suffix_len
+				 * Store difficulty as the divisor directly. */
+				BN_clear(bntmp2);
+				BN_set_bit(bntmp2, 192);
+				BN_set_word(bntmp, (BN_ULONG)b58_divisor);
+				BN_div(bntmp3, NULL, bntmp2, bntmp, bnctx);
+				BN_add(vcpp->vcp_difficulty, vcpp->vcp_difficulty, bntmp3);
+				vg_prefix_context_next_difficulty(
+					vcpp, bntmp, bntmp3, bnctx);
+				npfx++;
+				continue;
 			}
 
 		} else if (!vcpp->vcp_caseinsensitive) {
@@ -1566,11 +1786,41 @@ vg_prefix_context_add_patterns(vg_context_t *vcp,
 			"Hint: Run vanitygen++ with \"-C LIST\" for a list of valid prefixes.  Also note that many coins only allow certain characters as the second character in the prefix.\n");
 	}
 
+	/* For combined prefix+suffix, adjust difficulty by suffix factor */
+	if (npfx && vcpp->vcp_has_suffix &&
+	    !avl_root_empty(&vcpp->vcp_avlroot)) {
+		/* Divide the range by base^suffix_len to account for
+		 * suffix constraint. ETH uses base=16 (hex), TRX uses
+		 * base=58 (Base58). */
+		if (TRXFlag) {
+			BN_set_word(bntmp, (BN_ULONG)vcpp->vcp_suffix_divisor);
+		} else {
+			BN_clear(bntmp);
+			BN_set_word(bntmp, 1);
+			BN_clear(bntmp2);
+			BN_set_word(bntmp2, 16);
+			for (i = 0; i < vcpp->vcp_suffix_len; i++) {
+				BN_mul(bntmp, bntmp, bntmp2, bnctx);
+			}
+		}
+		BN_div(bntmp2, NULL, vcpp->vcp_difficulty, bntmp, bnctx);
+		/* Ensure at least 1 */
+		if (BN_is_zero(bntmp2))
+			BN_set_word(bntmp2, 1);
+		BN_copy(vcpp->vcp_difficulty, bntmp2);
+	}
+
 	if (npfx)
 		vg_prefix_context_next_difficulty(vcpp, bntmp, bntmp2, bnctx);
 
 	ret = (npfx != 0);
 
+	goto cleanup;
+
+fail:
+	ret = 0;
+
+cleanup:
 	BN_clear_free(bntmp);
 	BN_clear_free(bntmp2);
 	BN_clear_free(bntmp3);
@@ -1624,6 +1874,37 @@ vg_prefix_get_difficulty(int addrtype, const char *pattern)
 }
 
 
+/* Verify suffix match on the CPU side. Returns 1 if suffix matches, 0 otherwise. */
+static int
+vg_prefix_check_suffix(vg_prefix_context_t *vcpp, unsigned char *binres)
+{
+	int i;
+	for (i = 0; i < 20; i++) {
+		if ((binres[i] & vcpp->vcp_suffix_mask[i]) !=
+		    vcpp->vcp_suffix_target[i])
+			return 0;
+	}
+	return 1;
+}
+
+/*
+ * TRX suffix verification: compute full Base58Check address,
+ * compare trailing suffix_len characters.
+ * binres is [version(1)][hash(20)] = 21 bytes.
+ */
+static int
+vg_prefix_check_suffix_trx(vg_prefix_context_t *vcpp, unsigned char *binres)
+{
+	char addr_buf[64];
+	vg_b58_encode_check(binres, 21, addr_buf);
+	size_t addr_len = strlen(addr_buf);
+	size_t slen = vcpp->vcp_suffix_len;
+	if (addr_len < slen)
+		return 0;
+	return (memcmp(addr_buf + (addr_len - slen),
+		       vcpp->vcp_suffix_pattern, slen) == 0);
+}
+
 // return 0 (not found), 1 (found), 2 (not continue)
 static int
 vg_prefix_test(vg_exec_context_t *vxcp)
@@ -1631,6 +1912,8 @@ vg_prefix_test(vg_exec_context_t *vxcp)
 	vg_prefix_context_t *vcpp = (vg_prefix_context_t *) vxcp->vxc_vc;
 	vg_prefix_t *vp;
 	int res = 0;
+	int suffix_only = vcpp->vcp_has_suffix && avl_root_empty(&vcpp->vcp_avlroot);
+	const char *matched_pattern = NULL;
 
 	// Convert address from binary format (vxcp->vxc_binres) into BIGNUM (vxcp->vxc_bntarg)
 	if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH) {
@@ -1644,25 +1927,128 @@ vg_prefix_test(vg_exec_context_t *vxcp)
 		BN_bin2bn(vxcp->vxc_binres, 25, vxcp->vxc_bntarg); // 25 = [version(1 byte)][ripemd160_hash(20 bytes)][checksum(4 bytes)]
 	}
 
+	if (suffix_only) {
+		/* Suffix-only mode: verify suffix match directly */
+		if (TRXFlag) {
+			if (!vg_prefix_check_suffix_trx(vcpp, vxcp->vxc_binres))
+				return 0;
+		} else {
+			if (!vg_prefix_check_suffix(vcpp, vxcp->vxc_binres))
+				return 0;
+		}
+
+		/* EIP-55 case-sensitive check for suffix */
+		if (vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH &&
+		    !vcpp->vcp_caseinsensitive) {
+			char checksum_addr[41];
+			eth_encode_checksum_addr(vxcp->vxc_binres, 20,
+						 checksum_addr, 40);
+			checksum_addr[40] = '\0';
+			size_t slen = vcpp->vcp_suffix_len;
+			/* Compare the last slen chars of checksum address
+			   against the suffix pattern (case-sensitive) */
+			if (memcmp(checksum_addr + (40 - slen),
+				   vcpp->vcp_suffix_pattern, slen) != 0) {
+				if (vxcp->vxc_vc->vc_verbose > 1) {
+					fprintf(stderr,
+						"suffix case-sensitive fail\n");
+				}
+				return 0;
+			}
+		}
+
+		/* Build display pattern: "*<suffix>" */
+		char display_pattern[64];
+		snprintf(display_pattern, sizeof(display_pattern),
+			 "*%s", vcpp->vcp_suffix_pattern);
+		matched_pattern = display_pattern;
+
+		if (vg_exec_context_upgrade_lock(vxcp))
+			return vg_prefix_test(vxcp);
+
+		vg_exec_context_consolidate_key(vxcp);
+		vcpp->base.vc_output_match(&vcpp->base, vxcp->vxc_key,
+					   matched_pattern);
+		vcpp->base.vc_found++;
+		if (vcpp->base.vc_numpairs >= 1 &&
+		    vcpp->base.vc_found >= vcpp->base.vc_numpairs) {
+			exit(1);
+		}
+		if (vcpp->base.vc_only_one) {
+			return 2;
+		}
+		if (vcpp->base.vc_remove_on_match) {
+			vcpp->vcp_has_suffix = 0;
+			vcpp->base.vc_npatterns--;
+			vcpp->base.vc_pattern_generation++;
+			return 2;
+		}
+		return 1;
+	}
+
 research:
 	vp = vg_prefix_avl_search(&vcpp->vcp_avlroot, vxcp->vxc_bntarg);
+
+	/* For combined prefix+suffix: also verify suffix */
+	if (vp && vcpp->vcp_has_suffix) {
+		if (TRXFlag) {
+			if (!vg_prefix_check_suffix_trx(vcpp, vxcp->vxc_binres))
+				vp = NULL;
+		} else {
+			if (!vg_prefix_check_suffix(vcpp, vxcp->vxc_binres))
+				vp = NULL;
+		}
+	}
+
 	if (vp && vxcp->vxc_vc->vc_addrtype == ADDR_TYPE_ETH && (!vcpp->vcp_caseinsensitive)) { // case-sensitive for ETH
-		char checksum_addr[40];
+		char checksum_addr[41];
 		const char *pattern = vp->vp_pattern;
 		size_t plen = strlen(vp->vp_pattern);
 		// construct checksum addr (without leading '0x') into checksum_addr
 		eth_encode_checksum_addr(vxcp->vxc_binres, 20, checksum_addr, 40);
-		// skip '0x' in pattern
-		if (pattern[0] == '0' && pattern[1] == 'x') {
-			pattern = vp->vp_pattern + 2;
-			plen -= 2;
-		}
-		// perform case-sensitive comparing
-		if (memcmp(checksum_addr, pattern, plen) != 0) {
-			if (vxcp->vxc_vc->vc_verbose > 1) {
-				fprintf(stderr, "case-sensitive comparing fail, pattern %s\n", vp->vp_pattern);
+		checksum_addr[40] = '\0';
+
+		if (vcpp->vcp_has_suffix) {
+			/* Combined: check prefix part and suffix part separately */
+			const char *star = strchr(pattern, '*');
+			if (star) {
+				size_t pfx_start = 0;
+				size_t pfx_len = star - pattern;
+				/* skip 0x in prefix */
+				if (pfx_len >= 2 && pattern[0] == '0' && pattern[1] == 'x') {
+					pfx_start = 2;
+					pfx_len -= 2;
+				}
+				const char *suffix = star + 1;
+				size_t slen = strlen(suffix);
+				/* Check prefix case */
+				if (pfx_len > 0 &&
+				    memcmp(checksum_addr, pattern + pfx_start, pfx_len) != 0) {
+					if (vxcp->vxc_vc->vc_verbose > 1)
+						fprintf(stderr, "prefix case-sensitive fail, pattern %s\n", vp->vp_pattern);
+					vp = NULL;
+				}
+				/* Check suffix case */
+				if (vp && slen > 0 &&
+				    memcmp(checksum_addr + (40 - slen), suffix, slen) != 0) {
+					if (vxcp->vxc_vc->vc_verbose > 1)
+						fprintf(stderr, "suffix case-sensitive fail, pattern %s\n", vp->vp_pattern);
+					vp = NULL;
+				}
 			}
-			vp = NULL;
+		} else {
+			// skip '0x' in pattern
+			if (pattern[0] == '0' && pattern[1] == 'x') {
+				pattern = vp->vp_pattern + 2;
+				plen -= 2;
+			}
+			// perform case-sensitive comparing
+			if (memcmp(checksum_addr, pattern, plen) != 0) {
+				if (vxcp->vxc_vc->vc_verbose > 1) {
+					fprintf(stderr, "case-sensitive comparing fail, pattern %s\n", vp->vp_pattern);
+				}
+				vp = NULL;
+			}
 		}
 	}
 	if (vp) {
@@ -1696,6 +2082,11 @@ research:
 			vg_prefix_delete(&vcpp->vcp_avlroot,vp);
 			vcpp->base.vc_npatterns--;
 
+			/* For combined prefix+suffix: also clear the suffix
+			 * so it doesn't continue as suffix-only matching. */
+			if (vcpp->vcp_has_suffix)
+				vcpp->vcp_has_suffix = 0;
+
 			if (!avl_root_empty(&vcpp->vcp_avlroot))
 				vg_prefix_context_next_difficulty(
 					vcpp, vxcp->vxc_bntmp,
@@ -1705,7 +2096,7 @@ research:
 		}
 		res = 1;
 	}
-	if (avl_root_empty(&vcpp->vcp_avlroot)) {
+	if (avl_root_empty(&vcpp->vcp_avlroot) && !vcpp->vcp_has_suffix) {
 		return 2;
 	}
 	return res;

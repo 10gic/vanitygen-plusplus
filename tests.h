@@ -31,6 +31,7 @@ END_TEST
 #include "util_test.h"
 #include "segwit_addr_test.h"
 #include "pattern_test.h"
+#include "ton_test.h"
 
 Suite* create_sample_suite(void)
 {
@@ -46,6 +47,10 @@ Suite* create_sample_suite(void)
     tcase_add_test(tc, test_hex_dec);
     suite_add_tcase(suite, tc);
 
+	tc = tcase_create("util b58 raw test");
+	tcase_add_test(tc, test_b58_encode_raw);
+	suite_add_tcase(suite, tc);
+
 	tc = tcase_create("util eth test");
 	tcase_add_test(tc, test_eth_pubkey2addr);
 	tcase_add_test(tc, test_eth_encode_checksum_addr);
@@ -57,6 +62,22 @@ Suite* create_sample_suite(void)
 
 	tc = tcase_create("pattern func test");
 	tcase_add_test(tc, test_get_prefix_ranges);
+	tcase_add_test(tc, test_eth_suffix_parsing);
+	tcase_add_test(tc, test_eth_suffix_match_verify);
+	tcase_add_test(tc, test_trx_suffix_parsing);
+	tcase_add_test(tc, test_trx_suffix_cpu_verify);
+	suite_add_tcase(suite, tc);
+
+	tc = tcase_create("TON address derivation");
+	tcase_add_test(tc, test_ton_v5r1_data_cell_hash);
+	tcase_add_test(tc, test_ton_v4r2_data_cell_hash);
+	tcase_add_test(tc, test_ton_v5r1_stateinit_hash);
+	tcase_add_test(tc, test_ton_v4r2_stateinit_hash);
+	tcase_add_test(tc, test_ton_v5r1_address_bounceable);
+	tcase_add_test(tc, test_ton_v5r1_address_non_bounceable);
+	tcase_add_test(tc, test_ton_v4r2_address_bounceable);
+	tcase_add_test(tc, test_ton_v4r2_address_non_bounceable);
+	tcase_add_test(tc, test_ton_bounceable_detection);
 	suite_add_tcase(suite, tc);
 
     return suite;

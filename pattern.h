@@ -19,6 +19,7 @@
 #if !defined (__VG_PATTERN_H__)
 #define __VG_PATTERN_H__
 
+#include <stdint.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 
@@ -161,6 +162,13 @@ extern void vg_prefix_context_set_case_insensitive(vg_context_t *vcp,
 						   int caseinsensitive);
 extern int vg_prefix_context_get_case_insensitive(vg_context_t *vcp);
 extern double vg_prefix_get_difficulty(int addrtype, const char *pattern);
+extern int vg_prefix_context_has_suffix(vg_context_t *vcp);
+extern void vg_prefix_context_get_suffix(vg_context_t *vcp,
+					 unsigned char *mask,
+					 unsigned char *target);
+extern void vg_prefix_context_get_suffix_mod(vg_context_t *vcp,
+					     uint64_t *divisor,
+					     uint64_t *target);
 
 /* Regex context methods */
 extern vg_context_t *vg_regex_context_new(int addrtype, int privtype);

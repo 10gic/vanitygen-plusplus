@@ -1250,115 +1250,110 @@ ec_add_grid(__global bn_word *points_out, __global bn_word *z_heap,
 	bn_unroll(ec_add_grid_inner_4);
 }
 
+/*
+ * Batched modular inversion using a prefix-product chain in private memory.
+ * (Algorithm 2.11 from Modern Computer Arithmetic)
+ *
+ * Each work item processes `batch` consecutive Z values and computes their
+ * modular inverses using only 1 call to bn_mod_inverse plus ~2*batch
+ * Montgomery multiplications.  Intermediate prefix products are stored in
+ * a private-memory array, avoiding the global-memory heap tree traffic of
+ * the previous implementation.
+ *
+ * Max batch size is 255 (ulong overflow safety for TRX suffix mod at 58^9;
+ * also limits private memory to ~8 KB per work item).
+ */
+
+#define BATCH_INVERSE_MAX 255
+
 __kernel void
 heap_invert(__global bn_word *z_heap, int batch)
 {
-	bignum a, b, c, z;
-	int i, off, lcell, hcell, start;
+	bignum inv, a, c;
+	bignum buffer[BATCH_INVERSE_MAX];
+	int i, cell, start;
+	int off = get_global_size(0);
 
-#define heap_invert_inner_load_a(j)				\
-		a.d[j] = z_heap[start + j*ACCESS_STRIDE];
-#define heap_invert_inner_load_b(j)				\
-		b.d[j] = z_heap[start + j*ACCESS_STRIDE];
-#define heap_invert_inner_load_z(j)				\
-		z.d[j] = z_heap[start + j*ACCESS_STRIDE];
-#define heap_invert_inner_store_z(j)				\
-		z_heap[start + j*ACCESS_STRIDE] = z.d[j];
-#define heap_invert_inner_store_c(j)				\
-		z_heap[start + j*ACCESS_STRIDE] = c.d[j];
+#define heap_invert_load(dst, cell_expr) do {				\
+		int _c = (cell_expr);					\
+		int _s = (((_c / ACCESS_STRIDE) * ACCESS_BUNDLE) +	\
+			  (_c % ACCESS_STRIDE));			\
+		dst.d[0] = z_heap[_s + 0*ACCESS_STRIDE];		\
+		dst.d[1] = z_heap[_s + 1*ACCESS_STRIDE];		\
+		dst.d[2] = z_heap[_s + 2*ACCESS_STRIDE];		\
+		dst.d[3] = z_heap[_s + 3*ACCESS_STRIDE];		\
+		dst.d[4] = z_heap[_s + 4*ACCESS_STRIDE];		\
+		dst.d[5] = z_heap[_s + 5*ACCESS_STRIDE];		\
+		dst.d[6] = z_heap[_s + 6*ACCESS_STRIDE];		\
+		dst.d[7] = z_heap[_s + 7*ACCESS_STRIDE];		\
+	} while (0)
 
-	off = get_global_size(0);
-	lcell = get_global_id(0);
-	hcell = (off * batch) + lcell;
-	for (i = 0; i < (batch-1); i++) {
+#define heap_invert_store(src, cell_expr) do {				\
+		int _c = (cell_expr);					\
+		int _s = (((_c / ACCESS_STRIDE) * ACCESS_BUNDLE) +	\
+			  (_c % ACCESS_STRIDE));			\
+		z_heap[_s + 0*ACCESS_STRIDE] = src.d[0];		\
+		z_heap[_s + 1*ACCESS_STRIDE] = src.d[1];		\
+		z_heap[_s + 2*ACCESS_STRIDE] = src.d[2];		\
+		z_heap[_s + 3*ACCESS_STRIDE] = src.d[3];		\
+		z_heap[_s + 4*ACCESS_STRIDE] = src.d[4];		\
+		z_heap[_s + 5*ACCESS_STRIDE] = src.d[5];		\
+		z_heap[_s + 6*ACCESS_STRIDE] = src.d[6];		\
+		z_heap[_s + 7*ACCESS_STRIDE] = src.d[7];		\
+	} while (0)
 
-		start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (lcell % ACCESS_STRIDE));
+	cell = get_global_id(0);
 
-		bn_unroll(heap_invert_inner_load_a);
-
-		lcell += off;
-		start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (lcell % ACCESS_STRIDE));
-
-		bn_unroll(heap_invert_inner_load_b);
-
-		bn_mul_mont(&z, &a, &b);
-
-		start = (((hcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (hcell % ACCESS_STRIDE));
-
-		bn_unroll(heap_invert_inner_store_z);
-
-		lcell += off;
-		hcell += off;
+	/*
+	 * Up-sweep: build prefix products in private memory.
+	 * buffer[i] = Z[0] * Z[1] * ... * Z[i]
+	 */
+	heap_invert_load(buffer[0], cell);
+	for (i = 1; i < batch; i++) {
+		cell += off;
+		heap_invert_load(a, cell);
+		bn_mul_mont(&buffer[i], &buffer[i - 1], &a);
 	}
 
-	/* Invert the root, fix up 1/ZR -> R/Z */
-	bn_mod_inverse(&z, &z);
+	/*
+	 * Invert the accumulated product.
+	 * bn_mod_inverse returns result in normal domain;
+	 * multiply by mont_rr twice to convert to Montgomery domain.
+	 */
+	inv = buffer[batch - 1];
+	bn_mod_inverse(&inv, &inv);
 
-#define heap_invert_inner_1(i)			\
-	a.d[i] = mont_rr[i];
+	a.d[0] = mont_rr[0]; a.d[1] = mont_rr[1];
+	a.d[2] = mont_rr[2]; a.d[3] = mont_rr[3];
+	a.d[4] = mont_rr[4]; a.d[5] = mont_rr[5];
+	a.d[6] = mont_rr[6]; a.d[7] = mont_rr[7];
+	bn_mul_mont(&inv, &inv, &a);
+	bn_mul_mont(&inv, &inv, &a);
 
-	bn_unroll(heap_invert_inner_1);
+	/*
+	 * Down-sweep: recover individual inverses.
+	 *   out[i] = inv * buffer[i-1]    (prefix product without Z[i])
+	 *   inv    = inv * Z[i]           (re-read Z[i] from global memory)
+	 */
+	for (i = batch - 1; i > 0; i--) {
+		/* Re-read Z[i] before overwriting it */
+		heap_invert_load(a, cell);
 
-	bn_mul_mont(&z, &z, &a);
-	bn_mul_mont(&z, &z, &a);
+		/* out[i] = inv * buffer[i-1] */
+		bn_mul_mont(&c, &inv, &buffer[i - 1]);
+		heap_invert_store(c, cell);
 
-	/* Unroll the first iteration to avoid a load/store on the root */
-	lcell -= (off << 1);
-	hcell -= (off << 1);
+		/* inv = inv * Z[i] */
+		bn_mul_mont(&inv, &inv, &a);
 
-	start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-		 (lcell % ACCESS_STRIDE));
-	bn_unroll(heap_invert_inner_load_a);
-
-	lcell += off;
-	start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-		 (lcell % ACCESS_STRIDE));
-	bn_unroll(heap_invert_inner_load_b);
-
-	bn_mul_mont(&c, &a, &z);
-
-	bn_unroll(heap_invert_inner_store_c);
-
-	bn_mul_mont(&c, &b, &z);
-
-	lcell -= off;
-	start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-		 (lcell % ACCESS_STRIDE));
-	bn_unroll(heap_invert_inner_store_c);
-
-	lcell -= (off << 1);
-
-	for (i = 0; i < (batch-2); i++) {
-		start = (((hcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (hcell % ACCESS_STRIDE));
-		bn_unroll(heap_invert_inner_load_z);
-
-		start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (lcell % ACCESS_STRIDE));
-		bn_unroll(heap_invert_inner_load_a);
-
-		lcell += off;
-		start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (lcell % ACCESS_STRIDE));
-		bn_unroll(heap_invert_inner_load_b);
-
-		bn_mul_mont(&c, &a, &z);
-
-		bn_unroll(heap_invert_inner_store_c);
-
-		bn_mul_mont(&c, &b, &z);
-
-		lcell -= off;
-		start = (((lcell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
-			 (lcell % ACCESS_STRIDE));
-		bn_unroll(heap_invert_inner_store_c);
-
-		lcell -= (off << 1);
-		hcell -= off;
+		cell -= off;
 	}
+
+	/* out[0] = inv (the final accumulated inverse) */
+	heap_invert_store(inv, cell);
+
+#undef heap_invert_load
+#undef heap_invert_store
 }
 
 void
@@ -1750,6 +1745,248 @@ hash_ec_point_search_prefix(__global uint *found,
 
 			hash160_unroll(hash_ec_point_search_prefix_inner_2);
 			high = -1;
+		}
+	}
+}
+
+
+/*
+ * TRX suffix check via Base58Check checksum + modular arithmetic.
+ *
+ * hash[5] must be big-endian (already bswap'd).
+ * suffix_mask[0..1] holds divisor as two uint32 (high word first).
+ * suffix_target[0..1] holds target as two uint32 (high word first).
+ *
+ * Computes: SHA256(SHA256(0x41 || hash20)) to get 4-byte checksum,
+ * then checks (full_25_byte_value mod divisor) == target.
+ */
+int
+trx_check_suffix(uint *hash, __global uint *suffix_mask,
+		 __global uint *suffix_target)
+{
+	uint sha_in[16], sha_out[8];
+
+	/* Load divisor and target (stored as big-endian bytes by the host).
+	 * Use load_be32() to convert from big-endian buffer to native uint. */
+	ulong divisor = ((ulong)load_be32(suffix_mask[0]) << 32) |
+			(ulong)load_be32(suffix_mask[1]);
+	ulong b58target = ((ulong)load_be32(suffix_target[0]) << 32) |
+			  (ulong)load_be32(suffix_target[1]);
+
+	/*
+	 * First SHA256: SHA256(0x41 || hash20)
+	 * Input is 21 bytes. Prepending 0x41 shifts the hash by 1 byte.
+	 */
+	sha_in[0] = (0x41u << 24) | (hash[0] >> 8);
+	sha_in[1] = (hash[0] << 24) | (hash[1] >> 8);
+	sha_in[2] = (hash[1] << 24) | (hash[2] >> 8);
+	sha_in[3] = (hash[2] << 24) | (hash[3] >> 8);
+	sha_in[4] = (hash[3] << 24) | (hash[4] >> 8);
+	sha_in[5] = (hash[4] << 24) | 0x00800000u; /* last byte + 0x80 pad */
+	sha_in[6] = 0;
+	sha_in[7] = 0;
+	sha_in[8] = 0;
+	sha_in[9] = 0;
+	sha_in[10] = 0;
+	sha_in[11] = 0;
+	sha_in[12] = 0;
+	sha_in[13] = 0;
+	sha_in[14] = 0;
+	sha_in[15] = 21 * 8; /* 168 bits */
+
+	sha2_256_init(sha_out);
+	sha2_256_block(sha_out, sha_in);
+
+	/* Second SHA256: SHA256(first_hash) — 32 bytes input */
+	sha_in[0] = sha_out[0];
+	sha_in[1] = sha_out[1];
+	sha_in[2] = sha_out[2];
+	sha_in[3] = sha_out[3];
+	sha_in[4] = sha_out[4];
+	sha_in[5] = sha_out[5];
+	sha_in[6] = sha_out[6];
+	sha_in[7] = sha_out[7];
+	sha_in[8] = 0x80000000u;
+	sha_in[9] = 0;
+	sha_in[10] = 0;
+	sha_in[11] = 0;
+	sha_in[12] = 0;
+	sha_in[13] = 0;
+	sha_in[14] = 0;
+	sha_in[15] = 32 * 8; /* 256 bits */
+
+	sha2_256_init(sha_out);
+	sha2_256_block(sha_out, sha_in);
+
+	/* sha_out[0] = first 4 bytes of checksum (big-endian) */
+
+	/*
+	 * Compute N mod divisor, where N = [0x41 || hash20 || checksum4].
+	 * Byte-by-byte reduction: rem = (rem * 256 + byte) % divisor
+	 */
+	ulong rem = 0;
+	uint w;
+
+	/* Byte 0: version 0x41 */
+	rem = 0x41 % divisor;
+
+	/* Bytes 1-20: hash (5 big-endian uint32 = 20 bytes) */
+	w = hash[0];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+	w = hash[1];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+	w = hash[2];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+	w = hash[3];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+	w = hash[4];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+
+	/* Bytes 21-24: checksum (first 4 bytes of double-SHA256) */
+	w = sha_out[0];
+	rem = (rem * 256 + (w >> 24)) % divisor;
+	rem = (rem * 256 + ((w >> 16) & 0xff)) % divisor;
+	rem = (rem * 256 + ((w >> 8) & 0xff)) % divisor;
+	rem = (rem * 256 + (w & 0xff)) % divisor;
+
+	return (rem == b58target);
+}
+
+__kernel void
+hash_ec_point_search_prefix_suffix(__global uint *found,
+				   __global bn_word *points_in,
+				   __global bn_word *z_heap,
+				   __global uint *target_table, int ntargets,
+				   __global uint *suffix_mask,
+				   __global uint *suffix_target)
+{
+	uint hash[5];
+	int i, high, low, p, cell, start;
+
+	cell = ((get_global_id(1) * get_global_size(0)) + get_global_id(0));
+	start = (((cell / ACCESS_STRIDE) * ACCESS_BUNDLE) +
+		 (cell % ACCESS_STRIDE));
+	z_heap += start;
+
+	start = ((((2 * cell) / ACCESS_STRIDE) * ACCESS_BUNDLE) +
+		 (cell % (ACCESS_STRIDE/2)));
+	points_in += start;
+
+	/* Complete the coordinates and hash */
+	if (addr_type_eth) {
+		hash_ec_point_eth(hash, points_in, z_heap);
+	} else if (trx_flag) {
+		hash_ec_point_trx(hash, points_in, z_heap);
+	} else {
+		hash_ec_point(hash, points_in, z_heap);
+	}
+
+	/* Byteswap to big-endian for comparison */
+#define hash_ec_point_search_ps_inner_1(i)	\
+	hash[i] = bswap32(hash[i]);
+
+	hash160_unroll(hash_ec_point_search_ps_inner_1);
+
+	if (trx_flag) {
+		/*
+		 * TRX suffix matching: Base58Check requires computing
+		 * the checksum (double SHA256) which is expensive.
+		 *
+		 * Combined mode: check prefix first (cheap binary search),
+		 * only compute checksum for prefix matches.
+		 * Suffix-only mode: must compute checksum for every candidate.
+		 */
+		if (ntargets > 0) {
+			/* Combined: prefix binary search first */
+			for (high = ntargets - 1, low = 0, i = high >> 1;
+			     high >= low;
+			     i = low + ((high - low) >> 1)) {
+				p = hash160_ucmp_g(hash, &target_table[10*i]);
+				low = (p > 0) ? (i + 1) : low;
+				high = (p < 0) ? (i - 1) : high;
+				if (p == 0) {
+					/* Prefix matched — now check suffix */
+					if (trx_check_suffix(hash, suffix_mask,
+							     suffix_target)) {
+						found[0] = ((get_global_id(1) *
+							     get_global_size(0)) +
+							    get_global_id(0));
+						found[1] = i;
+#define hash_ec_point_search_ps_trx_c(i)	\
+						found[i+2] = load_be32(hash[i]);
+						hash160_unroll(
+							hash_ec_point_search_ps_trx_c);
+					}
+					high = -1;
+				}
+			}
+		} else {
+			/* Suffix-only: check every candidate */
+			if (trx_check_suffix(hash, suffix_mask,
+					     suffix_target)) {
+				found[0] = ((get_global_id(1) *
+					     get_global_size(0)) +
+					    get_global_id(0));
+				found[1] = 0;
+#define hash_ec_point_search_ps_trx_s(i)	\
+				found[i+2] = load_be32(hash[i]);
+				hash160_unroll(hash_ec_point_search_ps_trx_s);
+			}
+		}
+	} else {
+		/*
+		 * ETH/Bitcoin suffix check: (hash & mask) == target
+		 * The mask/target are uploaded as big-endian bytes from the host.
+		 * Use load_be32() to match the byte order of the bswap'd hash,
+		 * same as hash160_ucmp_g does for the prefix target_table.
+		 */
+		if ((hash[0] & load_be32(suffix_mask[0])) != load_be32(suffix_target[0])) return;
+		if ((hash[1] & load_be32(suffix_mask[1])) != load_be32(suffix_target[1])) return;
+		if ((hash[2] & load_be32(suffix_mask[2])) != load_be32(suffix_target[2])) return;
+		if ((hash[3] & load_be32(suffix_mask[3])) != load_be32(suffix_target[3])) return;
+		if ((hash[4] & load_be32(suffix_mask[4])) != load_be32(suffix_target[4])) return;
+
+		if (ntargets > 0) {
+			/* Combined mode: suffix matched, now binary-search prefix */
+			for (high = ntargets - 1, low = 0, i = high >> 1;
+			     high >= low;
+			     i = low + ((high - low) >> 1)) {
+				p = hash160_ucmp_g(hash, &target_table[10*i]);
+				low = (p > 0) ? (i + 1) : low;
+				high = (p < 0) ? (i - 1) : high;
+				if (p == 0) {
+					found[0] = ((get_global_id(1) * get_global_size(0)) +
+						    get_global_id(0));
+					found[1] = i;
+#define hash_ec_point_search_ps_inner_2(i)	\
+					found[i+2] = load_be32(hash[i]);
+					hash160_unroll(hash_ec_point_search_ps_inner_2);
+					high = -1;
+				}
+			}
+		} else {
+			/* Suffix-only mode: no prefix table, report match directly */
+			found[0] = ((get_global_id(1) * get_global_size(0)) +
+				    get_global_id(0));
+			found[1] = 0;
+#define hash_ec_point_search_ps_inner_3(i)	\
+			found[i+2] = load_be32(hash[i]);
+			hash160_unroll(hash_ec_point_search_ps_inner_3);
 		}
 	}
 }

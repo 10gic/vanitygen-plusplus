@@ -26,6 +26,7 @@
 #include <openssl/rand.h>
 
 #include "oclengine.h"
+#include "ocled25519engine.h"
 #include "pattern.h"
 #include "util.h"
 
@@ -101,6 +102,18 @@ version, name);
 int
 main(int argc, char **argv)
 {
+	/* Dispatch Ed25519 coins before secp256k1 option parsing */
+	for (int j = 1; j < argc - 1; j++) {
+		if (strcmp(argv[j], "-C") == 0) {
+			if (strcmp(argv[j+1], "SOL") == 0 ||
+			    strcmp(argv[j+1], "XLM") == 0 ||
+			    strcmp(argv[j+1], "TON") == 0) {
+				return ocl_ed25519_main(argc, argv);
+			}
+			break;
+		}
+	}
+
 	int addrtype = 0;
 	int privtype = 128;
 	int regex = 0;
@@ -190,6 +203,9 @@ main(int argc, char **argv)
 					);
                 vg_print_alicoin_help_msg();
                 fprintf(stderr, "GRS : Groestlcoin : F\n");
+                fprintf(stderr, "--- Ed25519 coins (GPU) ---\n");
+                fprintf(stderr, "SOL : Solana\n");
+                fprintf(stderr, "XLM : Stellar\n");
                 return 1;
 			}
 			if (strcmp(optarg, "ETH")== 0) {

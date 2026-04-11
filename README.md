@@ -59,7 +59,22 @@ ETH Address: 0x999999188b45BcfA499Ff1bDc041eE21cc890B16
 ETH Privkey: 0xdb3813534c0c9595f9b8b35d6f544827065b33930ae42c38a9d7ce41a1d74669
 ```
 
-If you have an OpenCL-compatible GPU, use `oclvanitygen++` for faster performance.
+If you have an OpenCL-compatible GPU, use `oclvanitygen++` for faster performance. It supports both secp256k1 coins (BTC, ETH, etc.) and Ed25519 coins (SOL, XLM).
+
+## Ed25519 Chains (GPU)
+`oclvanitygen++` supports Ed25519-based blockchains (Solana, Stellar, TON) via `-C SOL`, `-C XLM`, or `-C TON`. The pattern uses `*` as a wildcard:
+```
+$ ./oclvanitygen++ -C SOL AAAA              # prefix
+$ ./oclvanitygen++ -C SOL '*pump'           # suffix
+$ ./oclvanitygen++ -C SOL 'AAAA*pump'       # prefix + suffix
+$ ./oclvanitygen++ -C SOL '*cafe*' -i       # anywhere, case-insensitive
+$ ./oclvanitygen++ -C SOL AAAA -a 5 -o out  # find 5 matches, save to file
+$ ./oclvanitygen++ -C TON UQAbc             # TON V5R1, prefix 
+$ ./oclvanitygen++ -C TON 'UQAbc*xyz'       # TON V5R1, prefix + suffix
+$ ./oclvanitygen++ -C TON -W v4r2 EQAbc     # TON V4R2, bounceable
+```
+
+Seeds are generated from `/dev/urandom` (cryptographically secure). The output seed is a standard RFC 8032 Ed25519 seed that can be imported into any compatible wallet.
 
 # Build
 ## Method 1: Manual Dependency Installation
@@ -83,6 +98,12 @@ On MacOS:
 ```
 $ brew install openssl@3
 $ brew install pcre
+```
+
+For GPU tools (`oclvanitygen++`, `oclvanityminer`), you also need OpenCL development libraries:
+```
+$ apt install opencl-headers ocl-icd-opencl-dev    # Ubuntu
+$ yum install opencl-headers ocl-icd-devel         # CentOS/Redhat
 ```
 
 Step 2: Build the executable files:

@@ -21,7 +21,8 @@ CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
 # CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
 
 OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
-     stellar.o base32.o crc16.o bech32.o segwit_addr.o
+     stellar.o base32.o crc16.o bech32.o segwit_addr.o \
+     ocled25519engine.o oclvanitygen_ed25519.o
 PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
 
 PLATFORM=$(shell uname -s)
@@ -48,19 +49,25 @@ all: $(PROGS)
 vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o simplevanitygen.o bech32.o segwit_addr.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o
+oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o ocled25519engine.o oclvanitygen_ed25519.o stellar.o base32.o crc16.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS)
 
 oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o groestl.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcurl
 
+ocled25519engine.o: ocled25519engine.c ocled25519engine.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+oclvanitygen_ed25519.o: oclvanitygen_ed25519.c ocled25519engine.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 keyconv: keyconv.o util.o groestl.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-run_tests.o: tests.h util_test.h segwit_addr_test.h pattern_test.h
+run_tests.o: tests.h util_test.h segwit_addr_test.h pattern_test.h ton_test.h pattern.c pattern.h
 
-run_tests: run_tests.o util.o groestl.o sha3.o bech32.o segwit_addr.o
-	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcheck
+run_tests: run_tests.o util.o groestl.o sha3.o bech32.o segwit_addr.o crc16.o
+	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcheck -lsubunit
 
 test: run_tests
 	./run_tests

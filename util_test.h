@@ -52,6 +52,48 @@ START_TEST(test_hex_dec)
 }
 END_TEST
 
+START_TEST(test_b58_encode_raw)
+{
+    struct {
+        const char* input_hex;
+        size_t      input_len;
+        const char* expect;
+    } tests[] = {
+        /* Single zero byte */
+        { "00", 1, "1" },
+        /* Multiple leading zeros */
+        { "0000", 2, "11" },
+        { "00000000000000000000", 10, "1111111111" },
+        /* Simple single-byte values */
+        { "01", 1, "2" },
+        { "39", 1, "z" },
+        { "3a", 1, "21" },
+        /* Multi-byte values (canonical Base58 test vectors) */
+        { "61", 1, "2g" },
+        { "626262", 3, "a3gV" },
+        { "636363", 3, "aPEr" },
+        /* Leading zero byte followed by data */
+        { "00eb15231dfceb60925886b67d065299925915aeb172c06647",
+          25, "1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L" },
+        /* 32 zero bytes (Solana System Program) */
+        { "0000000000000000000000000000000000000000000000000000000000000000",
+          32, "11111111111111111111111111111111" },
+    };
+
+    size_t n = sizeof(tests) / sizeof(tests[0]);
+
+    for (int i = 0; i < n; i++) {
+        char got[128];
+        uint8_t input[64];
+        memcpy(input, from_hex(tests[i].input_hex), tests[i].input_len);
+
+        vg_b58_encode_raw(input, tests[i].input_len, got);
+
+        ck_assert_str_eq(got, tests[i].expect);
+    }
+}
+END_TEST
+
 START_TEST(test_eth_pubkey2addr)
 {
     struct {
