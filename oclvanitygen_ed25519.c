@@ -936,7 +936,7 @@ ocl_ed25519_main(int argc, char *argv[])
                     reseed_needed = 1;
                     match_result_t *mr = &works[t].matches[m];
 
-                    printf("Address:    %s\n", mr->addr);
+                    printf("\r\033[KAddress:    %s\n", mr->addr);
                     if (coin->enc == ENC_TON) {
                         printf("PrivKey:    ");
                         for (int j = 0; j < 32; j++) printf("%02x", mr->seed[j]);
@@ -945,6 +945,13 @@ ocl_ed25519_main(int argc, char *argv[])
                         for (int j = 0; j < 32; j++) printf("%02x", mr->pubkey[j]);
                         printf("\n");
                         printf("Wallet:     %s\n\n", g_ton_wallet->name);
+                    } else if (coin->enc == ENC_BASE58_RAW) {
+                        uint8_t kp[64];
+                        char kp_b58[89];
+                        memcpy(kp, mr->seed, 32);
+                        memcpy(kp + 32, mr->pubkey, 32);
+                        vg_b58_encode_raw(kp, 64, kp_b58);
+                        printf("Privkey:    %s\n\n", kp_b58);
                     } else {
                         printf("Seed (hex): ");
                         for (int j = 0; j < 32; j++) printf("%02x", mr->seed[j]);
@@ -965,6 +972,13 @@ ocl_ed25519_main(int argc, char *argv[])
                             for (int j = 0; j < 32; j++) fprintf(out_fp, "%02x", mr->pubkey[j]);
                             fprintf(out_fp, "\n");
                             fprintf(out_fp, "Wallet:     %s\n\n", g_ton_wallet->name);
+                        } else if (coin->enc == ENC_BASE58_RAW) {
+                            uint8_t kp[64];
+                            char kp_b58[89];
+                            memcpy(kp, mr->seed, 32);
+                            memcpy(kp + 32, mr->pubkey, 32);
+                            vg_b58_encode_raw(kp, 64, kp_b58);
+                            fprintf(out_fp, "Privkey:    %s\n\n", kp_b58);
                         } else {
                             fprintf(out_fp, "Seed (hex): ");
                             for (int j = 0; j < 32; j++) fprintf(out_fp, "%02x", mr->seed[j]);
