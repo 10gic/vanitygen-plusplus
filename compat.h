@@ -70,6 +70,51 @@ int vg_random_bytes(void *buf, size_t len);
  */
 uint64_t vg_monotonic_ns(void);
 
+/* -------------------------------------------------------------------------
+ * Relaxed atomics on `int`
+ * -------------------------------------------------------------------------
+ * Minimal replacement for the GCC __atomic_* builtins used in the codebase.
+ * "Relaxed" semantics: atomicity only, no inter-thread ordering guarantees -
+ * sufficient for "have we found enough matches yet?" style polling counters
+ * where the worst case of a slightly stale read is one extra loop iteration.
+ *
+ * Defined as static inline in the header so callers don't pay a function
+ * call in tight inner loops. Kept narrow (only what's needed today) -
+ * extend with new types as the codebase requires them.
+ */
+#ifdef _WIN32
+#include <intrin.h>     /* _InterlockedIncrement */
+
+static __inline int
+vg_atomic_load_int(const volatile int *p)
+{
+    /* Aligned 32-bit loads are atomic on x86/x64. A plain volatile
+     * read is enough for memory_order_relaxed semantics; no fence
+     * is inserted. */
+    return *p;
+}
+
+static __inline void
+vg_atomic_inc_int(volatile int *p)
+{
+    /* `int` and `long` are both 32-bit on Windows, so the cast is
+     * size-safe. Discard the return value - callers don't use it. */
+    (void)_InterlockedIncrement((volatile long *)p);
+}
+#else
+static inline int
+vg_atomic_load_int(const volatile int *p)
+{
+    return __atomic_load_n(p, __ATOMIC_RELAXED);
+}
+
+static inline void
+vg_atomic_inc_int(volatile int *p)
+{
+    (void)__atomic_add_fetch(p, 1, __ATOMIC_RELAXED);
+}
+#endif
+
 /*
  * vg_dirname - copy the directory component of `path` into `out`.
  *

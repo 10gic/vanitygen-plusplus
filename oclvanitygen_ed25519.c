@@ -24,15 +24,7 @@
 #include <pthread.h>
 
 /*
- * Portability layer. Provides:
- *   - vg_random_bytes()  - replaces direct /dev/urandom reads
- *   - vg_dirname()       - replaces POSIX dirname()
- *   - vg_monotonic_ns()  - replaces clock_gettime(CLOCK_MONOTONIC, ...)
- *   - strcasecmp / strncasecmp on Windows (mapped to _stricmp / _strnicmp)
- *   - ssize_t typedef on Windows
- *
- * Keep this the only platform-aware include so the rest of the file
- * stays free of #ifdef _WIN32 noise.
+ * Portability layer.
  */
 #include "compat.h"
 
@@ -73,9 +65,12 @@ typedef struct {
  *   walletId = 0x7fffff11 (mainnet, workchain 0, subwallet 0)
  *   data cell = auth(1) + seqno(32) + walletId(32) + pubkey(256) + plugins(1) = 322 bits
  */
+/* Positional initialization (not designated) so this compiles under
+ * MSVC's pre-C++20 mode. Fields are annotated with their names; the
+ * struct definition above is the source of truth for the order. */
 static const ton_wallet_t ton_v5r1 = {
-    .name = "V5R1",
-    .si_prefix = {
+    /* .name */         "V5R1",
+    /* .si_prefix */    {
         0x02, 0x01, 0x34,       /* d1=2refs, d2=1, data=0x34 (00110_100) */
         0x00, 0x06,             /* code depth = 6 */
         0x00, 0x00,             /* data depth = 0 */
@@ -85,13 +80,13 @@ static const ton_wallet_t ton_v5r1 = {
         0xd1, 0xa3, 0x0f, 0x04, 0xf7, 0x37, 0xd4, 0xf6,
         0x2a, 0x66, 0x8e, 0x95, 0x52, 0xd2, 0xb7, 0x2f,
     },
-    .dc_msg_prefix = {
+    /* .dc_msg_prefix */ {
         0x00, 0x51,             /* d1=0, d2=81 */
         0x80, 0x00, 0x00, 0x00, /* auth=1, seqno=0 (first 31 bits) */
         0x3F, 0xFF, 0xFF, 0x88, /* seqno LSB + walletId bits [31:1] */
     },
-    .dc_carry = 0x80,           /* walletId bit 0 = 1 */
-    .pubkey_shift = 1,
+    /* .dc_carry */     0x80,   /* walletId bit 0 = 1 */
+    /* .pubkey_shift */ 1,
 };
 
 /*
@@ -102,8 +97,8 @@ static const ton_wallet_t ton_v5r1 = {
  *   data cell = seqno(32) + walletId(32) + pubkey(256) + plugins(1) = 321 bits
  */
 static const ton_wallet_t ton_v4r2 = {
-    .name = "V4R2",
-    .si_prefix = {
+    /* .name */         "V4R2",
+    /* .si_prefix */    {
         0x02, 0x01, 0x34,       /* d1=2refs, d2=1, data=0x34 */
         0x00, 0x07,             /* code depth = 7 */
         0x00, 0x00,             /* data depth = 0 */
@@ -113,13 +108,13 @@ static const ton_wallet_t ton_v4r2 = {
         0x84, 0x67, 0x89, 0xfb, 0x4a, 0xe5, 0x80, 0xc8,
         0x78, 0x86, 0x6d, 0x95, 0x9d, 0xab, 0xd5, 0xc0,
     },
-    .dc_msg_prefix = {
+    /* .dc_msg_prefix */ {
         0x00, 0x51,             /* d1=0, d2=81 */
         0x00, 0x00, 0x00, 0x00, /* seqno = 0 */
         0x29, 0xA9, 0xA3, 0x17, /* walletId = 698983191 */
     },
-    .dc_carry = 0x00,
-    .pubkey_shift = 0,
+    /* .dc_carry */     0x00,
+    /* .pubkey_shift */ 0,
 };
 
 /* File-scoped TON state (set during option parsing) */
@@ -644,7 +639,7 @@ match_thread_func(void *arg)
     char addr[MAX_ADDR_LEN];
 
     for (size_t k = w->start_k; k < w->end_k; k++) {
-        if (__atomic_load_n(w->global_found, __ATOMIC_RELAXED) >= w->max_found)
+        if (vg_atomic_load_int(w->global_found) >= w->max_found)
             break;
 
         const uint8_t *pubkey = w->pubkeys + k * 32;
@@ -665,7 +660,7 @@ match_thread_func(void *arg)
             advance_seed(w->matches[idx].seed, ko);
 
             w->local_found++;
-            __atomic_add_fetch(w->global_found, 1, __ATOMIC_RELAXED);
+            vg_atomic_inc_int(w->global_found);
         }
     }
     return NULL;
