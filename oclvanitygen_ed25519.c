@@ -3,9 +3,10 @@
  *
  * Supports: SOL (Solana, Base58 raw), XLM (Stellar, strkey), TON (V5R1/V4R2)
  *
- * Security: seeds are read from /dev/urandom before each batch.
+ * Security: seeds are read from the OS cryptographic RNG before each batch
+ * (/dev/urandom on POSIX, BCryptGenRandom on Windows; see compat.c).
  * The GPU only performs deterministic Ed25519 key derivation; all randomness
- * originates from the OS cryptographic RNG.
+ * originates from the OS RNG.
  *
  * Usage:
  *   oclvanitygen-ed25519++ [options] <pattern>
@@ -15,16 +16,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <time.h>
 #include <signal.h>
-#include <libgen.h>   /* dirname() */
 #include <ctype.h>    /* isalpha, toupper, tolower, isupper */
 #include <math.h>     /* exp, log, pow */
 #include <assert.h>
-#include <strings.h>  /* strncasecmp */
 #include <pthread.h>
+
+/*
+ * Portability layer. Provides:
+ *   - vg_random_bytes()  - replaces direct /dev/urandom reads
+ *   - vg_dirname()       - replaces POSIX dirname()
+ *   - vg_monotonic_ns()  - replaces clock_gettime(CLOCK_MONOTONIC, ...)
+ *   - strcasecmp / strncasecmp on Windows (mapped to _stricmp / _strnicmp)
+ *   - ssize_t typedef on Windows
+ *
+ * Keep this the only platform-aware include so the rest of the file
+ * stays free of #ifdef _WIN32 noise.
+ */
+#include "compat.h"
+
+/* getopt() / optind / count_processors() come from libc on POSIX and
+ * from winglue.h on Windows. The pattern below mirrors keyconv.c. */
+#if defined(_WIN32)
+#include "winglue.h"
+#else
+#include <unistd.h>   /* getopt, optind, optarg */
+#endif
 
 #include <openssl/sha.h>
 
@@ -211,32 +229,6 @@ find_coin(const char *name)
             return &coins[i];
     }
     return NULL;
-}
-
-/* =========================================================================
- * Secure seeding
- * ========================================================================= */
-
-static int
-fill_seeds_from_urandom(uint8_t *buf, size_t len)
-{
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd < 0) {
-        perror("open /dev/urandom");
-        return -1;
-    }
-    size_t got = 0;
-    while (got < len) {
-        ssize_t n = read(fd, buf + got, len - got);
-        if (n <= 0) {
-            perror("read /dev/urandom");
-            close(fd);
-            return -1;
-        }
-        got += (size_t)n;
-    }
-    close(fd);
-    return 0;
 }
 
 /* =========================================================================
@@ -596,18 +588,18 @@ usage(const char *prog)
 static int
 find_kernel_path(const char *argv0, char *out, size_t outsz)
 {
-    char tmp[1024];
-    char *dir;
+    char dir[1024];
     FILE *fp;
 
-    /* Try dirname(argv0) */
-    snprintf(tmp, sizeof(tmp), "%s", argv0);
-    dir = dirname(tmp);
+    /* Try the directory the executable lives in. vg_dirname() abstracts
+     * over POSIX dirname() vs. the manual scan needed on Windows, and
+     * does not modify `argv0`. */
+    vg_dirname(argv0, dir, sizeof(dir));
     snprintf(out, outsz, "%s/calc_addrs_ed25519.cl", dir);
     fp = fopen(out, "r");
     if (fp) { fclose(fp); return 0; }
 
-    /* Try current directory */
+    /* Fall back to the current working directory. */
     snprintf(out, outsz, "calc_addrs_ed25519.cl");
     fp = fopen(out, "r");
     if (fp) { fclose(fp); return 0; }
@@ -854,9 +846,11 @@ ocl_ed25519_main(int argc, char *argv[])
 
     uint64_t total_tried = 0;
     int      found       = 0;
-    struct timespec t_start, t_last, t_now;
-    clock_gettime(CLOCK_MONOTONIC, &t_start);
-    t_last = t_start;
+    /* Monotonic-counter samples in nanoseconds. vg_monotonic_ns()
+     * abstracts over clock_gettime(CLOCK_MONOTONIC) on POSIX and
+     * QueryPerformanceCounter on Windows. */
+    uint64_t t_start_ns = vg_monotonic_ns();
+    uint64_t t_last_ns  = t_start_ns;
 
     /*
      * Pipeline: GPU computes batch N+1 while CPU matches batch N.
@@ -864,8 +858,8 @@ ocl_ed25519_main(int argc, char *argv[])
      */
     int cur = 0;
     int reseed_needed = 0;
-    if (fill_seeds_from_urandom(seeds[0], seed_bytes) < 0) {
-        fprintf(stderr, "Failed to read /dev/urandom\n");
+    if (vg_random_bytes(seeds[0], seed_bytes) < 0) {
+        fprintf(stderr, "Failed to read OS random source\n");
         goto done;
     }
 
@@ -877,9 +871,9 @@ ocl_ed25519_main(int argc, char *argv[])
         /* Prepare next batch seeds */
         int next = 1 - cur;
         if (reseed_needed) {
-            /* After a match, reseed from /dev/urandom to prevent correlation */
-            if (fill_seeds_from_urandom(seeds[next], seed_bytes) < 0) {
-                fprintf(stderr, "Failed to read /dev/urandom\n");
+            /* After a match, reseed from the OS RNG to prevent correlation */
+            if (vg_random_bytes(seeds[next], seed_bytes) < 0) {
+                fprintf(stderr, "Failed to read OS random source\n");
                 break;
             }
             reseed_needed = 0;
@@ -989,14 +983,10 @@ ocl_ed25519_main(int argc, char *argv[])
 
         /* Progress report every ~1 second */
         if (!quiet) {
-            clock_gettime(CLOCK_MONOTONIC, &t_now);
-            double elapsed_since_last =
-                (t_now.tv_sec  - t_last.tv_sec) +
-                (t_now.tv_nsec - t_last.tv_nsec) * 1e-9;
+            uint64_t t_now_ns = vg_monotonic_ns();
+            double elapsed_since_last = (t_now_ns - t_last_ns) * 1e-9;
             if (elapsed_since_last >= 1.0) {
-                double elapsed_total =
-                    (t_now.tv_sec  - t_start.tv_sec) +
-                    (t_now.tv_nsec - t_start.tv_nsec) * 1e-9;
+                double elapsed_total = (t_now_ns - t_start_ns) * 1e-9;
                 double rate = (double)total_tried / elapsed_total;
                 char eta_buf[64] = "";
                 if (difficulty > 0 && rate > 0) {
@@ -1019,7 +1009,7 @@ ocl_ed25519_main(int argc, char *argv[])
                         found, max_found);
                 }
                 fflush(stderr);
-                t_last = t_now;
+                t_last_ns = t_now_ns;
             }
         }
     }

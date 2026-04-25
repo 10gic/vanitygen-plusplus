@@ -21,7 +21,7 @@ CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
 # CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
 
 OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
-     stellar.o base32.o crc16.o bech32.o segwit_addr.o \
+     stellar.o base32.o crc16.o bech32.o segwit_addr.o compat.o \
      ocled25519engine.o oclvanitygen_ed25519.o
 PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
 
@@ -49,7 +49,7 @@ all: $(PROGS)
 vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o simplevanitygen.o bech32.o segwit_addr.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o ocled25519engine.o oclvanitygen_ed25519.o stellar.o base32.o crc16.o
+oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o ocled25519engine.o oclvanitygen_ed25519.o stellar.o base32.o crc16.o compat.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS)
 
 oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o groestl.o sha3.o

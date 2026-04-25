@@ -22,22 +22,29 @@ PTHREADS_LIBS = .\third_party\windows\pthread\Pre-built.2\lib\x64\pthreadVC2.lib
 PCRE_INCLUDE = .\third_party\windows\pcre-8.34\include
 PCRE_LIBS = .\third_party\windows\pcre-8.34\binaries\x64\Release\lib\pcre.lib
 
-
+#### libcurl (only needed for oclvanityminer.exe)
 #CURL_DIR = C:\curl-7.26.0-x86\builds\libcurl-release-static-ssl-static-ipv6-sspi
 #CURL_INCLUDE = /I$(CURL_DIR)\include /DCURL_STATICLIB
 #CURL_LIBS = $(CURL_DIR)\lib\libcurl_a.lib
 
 CFLAGS_BASE = /D_WIN32 /DPTW32_STATIC_LIB /DHAVE_STRUCT_TIMESPEC /I$(PTHREADS_INCLUDE) /I$(PCRE_INCLUDE) /I$(OPENSSL_INCLUDE) /I$(OPENCL_INCLUDE) /Ox /Zi
 CFLAGS = $(CFLAGS_BASE) /GL
-LIBS = $(OPENSSL_LIBS) $(PTHREADS_LIBS) $(PCRE_LIBS) ws2_32.lib user32.lib advapi32.lib gdi32.lib /LTCG /DEBUG
-OBJS = vanitygen.obj oclvanitygen.obj oclengine.obj oclvanityminer.obj keyconv.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ed25519.obj stellar.o base32.o crc16.o
+LIBS = $(OPENSSL_LIBS) $(PTHREADS_LIBS) $(PCRE_LIBS) ws2_32.lib user32.lib advapi32.lib gdi32.lib bcrypt.lib /LTCG /DEBUG
+
+#### All object files (used by `clean`)
+OBJS = vanitygen.obj keyconv.obj \
+       oclvanitygen.obj oclvanityminer.obj oclengine.obj \
+       ocled25519engine.obj oclvanitygen_ed25519.obj \
+       pattern.obj util.obj winglue.obj simplevanitygen.obj compat.obj \
+       groestl.obj sha3.obj ed25519.obj \
+       stellar.obj base32.obj crc16.obj bech32.obj segwit_addr.obj
 
 all: vanitygen++.exe oclvanitygen++.exe
 
 vanitygen++.exe: vanitygen.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ed25519.obj stellar.obj base32.obj crc16.obj simplevanitygen.obj bech32.obj segwit_addr.obj
 	link /nologo /out:$@ $** $(LIBS)
 
-oclvanitygen++.exe: oclvanitygen.obj oclengine.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj
+oclvanitygen++.exe: oclvanitygen.obj oclengine.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj ocled25519engine.obj oclvanitygen_ed25519.obj stellar.obj base32.obj crc16.obj compat.obj
 	link /nologo /out:$@ $** $(LIBS) $(OPENCL_LIBS)
 
 oclvanityminer.exe: oclvanityminer.obj oclengine.obj pattern.obj util.obj winglue.obj groestl.obj sha3.obj
@@ -56,7 +63,7 @@ oclvanitygen.obj: oclvanitygen.c
 	@$(CC) /nologo $(CFLAGS_BASE) /c /Tpoclvanitygen.c /Fo$@
 
 oclvanityminer.obj: oclvanityminer.c
-	@$(CC) /nologo $(CFLAGS_BASE) $(CURL_INCLUDE) /c /Tpoclvanityminer.c /Fo
+	@$(CC) /nologo $(CFLAGS_BASE) $(CURL_INCLUDE) /c /Tpoclvanityminer.c /Fo$@
 
 clean:
-	del vanitygen++.exe oclvanitygen++.exe oclvanityminer.exe keyconv.exe $(OBJS)
+	-del vanitygen++.exe oclvanitygen++.exe oclvanityminer.exe keyconv.exe $(OBJS)
