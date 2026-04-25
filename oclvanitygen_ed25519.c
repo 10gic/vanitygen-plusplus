@@ -683,7 +683,9 @@ ocl_ed25519_main(int argc, char *argv[])
     int do_list       = 0;
     int max_found     = 1;
     int case_insens   = 0;
-    int verbose       = 0;
+    int verbose       = 1;   /* match oclvanitygen.c (BTC path) so kernel
+                              * compile / device-pick messages show up; -q
+                              * still suppresses everything */
     int quiet         = 0;
     FILE *out_fp           = NULL;
     const char *out_file   = NULL;
