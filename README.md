@@ -1,5 +1,5 @@
 # Vanitygen++
-A vanity address generator supporting over 100 cryptocurrencies including BTC, ETH, LTC, TRX, and more.
+A vanity address generator supporting over 100 cryptocurrencies including BTC, ETH, LTC, TRX, SOL and more.
 
 # Usage
 List all supported cryptocurrencies:
@@ -8,6 +8,7 @@ $ ./vanitygen++ -C LIST
 ETH : Ethereum : 0x
 BTC : Bitcoin : 1
 LTC : Litecoin : L
+SOL : Solana : (Base58)
 ...... (additional output omitted)
 ```
 
@@ -57,6 +58,15 @@ Difficulty: 16777216
 ETH Pattern: 0x999999
 ETH Address: 0x999999188b45BcfA499Ff1bDc041eE21cc890B16
 ETH Privkey: 0xdb3813534c0c9595f9b8b35d6f544827065b33930ae42c38a9d7ce41a1d74669
+```
+
+Generate a SOL vanity address:
+```
+$ ./vanitygen++ -C SOL AAAA
+Generating SOL Address
+SOL pattern: AAAA
+SOL Address: AAAAyVtwvieeVxE4RSpSnxVRUgXkYwQCtMF1vGKx8mTN
+SOL Privkey: 3PpbmQMrc8iUEUy2C2M8KCEWEjm3KNrtTcKjbMd617pfuv3cFzrER9tK85GZiKP9s2k2cRtKoXZXTxW6qWxdAWye
 ```
 
 If you have an OpenCL-compatible GPU, use `oclvanitygen++` for faster performance. It supports both secp256k1 coins (BTC, ETH, etc.) and Ed25519 coins (SOL, XLM).

@@ -74,8 +74,11 @@ thread_loop_ed25519(void *arg)
     unsigned char priv_buf[32];
     unsigned char pub_buf[32];
     unsigned char xlm_private_out[56];
-    unsigned char xlm_addr_out[57]; // more 1 byte (hold '\0'), strstr need NULL terminated string
+    unsigned char xlm_addr_out[57];
     xlm_addr_out[56] = '\0';
+    char sol_addr_out[45];
+    char sol_priv_b58[89];
+    unsigned char sol_keypair[64];
     int find_it = 0;
     size_t pattern_len;
     size_t buf_len = 32;
@@ -176,6 +179,59 @@ check_thread_index:
                         fprintf(fp, "Pattern: %s\n", vc_ed25519->pattern);
                         fprintf(fp, "XLM Address: %.56s\n", xlm_addr_out);
                         fprintf(fp, "XLM Privkey: %.56s\n", xlm_private_out);
+                        fclose(fp);
+                    }
+                }
+
+                pthread_mutex_unlock(&mtx);
+            }
+        }
+
+        if (vc_ed25519->vc_addrtype == ADDR_TYPE_SOL) {
+            vg_b58_encode_raw(pub_buf, 32, sol_addr_out);
+            size_t addr_len = strlen(sol_addr_out);
+
+            if (vc_ed25519->match_location == 0) {
+                if (strstr(sol_addr_out, vc_ed25519->pattern) != NULL)
+                    find_it = 1;
+            } else if (vc_ed25519->match_location == 1) {
+                if (strncmp(vc_ed25519->pattern, sol_addr_out, pattern_len) == 0)
+                    find_it = 1;
+            } else if (vc_ed25519->match_location == 2) {
+                if (addr_len >= pattern_len &&
+                    strncmp(vc_ed25519->pattern, sol_addr_out + addr_len - pattern_len, pattern_len) == 0)
+                    find_it = 1;
+            }
+            if (find_it == 1) {
+                pthread_mutex_lock(&mtx);
+
+                if (vc_ed25519->vc_found_num >= vc_ed25519->vc_numpairs) {
+                    vc_ed25519->vc_halt = 1;
+                    pthread_mutex_unlock(&mtx);
+                    goto out;
+                }
+
+                vc_ed25519->vc_found_num++;
+
+                printf("\rSOL Address: %s\n", sol_addr_out);
+
+                EVP_PKEY_get_raw_private_key(pkey, (unsigned char *)&priv_buf, &buf_len);
+
+                memcpy(sol_keypair, priv_buf, 32);
+                memcpy(sol_keypair + 32, pub_buf, 32);
+                vg_b58_encode_raw(sol_keypair, 64, sol_priv_b58);
+
+                printf("SOL Privkey: %s\n", sol_priv_b58);
+                vc_ed25519->vc_halt = 1;
+
+                if (vc_ed25519->vc_result_file) {
+                    FILE *fp = fopen(vc_ed25519->vc_result_file, "a");
+                    if (!fp) {
+                        fprintf(stderr, "ERROR: could not open result file: %s\n", strerror(errno));
+                    } else {
+                        fprintf(fp, "Pattern: %s\n", vc_ed25519->pattern);
+                        fprintf(fp, "SOL Address: %s\n", sol_addr_out);
+                        fprintf(fp, "SOL Privkey: %s\n", sol_priv_b58);
                         fclose(fp);
                     }
                 }

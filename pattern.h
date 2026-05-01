@@ -47,6 +47,9 @@
 #define ADDR_TYPE_ATOM -3
 #define PRIV_TYPE_ATOM -3
 
+#define ADDR_TYPE_SOL -4
+#define PRIV_TYPE_SOL -4
+
 typedef struct _vg_context_s vg_context_t;
 
 struct _vg_exec_context_s;

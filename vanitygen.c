@@ -446,6 +446,7 @@ main(int argc, char **argv)
 					"Argument(UPPERCASE) : Coin : Address Prefix\n"
 					"---------------\n"
 					"ETH : Ethereum : 0x\n"
+					"SOL : Solana : (Base58)\n"
 					"XLM : Stellar Lumens : G\n"
 					"ATOM : Cosmos : cosmos1\n"
 					);
@@ -458,6 +459,14 @@ main(int argc, char **argv)
 						"Generating ETH Address\n");
 				addrtype = ADDR_TYPE_ETH;
 				privtype = PRIV_TYPE_ETH;
+				break;
+			}
+			else
+			if (strcmp(optarg, "SOL")== 0) {
+				fprintf(stderr,
+						"Generating SOL Address\n");
+				addrtype = ADDR_TYPE_SOL;
+				privtype = PRIV_TYPE_SOL;
 				break;
 			}
 			else
@@ -626,6 +635,71 @@ main(int argc, char **argv)
 			"WARNING: Use OpenSSL 1.0.0d+ for best performance\n");
 	}
 #endif
+
+	if (addrtype == ADDR_TYPE_SOL) {
+#if OPENSSL_VERSION_NUMBER < 0x10101000L
+		fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for SOL\n");
+#else
+		if (optind >= argc) {
+			usage(argv[0]);
+			return 1;
+		}
+		patterns = &argv[optind];
+		fprintf(stderr, "SOL pattern: %s\n", *patterns);
+
+		vg_context_ed25519_t *vc_ed25519 = NULL;
+		vc_ed25519 = (vg_context_ed25519_t *) malloc(sizeof(*vc_ed25519));
+		vc_ed25519->vc_verbose = verbose;
+		vc_ed25519->vc_addrtype = addrtype;
+		vc_ed25519->vc_privtype = privtype;
+		vc_ed25519->vc_result_file = result_file;
+		vc_ed25519->vc_numpairs = numpairs;
+		if (vc_ed25519->vc_numpairs == 0) {
+			vc_ed25519->vc_numpairs = 1;
+		}
+		vc_ed25519->pattern = *patterns;
+		vc_ed25519->match_location = 1;
+
+		size_t pattern_len = strlen(vc_ed25519->pattern);
+		if (pattern_len > 44) {
+			fprintf(stderr, "The pattern is too long for SOL address (max 44)\n");
+			return 1;
+		}
+		if (regex) {
+			fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
+			if (vc_ed25519->pattern[0] == '^') {
+				vc_ed25519->match_location = 1;
+				vc_ed25519->pattern = vc_ed25519->pattern + 1;
+			} else if (vc_ed25519->pattern[pattern_len-1] == '$') {
+				vc_ed25519->match_location = 2;
+				vc_ed25519->pattern[pattern_len-1] = '\0';
+			} else {
+				vc_ed25519->match_location = 0;
+			}
+		}
+
+		if (nthreads <= 0) {
+			nthreads = count_processors();
+			if (nthreads <= 0) {
+				fprintf(stderr, "ERROR: could not determine processor count\n");
+				nthreads = 1;
+			}
+			if (nthreads > ed25519_max_threads) {
+				fprintf(stderr, "WARNING: too many threads\n");
+				nthreads = ed25519_max_threads;
+			}
+		}
+		vc_ed25519->vc_thread_num = nthreads;
+		vc_ed25519->vc_start_time = (unsigned long)time(NULL);
+		vc_ed25519->vc_found_num = 0;
+		vc_ed25519->vc_halt = 0;
+		memset(vc_ed25519->vc_check_count, 0, sizeof(vc_ed25519->vc_check_count));
+
+		if (!start_threads_ed25519(vc_ed25519))
+			return 1;
+#endif
+		return 0;
+	}
 
 	if (addrtype == ADDR_TYPE_XLM) {
 #if OPENSSL_VERSION_NUMBER < 0x10101000L
